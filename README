@@ -1,0 +1,31 @@
+# KiddoAI Frontend Project
+
+This is the frontend project for KiddoAI, an AI-powered educational platform for kids.
+
+## Getting Started
+
+### Prerequisites
+
+Make sure you have the following installed:
+
+- Node.js
+- npm (Node Package Manager)
+
+### Installation
+
+1. Clone the repository:
+    ```
+    git clone https://github.com/yourusername/kiddoai-frontend.git
+    ```
+2. Navigate to the project directory:
+    ```
+    cd kiddoai-frontend
+    ```
+3. Install the dependencies:
+    ```
+    npm install
+    ```
+
+### Running the Project
+
+To start the development server, run:

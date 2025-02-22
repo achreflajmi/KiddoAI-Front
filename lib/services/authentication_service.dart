@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class AuthenticationService {
-  final String baseUrl = 'http://172.20.10.5:8081/KiddoAI'; // CHANGE THIS WITH YOUR IP ADDRESS (ipconfig)
+  final String baseUrl = 'https://aaa3-197-6-153-45.ngrok-free.app/KiddoAI'; // CHANGE THIS WITH YOUR IP ADDRESS (ipconfig)
 
   // Signup
   Future<Map<String, dynamic>> signup(String nom, String prenom, String email, String password, String favoriteCharacter, String dateOfBirth) async {

@@ -2,14 +2,14 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ChatbotService {
-  final String baseUrl = 'http://172.20.10.5:8081/KiddoAI';  // CHANGE THIS WITH YOUR IP ADDRESS (ipconfig)
+  final String baseUrl = 'https://aaa3-197-6-153-45.ngrok-free.app/KiddoAI';  // CHANGE THIS WITH YOUR IP ADDRESS (ipconfig)
 
   // Fetch thread ID from the backend
   Future<String> createThread() async {
     final response = await http.post(Uri.parse('$baseUrl/chat/create_thread'));
     if (response.statusCode == 200) {
       return jsonDecode(response.body)['thread_id']; // Extract thread_id from response
-    } else {
+    } else {    
       throw Exception('Failed to create thread');
     }
   }

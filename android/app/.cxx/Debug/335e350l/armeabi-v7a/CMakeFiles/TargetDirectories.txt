@@ -1,0 +1,2 @@
+C:/Users/21690/Desktop/KiddoAI-Front-Achref/android/app/.cxx/Debug/335e350l/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/Users/21690/Desktop/KiddoAI-Front-Achref/android/app/.cxx/Debug/335e350l/armeabi-v7a/CMakeFiles/rebuild_cache.dir

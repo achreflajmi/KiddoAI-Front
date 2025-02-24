@@ -16,7 +16,7 @@ class ChatPage extends StatefulWidget {
   _ChatPageState createState() => _ChatPageState();
 }
 
-class _ChatPageState extends State<ChatPage> {
+class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
   late String threadId;
   final TextEditingController _controller = TextEditingController();
   final List<Message> messages = [];
@@ -24,6 +24,8 @@ class _ChatPageState extends State<ChatPage> {
 
   FlutterSoundRecorder _audioRecorder = FlutterSoundRecorder();
   bool _isRecording = false;
+  late AnimationController _animationController;
+  late Animation<double> _microphoneScaleAnimation;
 
   @override
   void initState() {
@@ -33,7 +35,16 @@ class _ChatPageState extends State<ChatPage> {
       _getThreadId();
     }
     _loadMessages();
-    _initializeRecorder(); 
+    _initializeRecorder();
+
+    // Animation for recording button scaling
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 150),
+    );
+    _microphoneScaleAnimation = Tween<double>(begin: 1.0, end: 1.2).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
   }
 
   Future<void> _initializeRecorder() async {
@@ -113,7 +124,7 @@ class _ChatPageState extends State<ChatPage> {
     if (response.statusCode == 200) {
       setState(() {
         messages.add(Message(
-          sender: 'bot',
+          sender: 'user',
           content: jsonDecode(response.body)['response'],
         ));
       });
@@ -124,22 +135,9 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
-  Future<void> _startRecording() async {
-    try {
-      if (!_isRecording) {
-        await _audioRecorder.startRecorder(toFile: 'audio.wav');
-        setState(() {
-          _isRecording = true;
-        });
-      }
-    } catch (e) {
-      print("Error starting recording: $e");
-    }
-  }
-
   Future<void> _stopRecording() async {
     try {
-      String? path = await _audioRecorder.stopRecorder();  
+      String? path = await _audioRecorder.stopRecorder();
       if (path == null) {
         print("Error: Recording failed or path is null.");
         return;
@@ -149,11 +147,7 @@ class _ChatPageState extends State<ChatPage> {
         _isRecording = false;
       });
 
-      print("Audio file saved at: $path"); // Log the file path
-
-      // Save the audio file to your project's app directory
-      final savedFilePath = await _saveAudioToAppDirectory(path);
-      print("Audio file saved to app directory at: $savedFilePath");
+      print("Audio file saved at: $path");
 
       final audioFile = File(path);
       final audioBytes = await audioFile.readAsBytes();
@@ -161,45 +155,64 @@ class _ChatPageState extends State<ChatPage> {
       final response = await _sendAudioToBackend(audioBytes);
 
       if (response != null) {
+        // Only add the transcription as a bot message.
         setState(() {
-          messages.add(Message(sender: 'user', content: response));
+          messages.add(Message(sender: 'bot', content: response));
         });
+
+        _controller.clear();
         _saveMessages();
         _scrollToBottom();
+      } else {
+        print("Error: No response from backend.");
       }
     } catch (e) {
       print("Error stopping recording: $e");
     }
   }
 
-  // Save the audio file to the app's directory (or external storage if needed)
-  Future<String> _saveAudioToAppDirectory(String audioFilePath) async {
-    final directory = await getExternalStorageDirectory(); // Use external storage for better file access
-    final appDirectoryPath = '${directory!.path}/audio.wav'; // Save it to external storage or app directory
-
-    final audioFile = File(audioFilePath);
-    final savedFile = await audioFile.copy(appDirectoryPath);
-
-    return savedFile.path; // Return the path of the saved file
+  Future<void> _startRecording() async {
+    try {
+      if (!_isRecording) {
+        // Start recording
+        await _audioRecorder.startRecorder(toFile: 'audio.wav');
+        setState(() {
+          _isRecording = true;
+        });
+        _animationController.repeat(reverse: true);  // Trigger animation when speaking
+      }
+    } catch (e) {
+      print("Error starting recording: $e");
+    }
   }
 
   Future<String?> _sendAudioToBackend(List<int> audioBytes) async {
     final uri = Uri.parse('https://aaa3-197-6-153-45.ngrok-free.app/KiddoAI/chat/transcribe');
+    
+    if (threadId.isEmpty) {
+      print("Error: threadId is empty");
+      return null;
+    }
+
     final request = http.MultipartRequest('POST', uri)
+      ..fields['threadId'] = threadId
       ..files.add(http.MultipartFile.fromBytes('audio', audioBytes, filename: 'audio.wav'));
 
     final response = await request.send();
     if (response.statusCode == 200) {
       final responseBody = await response.stream.bytesToString();
-      print("Backend response body: $responseBody"); // Log the response body
-      return responseBody; 
+      print("Backend response body: $responseBody");
+      return responseBody;
     }
+
+    print("Error: Failed to send audio to backend.");
     return null;
   }
 
   @override
   void dispose() {
     _audioRecorder.closeRecorder();
+    _animationController.dispose();
     super.dispose();
   }
 
@@ -215,12 +228,9 @@ class _ChatPageState extends State<ChatPage> {
       backgroundColor: Color(0xFFF5F5F5),
       appBar: AppBar(
         backgroundColor: Colors.white,
-        elevation: 0,
+        elevation: 1,
         automaticallyImplyLeading: false,
-        title: Text(
-          'Voice Chat',
-          style: TextStyle(color: Colors.black, fontSize: 18),
-        ),
+        title: Text('Voice Chat', style: TextStyle(color: Colors.black, fontSize: 18)),
         actions: [
           Padding(
             padding: EdgeInsets.only(right: 16),
@@ -245,32 +255,36 @@ class _ChatPageState extends State<ChatPage> {
           Container(
             decoration: BoxDecoration(
               color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                ),
-              ],
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
             ),
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               children: [
-                IconButton(
-                  icon: Icon(_isRecording ? Icons.stop : Icons.mic),
-                  onPressed: _isRecording ? _stopRecording : _startRecording,
+                GestureDetector(
+                  onLongPressStart: (_) => _startRecording(),
+                  onLongPressEnd: (_) => _stopRecording(),
+                  child: ScaleTransition(
+                    scale: _microphoneScaleAnimation,
+                    child: Icon(
+                      _isRecording ? Icons.stop : Icons.mic,
+                      color: _isRecording ? Colors.red : Colors.blue,
+                    ),
+                  ),
                 ),
+                SizedBox(width: 12),
                 Expanded(
                   child: TextField(
                     controller: _controller,
                     decoration: InputDecoration(
-                      hintText: 'Write a message',
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                      hintText: 'Type a message...',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(30)),
+                      filled: true,
+                      fillColor: Colors.grey[200],
                     ),
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.send, color: Colors.grey),
+                  icon: Icon(Icons.send, color: Colors.blue),
                   onPressed: () {
                     _sendMessage(_controller.text);
                     _controller.clear();
@@ -289,34 +303,9 @@ class _ChatPageState extends State<ChatPage> {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
-        mainAxisAlignment:
-            isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
         children: [
-          if (!isUser && message.showAvatar) ...[ 
-            Container(
-              width: 200,
-              height: 200,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 4,
-                    offset: Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.asset(
-                  'assets/spongebob.png',
-                  fit: BoxFit.contain,
-                ),
-              ),
-            ),
-          ] else if (!isUser) ...[
+          if (!isUser) ...[
             CircleAvatar(
               backgroundImage: AssetImage('assets/spongebob.png'),
               radius: 16,
@@ -330,19 +319,12 @@ class _ChatPageState extends State<ChatPage> {
                 color: isUser ? Color(0xFF4CAF50) : Colors.white,
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 4,
-                    offset: Offset(0, 2),
-                  ),
+                  BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4, offset: Offset(0, 2)),
                 ],
               ),
               child: Text(
                 message.content,
-                style: TextStyle(
-                  color: isUser ? Colors.white : Colors.black87,
-                  fontSize: 16,
-                ),
+                style: TextStyle(color: isUser ? Colors.white : Colors.black87, fontSize: 16),
               ),
             ),
           ),

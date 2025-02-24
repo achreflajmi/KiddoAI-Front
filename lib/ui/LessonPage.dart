@@ -30,7 +30,7 @@ class _LessonsPageState extends State<LessonsPage> {
       builder: (context) => const LoadingAnimationWidget(),
     );
 
-    final url = Uri.parse("http://localhost:8081/KiddoAI/Activity/Create/$description");
+    final url = Uri.parse("http://192.168.1.114:8081/KiddoAI/Activity/Create/$description");
 
     try {
       final response = await http.get(url);
@@ -38,11 +38,11 @@ class _LessonsPageState extends State<LessonsPage> {
         // Close loading animation
         Navigator.pop(context);
 
-        // Navigate to WebView page with received URL
+        // Navigate to WebView page with the specified URL
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => WebViewActivityWidget(activityUrl: response.body),
+            builder: (context) => WebViewActivityWidget(activityUrl: "http://192.168.1.114:8081/KiddoAI/Activity/html"),
           ),
         );
       } else {

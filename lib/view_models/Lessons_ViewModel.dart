@@ -15,7 +15,7 @@ class LessonsViewModel {
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body);
+        final List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
         // Assuming each lesson is a JSON object
         lessons.value = data.map<Map<String, dynamic>>((lesson) => lesson as Map<String, dynamic>).toList();
       } else {

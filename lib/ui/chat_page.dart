@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-//import audio player
-import 'package:audioplayers/audioplayers.dart';
-
-import '../widgets/bottom_nav_bar.dart';
+import 'package:flutter_sound/flutter_sound.dart';
+import 'dart:io';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:path_provider/path_provider.dart'; // For getting app directories
 
 class ChatPage extends StatefulWidget {
   final String threadId;
@@ -16,12 +16,16 @@ class ChatPage extends StatefulWidget {
   _ChatPageState createState() => _ChatPageState();
 }
 
-class _ChatPageState extends State<ChatPage> {
+class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
   late String threadId;
   final TextEditingController _controller = TextEditingController();
   final List<Message> messages = [];
   final ScrollController _scrollController = ScrollController();
-  final AudioPlayer _audioPlayer = AudioPlayer();
+
+  FlutterSoundRecorder _audioRecorder = FlutterSoundRecorder();
+  bool _isRecording = false;
+  late AnimationController _animationController;
+  late Animation<double> _microphoneScaleAnimation;
 
   @override
   void initState() {
@@ -31,6 +35,29 @@ class _ChatPageState extends State<ChatPage> {
       _getThreadId();
     }
     _loadMessages();
+    _initializeRecorder();
+
+    // Animation for recording button scaling
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 150),
+    );
+    _microphoneScaleAnimation = Tween<double>(begin: 1.0, end: 1.2).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+  }
+
+  Future<void> _initializeRecorder() async {
+    try {
+      await _requestPermissions();
+      await _audioRecorder.openRecorder();
+    } catch (e) {
+      print("Error initializing recorder: $e");
+    }
+  }
+
+  Future<void> _requestPermissions() async {
+    await [Permission.microphone, Permission.storage].request();
   }
 
   Future<void> _getThreadId() async {
@@ -43,13 +70,12 @@ class _ChatPageState extends State<ChatPage> {
   Future<void> _loadMessages() async {
     final prefs = await SharedPreferences.getInstance();
     final savedMessages = prefs.getString('chatMessages_$threadId');
-
+    
     if (savedMessages != null) {
       final List<dynamic> decodedMessages = jsonDecode(savedMessages);
       setState(() {
         messages.clear();
-        messages.addAll(
-            decodedMessages.map((msg) => Message.fromJson(msg)).toList());
+        messages.addAll(decodedMessages.map((msg) => Message.fromJson(msg)).toList());
       });
     } else {
       setState(() {
@@ -64,8 +90,7 @@ class _ChatPageState extends State<ChatPage> {
 
   Future<void> _saveMessages() async {
     final prefs = await SharedPreferences.getInstance();
-    final encodedMessages =
-        jsonEncode(messages.map((msg) => msg.toJson()).toList());
+    final encodedMessages = jsonEncode(messages.map((msg) => msg.toJson()).toList());
     await prefs.setString('chatMessages_$threadId', encodedMessages);
   }
 
@@ -88,8 +113,7 @@ class _ChatPageState extends State<ChatPage> {
     _scrollToBottom();
 
     final response = await http.post(
-      Uri.parse(
-          'https://aaa3-197-6-153-45.ngrok-free.app/KiddoAI/chat/send'), // CHANGE THIS WITH YOUR IP ADDRESS (ipconfig)
+      Uri.parse('https://aaa3-197-6-153-45.ngrok-free.app/KiddoAI/chat/send'),
       body: jsonEncode({
         'threadId': threadId,
         'userInput': message,
@@ -98,105 +122,98 @@ class _ChatPageState extends State<ChatPage> {
     );
 
     if (response.statusCode == 200) {
-      String botResponse = jsonDecode(response.body)['response'];
       setState(() {
         messages.add(Message(
-          sender: 'bot',
-          content: botResponse,
+          sender: 'user',
+          content: jsonDecode(response.body)['response'],
         ));
       });
       _saveMessages();
       _scrollToBottom();
-      await _generateAndPlayVoice(botResponse);
     } else {
       print("Error: ${response.body}");
     }
   }
 
-// tb3a vergil st3mltha fl chat t3k fo9 :3
-  Future<void> _generateAndPlayVoice(String text) async {
-    final response = await http.post(
-      Uri.parse('https://93ae-102-156-135-121.ngrok-free.app/generate-voice'),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({
-        "text": text,
-        "speaker_wav": "sounds/SpongBob.wav",
-      }),
-    );
+  Future<void> _stopRecording() async {
+    try {
+      String? path = await _audioRecorder.stopRecorder();
+      if (path == null) {
+        print("Error: Recording failed or path is null.");
+        return;
+      }
 
-    if (response.statusCode == 200) {
-      final String audioUrl = jsonDecode(response.body)['audio_url'];
-      await _audioPlayer.play(UrlSource(audioUrl));
-    } else {
-      print("Error generating voice: ${response.body}");
+      setState(() {
+        _isRecording = false;
+      });
+
+      print("Audio file saved at: $path");
+
+      final audioFile = File(path);
+      final audioBytes = await audioFile.readAsBytes();
+
+      final response = await _sendAudioToBackend(audioBytes);
+
+      if (response != null) {
+        // Only add the transcription as a bot message.
+        setState(() {
+          messages.add(Message(sender: 'bot', content: response));
+        });
+
+        _controller.clear();
+        _saveMessages();
+        _scrollToBottom();
+      } else {
+        print("Error: No response from backend.");
+      }
+    } catch (e) {
+      print("Error stopping recording: $e");
     }
   }
 
-  Widget _buildMessage(Message message) {
-    final isUser = message.sender == 'user';
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        mainAxisAlignment:
-            isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (!isUser && message.showAvatar) ...[
-            Container(
-              width: 200,
-              height: 200,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 4,
-                    offset: Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.asset(
-                  'assets/spongebob.png',
-                  fit: BoxFit.contain,
-                ),
-              ),
-            ),
-          ] else if (!isUser) ...[
-            CircleAvatar(
-              backgroundImage: AssetImage('assets/spongebob.png'),
-              radius: 16,
-            ),
-            SizedBox(width: 8),
-          ],
-          Flexible(
-            child: Container(
-              padding: EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: isUser ? Color(0xFF4CAF50) : Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 4,
-                    offset: Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Text(
-                message.content,
-                style: TextStyle(
-                  color: isUser ? Colors.white : Colors.black87,
-                  fontSize: 16,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+  Future<void> _startRecording() async {
+    try {
+      if (!_isRecording) {
+        // Start recording
+        await _audioRecorder.startRecorder(toFile: 'audio.wav');
+        setState(() {
+          _isRecording = true;
+        });
+        _animationController.repeat(reverse: true);  // Trigger animation when speaking
+      }
+    } catch (e) {
+      print("Error starting recording: $e");
+    }
+  }
+
+  Future<String?> _sendAudioToBackend(List<int> audioBytes) async {
+    final uri = Uri.parse('https://aaa3-197-6-153-45.ngrok-free.app/KiddoAI/chat/transcribe');
+    
+    if (threadId.isEmpty) {
+      print("Error: threadId is empty");
+      return null;
+    }
+
+    final request = http.MultipartRequest('POST', uri)
+      ..fields['threadId'] = threadId
+      ..files.add(http.MultipartFile.fromBytes('audio', audioBytes, filename: 'audio.wav'));
+
+    final response = await request.send();
+    if (response.statusCode == 200) {
+      final responseBody = await response.stream.bytesToString();
+      print("Backend response body: $responseBody");
+      return responseBody;
+    }
+
+    print("Error: Failed to send audio to backend.");
+    return null;
+  }
+
+  @override
+  void dispose() {
+    _audioRecorder.closeRecorder();
+    _animationController.dispose();
+    super.dispose();
   }
 
   @override
@@ -211,12 +228,9 @@ class _ChatPageState extends State<ChatPage> {
       backgroundColor: Color(0xFFF5F5F5),
       appBar: AppBar(
         backgroundColor: Colors.white,
-        elevation: 0,
+        elevation: 1,
         automaticallyImplyLeading: false,
-        title: Text(
-          'voice chat',
-          style: TextStyle(color: Colors.black, fontSize: 18),
-        ),
+        title: Text('Voice Chat', style: TextStyle(color: Colors.black, fontSize: 18)),
         actions: [
           Padding(
             padding: EdgeInsets.only(right: 16),
@@ -241,28 +255,36 @@ class _ChatPageState extends State<ChatPage> {
           Container(
             decoration: BoxDecoration(
               color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                ),
-              ],
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
             ),
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               children: [
+                GestureDetector(
+                  onLongPressStart: (_) => _startRecording(),
+                  onLongPressEnd: (_) => _stopRecording(),
+                  child: ScaleTransition(
+                    scale: _microphoneScaleAnimation,
+                    child: Icon(
+                      _isRecording ? Icons.stop : Icons.mic,
+                      color: _isRecording ? Colors.red : Colors.blue,
+                    ),
+                  ),
+                ),
+                SizedBox(width: 12),
                 Expanded(
                   child: TextField(
                     controller: _controller,
                     decoration: InputDecoration(
-                      hintText: 'Write a message',
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                      hintText: 'Type a message...',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(30)),
+                      filled: true,
+                      fillColor: Colors.grey[200],
                     ),
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.send, color: Colors.grey),
+                  icon: Icon(Icons.send, color: Colors.blue),
                   onPressed: () {
                     _sendMessage(_controller.text);
                     _controller.clear();
@@ -271,9 +293,40 @@ class _ChatPageState extends State<ChatPage> {
               ],
             ),
           ),
-          BottomNavBar(
-            threadId: threadId,
-            currentIndex: 2,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMessage(Message message) {
+    final isUser = message.sender == 'user';
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        children: [
+          if (!isUser) ...[
+            CircleAvatar(
+              backgroundImage: AssetImage('assets/spongebob.png'),
+              radius: 16,
+            ),
+            SizedBox(width: 8),
+          ],
+          Flexible(
+            child: Container(
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: isUser ? Color(0xFF4CAF50) : Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4, offset: Offset(0, 2)),
+                ],
+              ),
+              child: Text(
+                message.content,
+                style: TextStyle(color: isUser ? Colors.white : Colors.black87, fontSize: 16),
+              ),
+            ),
           ),
         ],
       ),
@@ -286,8 +339,11 @@ class Message {
   final String content;
   final bool showAvatar;
 
-  Message(
-      {required this.sender, required this.content, this.showAvatar = false});
+  Message({
+    required this.sender,
+    required this.content,
+    this.showAvatar = false,
+  });
 
   Map<String, dynamic> toJson() {
     return {

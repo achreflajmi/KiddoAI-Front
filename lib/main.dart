@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'view_models/authentication_view_model.dart';
 import 'view_models/chatbot_viewmodel.dart';
 import 'ui/AuthPage.dart';
+import 'ui/webview_screen.dart';
 
 void main() {
   runApp(MyApp());
@@ -21,7 +22,7 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           primarySwatch: Colors.blue,
         ),
-        home: AuthPage(),
+        home: WebViewIQTestScreen(threadId: "lol",),//AuthPage(),
       ),
     );
   }

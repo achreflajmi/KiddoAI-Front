@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:front_kiddoai/ui/HomePage.dart';
 import '../ui/chat_page.dart';
 import '../ui/webview_screen.dart';
 
@@ -37,10 +38,19 @@ class BottomNavBar extends StatelessWidget {
               },
             ),
             IconButton(
-              icon: Icon(Icons.show_chart),
-              color: Colors.grey,
-              onPressed: () {},
+      icon: Icon(Icons.videogame_asset),
+      color: currentIndex == 1 ? Colors.blue : Colors.grey,
+      onPressed: () {
+        if (currentIndex != 1) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => SubjectsPage(),
             ),
+          );
+        }
+      },
+    ),
             IconButton(
               icon: Icon(Icons.chat_bubble_outline),
               color: currentIndex == 2 ? Colors.blue : Colors.grey,

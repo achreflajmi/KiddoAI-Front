@@ -12,7 +12,8 @@ class AuthPage extends StatefulWidget {
 
 class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
   late TabController _tabController;
-  final _formKey = GlobalKey<FormState>();
+  final _loginFormKey = GlobalKey<FormState>();
+  final _signupFormKey = GlobalKey<FormState>(); // Unique key for signup form
 
   // Signup Controllers
   final TextEditingController _nomController = TextEditingController();
@@ -43,7 +44,7 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
   }
 
   Future<void> _handleSignup() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_signupFormKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
 
@@ -75,7 +76,7 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
   }
 
   Future<void> _handleLogin() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_loginFormKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
 
@@ -215,7 +216,7 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
 
   Widget _buildLoginForm() {
     return Form(
-      key: _formKey,
+      key: _loginFormKey, // Use a unique key here
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -262,7 +263,7 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
 
   Widget _buildSignupForm() {
     return Form(
-      key: _formKey,
+      key: _signupFormKey, // Use a unique key here
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,

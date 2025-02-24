@@ -124,7 +124,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
     if (response.statusCode == 200) {
       setState(() {
         messages.add(Message(
-          sender: 'user',
+          sender: 'bot',
           content: jsonDecode(response.body)['response'],
         ));
       });

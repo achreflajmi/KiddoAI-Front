@@ -10,7 +10,7 @@ class LessonsViewModel {
     isLoading.value = true;
     lessons.value = [];
 
-    final url = Uri.parse("http://192.168.1.114:8081/KiddoAI/Lesson/bySubject/$subjectName");
+    final url = Uri.parse("http://172.20.10.6:8081/KiddoAI/Lesson/bySubject/$subjectName");
 
     try {
       final response = await http.get(url);

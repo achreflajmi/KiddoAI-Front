@@ -18,6 +18,7 @@ class _WebViewActivityWidgetState extends State<WebViewActivityWidget> {
     super.initState();
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setBackgroundColor(Colors.transparent)  // important for some weird cases where WebView has a white/black background overriding content
       ..loadRequest(Uri.parse(widget.activityUrl));
   }
 

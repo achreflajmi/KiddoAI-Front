@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
+import '../widgets/bottom_nav_bar.dart';
 
 class ProfilePage extends StatefulWidget {
+          final String threadId;
+  
+  ProfilePage({required this.threadId});
   @override
   _ProfilePageState createState() => _ProfilePageState();
 }
@@ -13,21 +19,23 @@ class _ProfilePageState extends State<ProfilePage> {
   late TextEditingController _emailController;
   late TextEditingController _characterController;
   late TextEditingController _dobController;
+  String? _threadId; // Store threadId for the user
 
   @override
   void initState() {
     super.initState();
-    _loadProfile();
     _firstNameController = TextEditingController();
     _lastNameController = TextEditingController();
     _emailController = TextEditingController();
     _characterController = TextEditingController();
     _dobController = TextEditingController();
+    _loadProfile();
   }
 
   Future<void> _loadProfile() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
+      _threadId = prefs.getString('threadId'); // Assuming threadId is stored
       _firstNameController.text = prefs.getString('nom') ?? '';
       _lastNameController.text = prefs.getString('prenom') ?? '';
       _emailController.text = prefs.getString('email') ?? '';
@@ -38,15 +46,56 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _saveProfile() async {
     if (_formKey.currentState!.validate()) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('nom', _firstNameController.text);
-      await prefs.setString('prenom', _lastNameController.text);
-      await prefs.setString('favoriteCharacter', _characterController.text);
-      await prefs.setString('dateOfBirth', _dobController.text);
+      try {
+        // Prepare the user data to send to the backend
+        final userData = {
+          'threadId': _threadId, // Ensure this is set correctly
+          'nom': _firstNameController.text,
+          'prenom': _lastNameController.text,
+          'email': _emailController.text,
+          'favoriteCharacter': _characterController.text,
+          'dateNaissance': _dobController.text,
+          'IQCategory': '', // Add if needed, or fetch from somewhere
+        };
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Profile updated successfully!')),
-      );
+        // Replace with your actual token retrieval logic
+        final prefs = await SharedPreferences.getInstance();
+        final token =
+            prefs.getString('authToken') ?? ''; // Example token storage
+
+        // Send PUT request to the backend
+        final response = await http.put(
+          Uri.parse(
+              'https://8fd8-102-154-202-95.ngrok-free.app/users/updateProfile'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization':
+                'Bearer $token', // Include if required by your backend
+          },
+          body: jsonEncode(userData),
+        );
+
+        if (response.statusCode == 200) {
+          // Update local SharedPreferences as a fallback or for caching
+          await prefs.setString('nom', _firstNameController.text);
+          await prefs.setString('prenom', _lastNameController.text);
+          await prefs.setString('favoriteCharacter', _characterController.text);
+          await prefs.setString('dateOfBirth', _dobController.text);
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Profile updated successfully!')),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content: Text('Failed to update profile: ${response.body}')),
+          );
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
     }
   }
 
@@ -109,11 +158,27 @@ class _ProfilePageState extends State<ProfilePage> {
                   backgroundColor: Color(0xFF4CAF50),
                   padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
                 ),
-                child: Text('Save Changes', style: TextStyle(color: Colors.white))),
+                child:
+                    Text('Save Changes', style: TextStyle(color: Colors.white)),
+              ),
             ],
           ),
         ),
       ),
+            bottomNavigationBar: BottomNavBar(
+        threadId: widget.threadId,
+        currentIndex: 1,
+      ),
     );
+  }
+
+  @override
+  void dispose() {
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _emailController.dispose();
+    _characterController.dispose();
+    _dobController.dispose();
+    super.dispose();
   }
 }

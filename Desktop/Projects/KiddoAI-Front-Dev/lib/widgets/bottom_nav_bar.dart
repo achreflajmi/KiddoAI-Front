@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../ui/chat_page.dart';
-import '../ui/webview_screen.dart'; 
-import '../ui/HomePage.dart'; 
+import '../ui/webview_screen.dart';
+import '../ui/HomePage.dart';
+import '../ui/profile_page.dart';
 
 class BottomNavBar extends StatelessWidget {
   final String threadId;
@@ -26,9 +27,11 @@ class BottomNavBar extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon,
-                color: isActive ? Color(0xFF4CAF50) : Colors.grey[600],
-                size: 24),
+            Icon(
+              icon,
+              color: isActive ? Color(0xFF4CAF50) : Colors.grey[600],
+              size: 24,
+            ),
             if (isActive)
               Container(
                 margin: EdgeInsets.only(top: 4),
@@ -47,7 +50,7 @@ class BottomNavBar extends StatelessWidget {
 
   void _handleNavigation(int index, BuildContext context) {
     if (index == currentIndex) return;
-    
+
     switch (index) {
       case 0:
         Navigator.pushReplacement(
@@ -61,7 +64,7 @@ class BottomNavBar extends StatelessWidget {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => SubjectsPage(), // This now works because SubjectsPage is imported
+            builder: (context) => SubjectsPage(threadId: threadId),
           ),
         );
         break;
@@ -74,10 +77,12 @@ class BottomNavBar extends StatelessWidget {
         );
         break;
       case 3:
-        // Add navigation for calendar page if needed
-        break;
-      case 4:
-        // Add navigation for settings page if needed
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ProfilePage(threadId: threadId),
+          ),
+        );
         break;
     }
   }
@@ -105,8 +110,7 @@ class BottomNavBar extends StatelessWidget {
               _buildNavItem(Icons.home_rounded, 0, context),
               _buildNavItem(Icons.show_chart_rounded, 1, context),
               _buildNavItem(Icons.chat_bubble_rounded, 2, context),
-              _buildNavItem(Icons.calendar_today_rounded, 3, context),
-              _buildNavItem(Icons.settings_rounded, 4, context),
+              _buildNavItem(Icons.person, 3, context), // Changed to profile icon
             ],
           ),
         ),

@@ -1,7 +1,8 @@
+// widgets/bottom_nav_bar.dart
 import 'package:flutter/material.dart';
 import '../ui/chat_page.dart';
 import '../ui/webview_screen.dart';
-import '../ui/HomePage.dart';
+import '../ui/HomePage.dart'; // Fixed import case
 import '../ui/profile_page.dart';
 
 class BottomNavBar extends StatelessWidget {
@@ -19,9 +20,9 @@ class BottomNavBar extends StatelessWidget {
     return GestureDetector(
       onTap: () => _handleNavigation(index, context),
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isActive ? Color(0xFF4CAF50).withOpacity(0.15) : Colors.transparent,
+          color: isActive ? const Color(0xFF4CAF50).withOpacity(0.15) : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Column(
@@ -29,15 +30,15 @@ class BottomNavBar extends StatelessWidget {
           children: [
             Icon(
               icon,
-              color: isActive ? Color(0xFF4CAF50) : Colors.grey[600],
+              color: isActive ? const Color(0xFF4CAF50) : Colors.grey[600],
               size: 24,
             ),
             if (isActive)
               Container(
-                margin: EdgeInsets.only(top: 4),
+                margin: const EdgeInsets.only(top: 4),
                 height: 3,
                 width: 3,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   color: Color(0xFF4CAF50),
                   shape: BoxShape.circle,
                 ),
@@ -51,40 +52,28 @@ class BottomNavBar extends StatelessWidget {
   void _handleNavigation(int index, BuildContext context) {
     if (index == currentIndex) return;
 
+    Widget page;
     switch (index) {
       case 0:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => WebViewIQTestScreen(threadId: threadId),
-          ),
-        );
+        page = WebViewIQTestScreen(threadId: threadId);
         break;
       case 1:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => SubjectsPage(threadId: threadId),
-          ),
-        );
+        page = SubjectsPage(threadId: threadId);
         break;
       case 2:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ChatPage(threadId: threadId),
-          ),
-        );
+        page = ChatPage(threadId: threadId);
         break;
       case 3:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ProfilePage(threadId: threadId),
-          ),
-        );
+        page = ProfilePage(threadId: threadId);
         break;
+      default:
+        return;
     }
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => page),
+    );
   }
 
   @override
@@ -96,21 +85,21 @@ class BottomNavBar extends StatelessWidget {
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 8,
-            offset: Offset(0, -2),
+            offset: const Offset(0, -2),
           ),
         ],
       ),
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.symmetric(vertical: 8),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               _buildNavItem(Icons.home_rounded, 0, context),
               _buildNavItem(Icons.show_chart_rounded, 1, context),
               _buildNavItem(Icons.chat_bubble_rounded, 2, context),
-              _buildNavItem(Icons.person, 3, context), // Changed to profile icon
+              _buildNavItem(Icons.person, 3, context),
             ],
           ),
         ),

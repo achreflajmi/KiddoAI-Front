@@ -1,126 +1,105 @@
+// ui/chat_page.dart
 import 'package:flutter/material.dart';
-import 'package:front_kiddoai/ui/profile_page.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:audioplayers/audioplayers.dart';
-import 'dart:async';
-import '../widgets/bottom_nav_bar.dart';
-import 'dart:ui';
-import 'package:flutter_sound/flutter_sound.dart';
-import 'package:path_provider/path_provider.dart';
-import 'dart:io';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:provider/provider.dart';
 import 'package:lottie/lottie.dart';
-
-class Message {
-  final String sender;
-  final String content;
-  final bool showAvatar;
-  final bool isAudio;
-  final DateTime timestamp;
-
-  Message({
-    required this.sender,
-    required this.content,
-    this.showAvatar = false,
-    this.isAudio = false,
-    required this.timestamp,
-  });
-
-  Map<String, dynamic> toJson() {
-    return {
-      'sender': sender,
-      'content': content,
-      'showAvatar': showAvatar,
-      'isAudio': isAudio,
-      'timestamp': timestamp.toIso8601String(),
-    };
-  }
-
-  factory Message.fromJson(Map<String, dynamic> json) {
-    return Message(
-      sender: json['sender'],
-      content: json['content'],
-      showAvatar: json['showAvatar'] ?? false,
-      isAudio: json['isAudio'] ?? false,
-      timestamp: json['timestamp'] != null 
-          ? DateTime.parse(json['timestamp']) 
-          : DateTime.now(),
-    );
-  }
-}
-
+import 'dart:ui';
+import '../view_models/chatbot_viewmodel.dart'; // Fixed import path
+import '../services/chatbot_service.dart';
+import '../widgets/bottom_nav_bar.dart';
+import 'profile_page.dart';
+import '../models/message.dart';
 
 class ChatPage extends StatefulWidget {
   final String threadId;
-  ChatPage({required this.threadId});
+  const ChatPage({Key? key, required this.threadId}) : super(key: key);
 
   @override
   _ChatPageState createState() => _ChatPageState();
 }
 
 class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
-  late String threadId;
+  late final ChatViewModel _viewModel;
   final TextEditingController _controller = TextEditingController();
-  final List<Message> messages = [];
   final ScrollController _scrollController = ScrollController();
-  final AudioPlayer _audioPlayer = AudioPlayer();
-  Timer? _timer;
   late AnimationController _animationController;
   late Animation<double> _microphoneScaleAnimation;
-  FlutterSoundRecorder _audioRecorder = FlutterSoundRecorder();
-  bool _isRecording = false;
-  bool _isTyping = false;
-  bool _isSending = false;
-  String _recordingDuration = "0:00";
-  Timer? _recordingTimer;
-  int _recordingSeconds = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _viewModel = ChatViewModel(ChatbotService());
+    _viewModel.initialize();
+
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 150),
+    );
+    _microphoneScaleAnimation = Tween<double>(begin: 1.0, end: 1.2).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+
+    _controller.addListener(() {
+      _viewModel.onTextChanged(_controller.text);
+    });
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    _controller.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
+  }
 
   Widget _buildMessage(Message message, int index) {
-  final isUser = message.sender == 'user';
-  final isLastMessage = index == messages.length - 1;
-  final showTimestamp = isLastMessage || 
-                        (index + 1 < messages.length &&
-                         messages[index + 1].sender != message.sender);
+    final isUser = message.sender == 'user';
+    final isLastMessage = index == _viewModel.messages.length - 1;
+    final showTimestamp = isLastMessage || 
+        (index + 1 < _viewModel.messages.length &&
+         _viewModel.messages[index + 1].sender != message.sender);
 
-  return Padding(
-    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-    child: Row(
-      mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (!isUser) ...[
-          GestureDetector(
-            onTap: () => _generateAndPlayVoice(message.content),
-            child: CircleAvatar(
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (!isUser) ...[
+            const CircleAvatar(
               backgroundImage: AssetImage('assets/spongebob.png'),
               radius: 16,
             ),
-          ),
-          SizedBox(width: 8),
-        ],
-        Flexible(
-          child: GestureDetector(
-            onTap: !isUser ? () => _generateAndPlayVoice(message.content) : null,
+            const SizedBox(width: 8),
+          ],
+          Flexible(
             child: Container(
               constraints: BoxConstraints(
                 maxWidth: MediaQuery.of(context).size.width * 0.75,
               ),
-              padding: EdgeInsets.all(12),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: isUser ? Color(0xFF4CAF50) : Colors.white,
+                color: isUser ? const Color(0xFF4CAF50) : Colors.white,
                 borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(20),
-                  topRight: Radius.circular(20),
-                  bottomLeft: isUser ? Radius.circular(20) : Radius.circular(4),
-                  bottomRight: isUser ? Radius.circular(4) : Radius.circular(20),
+                  topLeft: const Radius.circular(20),
+                  topRight: const Radius.circular(20),
+                  bottomLeft: isUser ? const Radius.circular(20) : const Radius.circular(4),
+                  bottomRight: isUser ? const Radius.circular(4) : const Radius.circular(20),
                 ),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.05),
                     blurRadius: 5,
-                    offset: Offset(0, 2),
+                    offset: const Offset(0, 2),
                   ),
                 ],
               ),
@@ -137,7 +116,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
                   ),
                   if (showTimestamp)
                     Padding(
-                      padding: EdgeInsets.only(top: 6),
+                      padding: const EdgeInsets.only(top: 6),
                       child: Text(
                         "${message.timestamp.hour}:${message.timestamp.minute.toString().padLeft(2, '0')}",
                         style: TextStyle(
@@ -150,572 +129,509 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
               ),
             ),
           ),
-        ),
-      ],
-    ),
-  );
-}
-
-
-  @override
-  void initState() {
-    super.initState();
-    threadId = widget.threadId;
-    if (threadId.isEmpty) {
-      _getThreadId();
-    }
-    _loadMessages();
-    _initializeRecorder();
-
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 150),
-    );
-    _microphoneScaleAnimation = Tween<double>(begin: 1.0, end: 1.2).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
-    );
-
-    _controller.addListener(() {
-      setState(() {
-        _isTyping = _controller.text.isNotEmpty;
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    _recordingTimer?.cancel();
-    _audioRecorder.closeRecorder();
-    _animationController.dispose();
-    _controller.dispose();
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _getThreadId() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      threadId = prefs.getString('threadId') ?? '';
-    });
-  }
-
-  Future<void> _loadMessages() async {
-    final prefs = await SharedPreferences.getInstance();
-    final savedMessages = prefs.getString('chatMessages_$threadId');
-
-    if (savedMessages != null) {
-      final List<dynamic> decodedMessages = jsonDecode(savedMessages);
-      setState(() {
-        messages.clear();
-        messages.addAll(decodedMessages.map((msg) => Message.fromJson(msg)).toList());
-      });
-
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_scrollController.hasClients) {
-          _scrollToBottom();
-        }
-      });
-    } else {
-      setState(() {
-        messages.add(Message(
-          sender: 'bot',
-          content: 'Hi there, friend!\nI\'m so excited to chat\nwith you!',
-          timestamp: DateTime.now(),
-        ));
-      });
-    }
-  }
-
-  Future<void> _saveMessages() async {
-    final prefs = await SharedPreferences.getInstance();
-    final encodedMessages =
-        jsonEncode(messages.map((msg) => msg.toJson()).toList());
-    await prefs.setString('chatMessages_$threadId', encodedMessages);
-  }
-
-  void _scrollToBottom() {
-    if (_scrollController.hasClients) {
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
-    }
-  }
-
-  Future<void> _sendMessage(String message) async {
-  if (message.isEmpty) return;
-
-  final DateTime timestamp = DateTime.now();
-
-  setState(() {
-    messages.add(Message(sender: 'user', content: message, timestamp: timestamp));
-    _isSending = true;
-  });
-
-  _saveMessages();
-  Future.delayed(Duration(milliseconds: 100), () => _scrollToBottom());
-
-  try {
-    final response = await http.post(
-      Uri.parse('https://8fd8-102-154-202-95.ngrok-free.app/KiddoAI/chat/send'),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({'threadId': threadId, 'userInput': message}),
-    );
-
-    if (response.statusCode == 200) {
-      // Parse the JSON response
-      final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
-      String botResponse = jsonResponse['response'];
-
-      // Remove "response" and ":" from the text, and keep only the plain content
-      // For example, if the response is '{"response": "مرحباً يا صديقي، كيف يمكنني مساعدتك؟"}',
-      // we want to extract only "مرحباً يا صديقي، كيف يمكنني مساعدتك؟"
-      if (botResponse.startsWith('"') && botResponse.endsWith('"')) {
-        botResponse = botResponse.substring(1, botResponse.length - 1); // Remove quotes
-      }
-      // Optionally, you can trim any extra whitespace
-      botResponse = botResponse.trim();
-
-      setState(() {
-        messages.add(Message(sender: 'bot', content: botResponse, timestamp: DateTime.now()));
-        _isSending = false;
-      });
-
-      _saveMessages();
-      _scrollToBottom();
-      _generateAndPlayVoice(botResponse);
-    } else {
-      setState(() {
-        _isSending = false;
-        messages.add(Message(sender: 'bot', content: "Oops! Please try again!", timestamp: DateTime.now()));
-      });
-    }
-  } catch (e) {
-    setState(() {
-      _isSending = false;
-      messages.add(Message(sender: 'bot', content: "Connection error!", timestamp: DateTime.now()));
-    });
-  }
-}
-
-  Future<void> _generateAndPlayVoice(String text) async {
-    try {
-      final response = await http.post(
-        Uri.parse('https://268b-196-184-222-196.ngrok-free.app/generate-voice'),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"text": text, "speaker_wav": "sounds/SpongBob.wav"}),
-      );
-
-      if (response.statusCode == 200) {
-        final String audioUrl = 'http://172.20.10.9:8001/outputlive.wav';
-        await _audioPlayer.play(UrlSource(audioUrl));
-      }
-    } catch (e) {
-      print("Error in voice generation/playback: $e");
-    }
-  }
-
-  Future<void> _initializeRecorder() async {
-    try {
-      await _requestPermissions();
-      await _audioRecorder.openRecorder();
-    } catch (e) {
-      print("Error initializing recorder: $e");
-    }
-  }
-
-  Future<void> _requestPermissions() async {
-    await [Permission.microphone, Permission.storage].request();
-  }
-
-  Future<void> _startRecording() async {
-    try {
-      await _audioRecorder.startRecorder(toFile: 'audio.wav');
-      setState(() {
-        _isRecording = true;
-      });
-      _animationController.repeat(reverse: true);
-    } catch (e) {
-      print("Error starting recording: $e");
-    }
-  }
-
-  Future<void> _stopRecording() async {
-    try {
-      String? path = await _audioRecorder.stopRecorder();
-      if (path == null) return;
-
-      setState(() {
-        _isRecording = false;
-        _animationController.stop();
-      });
-
-      final audioFile = File(path);
-      final audioBytes = await audioFile.readAsBytes();
-
-      final response = await _sendAudioToBackend(audioBytes);
-      if (response != null) {
-        setState(() {
-          messages.add(Message(sender: 'bot', content: response, timestamp: DateTime.now()));
-        });
-
-        _saveMessages();
-        _scrollToBottom();
-        _generateAndPlayVoice(response);
-      }
-    } catch (e) {
-      print("Error stopping recording: $e");
-    }
-  }
-
-  Future<String?> _sendAudioToBackend(List<int> audioBytes) async {
-    final uri = Uri.parse('https://8fd8-102-154-202-95.ngrok-free.app/KiddoAI/chat/transcribe');
-
-    final request = http.MultipartRequest('POST', uri)
-      ..fields['threadId'] = threadId
-      ..files.add(http.MultipartFile.fromBytes('audio', audioBytes, filename: 'audio.wav'));
-
-    final response = await request.send();
-    if (response.statusCode == 200) {
-      return await response.stream.bytesToString();
-    }
-    return null;
-  }
-
-@override
-Widget build(BuildContext context) {
-  if (threadId.isEmpty) {
-    return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Lottie.network(
-              'https://assets9.lottiefiles.com/packages/lf20_kkhbsucc.json',
-              height: 150,
-            ),
-            SizedBox(height: 20),
-            Text(
-              "Loading your chat...",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
+        ],
       ),
     );
   }
 
-  return Scaffold(
-    backgroundColor: Color.fromARGB(255, 242, 244, 249),
-    appBar: AppBar(
-      backgroundColor: Color(0xFF049a02),
-      elevation: 0,
-      centerTitle: true,
-      title: RichText(
-        text: TextSpan(
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-          ),
-          children: [
-            TextSpan(
-              text: 'K',
-              style: TextStyle(color: Colors.white),
-            ),
-            TextSpan(text: 'iddo'),
-            TextSpan(
-              text: 'A',
-              style: TextStyle(color: Colors.white),
-            ),
-            TextSpan(text: 'i Chat'),
-          ],
-        ),
-      ),
-      actions: [
-        Padding(
-          padding: EdgeInsets.only(right: 16),
-          child: GestureDetector(
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => ProfilePage(threadId: threadId)),
-            ),
-            child: CircleAvatar(
-              backgroundImage: AssetImage('assets/spongebob.png'),
-              radius: 18,
-            ),
-          ),
-        ),
-      ],
-    ),
-    body: Stack(
-      children: [
-        // Chat messages list
-        Positioned.fill(
-          child: ListView.builder(
-            controller: _scrollController,
-            padding: EdgeInsets.only(top: 220, bottom: 100),
-            itemCount: messages.length,
-            itemBuilder: (context, index) => _buildMessage(messages[index], index),
-          ),
-        ),
-
-        // Blurred background for SpongeBob and status
-        Positioned(
-          top: 0,
-          left: 0,
-          right: 0,
-          child: Container(
-            height: 170,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Color(0xFF049a02).withOpacity(0.8),
-                  Color(0xFF049a02).withOpacity(0.0),
-                ],
-              ),
-            ),
-            child: ClipRect(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                child: Container(color: Colors.transparent),
-              ),
-            ),
-          ),
-        ),
-
-        // SpongeBob Image with a card
-        Positioned(
-          top: 16,
-          left: 0,
-          right: 0,
-          child: Center(
-            child: Container(
-              clipBehavior: Clip.none,
-              width: 140,
-              height: 140,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(70),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: Offset(0, 4),
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider.value(
+      value: _viewModel,
+      child: Consumer<ChatViewModel>(
+        builder: (context, viewModel, child) {
+          if (viewModel.isLoading || widget.threadId.isEmpty) {
+            return Scaffold(
+              body: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Color(0xFF4CAF50), Color(0xFF8BC34A)],
                   ),
-                ],
-              ),
-              child: Stack(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(70),
-                    child: Image.asset(
-                      'assets/spongebob.png',
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  // Animated effect when speaking
-                  if (_isRecording || _isSending)
-                    Positioned.fill(
-                      child: Lottie.network(
-                        'https://assets1.lottiefiles.com/packages/lf20_vctzcozn.json',
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
-        ),
-
-        // Status text below SpongeBob
-        Positioned(
-          top: 160,
-          left: 0,
-          right: 0,
-          child: Center(
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 8,
-                    offset: Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: _isRecording
-                  ? Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 10,
-                          height: 10,
-                          decoration: BoxDecoration(
-                            color: Colors.red,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        SizedBox(width: 8),
-                        Text(
-                          "Recording... $_recordingDuration",
-                          style: TextStyle(
-                            color: Colors.red,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    )
-                  : _isSending
-                      ? Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF049a02)),
-                              ),
-                            ),
-                            SizedBox(width: 8),
-                            Text(
-                              "Thinking...",
-                              style: TextStyle(
-                                color: Color(0xFF049a02),
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        )
-                      : Text(
-                          "Let's chat!",
-                          style: TextStyle(
-                            color: Color(0xFF049a02),
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-            ),
-          ),
-        ),
-
-        // Input field with microphone and send button
-        Positioned(
-          bottom: 0,
-          left: 0,
-          right: 0,
-          child: ClipRect(
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.9),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 8,
-                      offset: Offset(0, -2),
-                    ),
-                  ],
                 ),
-                child: SafeArea(
-                  top: false,
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    child: Material(
-                      elevation: 2,
-                      borderRadius: BorderRadius.circular(30),
-                      child: Container(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      LottieBuilder.network(
+                        'https://assets9.lottiefiles.com/packages/lf20_kkhbsucc.json',
+                        height: 180,
+                      ),
+                      const SizedBox(height: 24),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(30),
-                          border: Border.all(
-                            color: _isRecording
-                                ? Colors.red.withOpacity(0.5)
-                                : _isTyping
-                                    ? Color(0xFF049a02).withOpacity(0.5)
-                                    : Colors.transparent,
-                            width: 2,
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            GestureDetector(
-                              onLongPressStart: (_) => _startRecording(),
-                              onLongPressEnd: (_) => _stopRecording(),
-                              child: Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 12),
-                                child: AnimatedBuilder(
-                                  animation: _animationController,
-                                  builder: (context, child) {
-                                    return Transform.scale(
-                                      scale: _isRecording
-                                          ? 1.0 + 0.2 * _microphoneScaleAnimation.value
-                                          : 1.0,
-                                      child: Icon(
-                                        _isRecording ? Icons.stop : Icons.mic,
-                                        color: _isRecording ? Colors.red : Color(0xFF4CAF50),
-                                        size: 28,
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              child: Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 20),
-                                child: TextField(
-                                  controller: _controller,
-                                  decoration: InputDecoration(
-                                    hintText: _isRecording ? 'Recording...' : 'Type your message...',
-                                    border: InputBorder.none,
-                                    hintStyle: TextStyle(
-                                      color: _isRecording ? Colors.red.withOpacity(0.6) : Colors.grey[600],
-                                    ),
-                                  ),
-                                  style: TextStyle(fontSize: 16),
-                                  maxLines: null,
-                                  enabled: !_isRecording,
-                                ),
-                              ),
-                            ),
-                            IconButton(
-                              icon: Icon(Icons.send_rounded),
-                              color: Color(0xFF4CAF50),
-                              iconSize: 28,
-                              onPressed: () {
-                                if (_controller.text.isNotEmpty) {
-                                  _sendMessage(_controller.text);
-                                  _controller.clear();
-                                }
-                              },
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
                             ),
                           ],
+                        ),
+                        child: const Text(
+                          "Loading your magical chat...",
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF4CAF50),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }
+
+          return Scaffold(
+            backgroundColor: const Color(0xFFF6F8FF),
+            appBar: PreferredSize(
+              preferredSize: const Size.fromHeight(70),
+              child: AppBar(
+                backgroundColor: const Color(0xFF4CAF50),
+                elevation: 0,
+                centerTitle: true,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(25),
+                    bottomRight: Radius.circular(25),
+                  ),
+                ),
+                title: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Image.asset(
+                      'assets/spongebob.png',
+                      height: 40,
+                      width: 40,
+                    ),
+                    const SizedBox(width: 10),
+                    RichText(
+                      text: const TextSpan(
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Comic Sans MS',
+                        ),
+                        children: [
+                          TextSpan(text: 'K', style: TextStyle(color: Colors.yellow)),
+                          TextSpan(text: 'iddo', style: TextStyle(color: Colors.white)),
+                          TextSpan(text: 'A', style: TextStyle(color: Colors.yellow)),
+                          TextSpan(text: 'i', style: TextStyle(color: Colors.white)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                actions: [
+                  Padding(
+                    padding: const EdgeInsets.only(right: 16),
+                    child: GestureDetector(
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ProfilePage(threadId: viewModel.threadId),
+                        ),
+                      ),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.yellow, width: 2),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const CircleAvatar(
+                          backgroundImage: AssetImage('assets/spongebob.png'),
+                          radius: 20,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            body: Stack(
+              children: [
+                Positioned.fill(
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      image: DecorationImage(
+                        image: AssetImage('assets/spongebob.png'),
+                        fit: BoxFit.contain,
+                        opacity: 0.05,
+                        alignment: Alignment.center,
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned.fill(
+                  child: Container(
+                    margin: const EdgeInsets.only(top: 175, bottom: 85),
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.8),
+                        borderRadius: BorderRadius.circular(25),
+                        border: Border.all(
+                          color: const Color(0xFF4CAF50).withOpacity(0.3),
+                          width: 2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(23),
+                        child: ListView.builder(
+                          controller: _scrollController,
+                          padding: const EdgeInsets.only(top: 15, bottom: 15),
+                          itemCount: viewModel.messages.length,
+                          itemBuilder: (context, index) {
+                            WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+                            return _buildMessage(viewModel.messages[index], index);
+                          },
                         ),
                       ),
                     ),
                   ),
                 ),
+                Positioned(
+                  top: 5,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 130,
+                          height: 130,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                            border: Border.all(
+                              color: viewModel.isRecording
+                                  ? Colors.red
+                                  : viewModel.isSending
+                                      ? Colors.blue
+                                      : Colors.yellow,
+                              width: 3,
+                            ),
+                          ),
+                          child: Stack(
+                            children: [
+                              ClipOval(
+                                child: Image.asset(
+                                  'assets/spongebob.png',
+                                  fit: BoxFit.cover,
+                                  width: 130,
+                                  height: 130,
+                                ),
+                              ),
+                              if (viewModel.isRecording || viewModel.isSending)
+                                Positioned.fill(
+                                  child: ClipOval(
+                                    child: Lottie.network(
+                                      'https://assets1.lottiefiles.com/packages/lf20_vctzcozn.json',
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          margin: const EdgeInsets.only(top: 10),
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(25),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 5,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                            border: Border.all(
+                              color: viewModel.isRecording
+                                  ? Colors.red.withOpacity(0.5)
+                                  : viewModel.isSending
+                                      ? Colors.blue.withOpacity(0.5)
+                                      : const Color(0xFF4CAF50).withOpacity(0.5),
+                              width: 2,
+                            ),
+                          ),
+                          child: viewModel.isRecording
+                              ? Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    LottieBuilder.network(
+                                      'https://assets3.lottiefiles.com/packages/lf20_tzjnbj0d.json',
+                                      width: 30,
+                                      height: 30,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      "I'm listening... ${viewModel.recordingDuration}",
+                                      style: const TextStyle(
+                                        color: Colors.red,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                        fontFamily: 'Comic Sans MS',
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              : viewModel.isSending
+                                  ? Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        LottieBuilder.network(
+                                          'https://assets9.lottiefiles.com/packages/lf20_nw19osms.json',
+                                          width: 30,
+                                          height: 30,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        const Text(
+                                          "Hmm, let me think...",
+                                          style: TextStyle(
+                                            color: Colors.blue,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                            fontFamily: 'Comic Sans MS',
+                                          ),
+                                        ),
+                                      ],
+                                    )
+                                  : Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Image.asset(
+                                          'assets/spongebob.png',
+                                          width: 24,
+                                          height: 24,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        const Text(
+                                          "Let's have fun learning!",
+                                          style: TextStyle(
+                                            color: Color(0xFF4CAF50),
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                            fontFamily: 'Comic Sans MS',
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.white.withOpacity(0.0),
+                          Colors.white.withOpacity(0.9),
+                          Colors.white,
+                        ],
+                      ),
+                    ),
+                    child: SafeArea(
+                      top: false,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                        child: Material(
+                          elevation: 4,
+                          borderRadius: BorderRadius.circular(30),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Colors.white,
+                                  Color(0xFFE8F5E9),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(30),
+                              border: Border.all(
+                                color: viewModel.isRecording
+                                    ? Colors.red
+                                    : viewModel.isTyping
+                                        ? const Color(0xFF4CAF50)
+                                        : Colors.transparent,
+                                width: 2,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 8,
+                                  spreadRadius: 1,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                GestureDetector(
+                                  onLongPressStart: (_) {
+                                    viewModel.startRecording();
+                                    _animationController.repeat(reverse: true);
+                                  },
+                                  onLongPressEnd: (_) {
+                                    viewModel.stopRecording();
+                                    _animationController.stop();
+                                  },
+                                  child: Container(
+                                    width: 50,
+                                    height: 50,
+                                    margin: const EdgeInsets.only(right: 8),
+                                    decoration: BoxDecoration(
+                                      color: viewModel.isRecording
+                                          ? Colors.red.withOpacity(0.1)
+                                          : const Color(0xFF4CAF50).withOpacity(0.1),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: AnimatedBuilder(
+                                      animation: _animationController,
+                                      builder: (context, child) {
+                                        return Transform.scale(
+                                          scale: viewModel.isRecording
+                                              ? 1.0 + 0.2 * _microphoneScaleAnimation.value
+                                              : 1.0,
+                                          child: Icon(
+                                            viewModel.isRecording ? Icons.stop : Icons.mic,
+                                            color: viewModel.isRecording
+                                                ? Colors.red
+                                                : const Color(0xFF4CAF50),
+                                            size: 28,
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: TextField(
+                                    controller: _controller,
+                                    decoration: InputDecoration(
+                                      hintText: viewModel.isRecording
+                                          ? 'Listening to you...'
+                                          : 'Type your message to SpongeBob...',
+                                      border: InputBorder.none,
+                                      hintStyle: TextStyle(
+                                        color: viewModel.isRecording
+                                            ? Colors.red.withOpacity(0.6)
+                                            : Colors.grey[600],
+                                        fontFamily: 'Comic Sans MS',
+                                        fontSize: 16,
+                                      ),
+                                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                                    ),
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontFamily: 'Comic Sans MS',
+                                    ),
+                                    maxLines: null,
+                                    enabled: !viewModel.isRecording,
+                                  ),
+                                ),
+                                AnimatedContainer(
+                                  duration: const Duration(milliseconds: 300),
+                                  width: 50,
+                                  height: 50,
+                                  decoration: BoxDecoration(
+                                    color: _controller.text.isNotEmpty
+                                        ? const Color(0xFF4CAF50)
+                                        : const Color(0xFFE0E0E0),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: IconButton(
+                                    icon: Icon(
+                                      Icons.send_rounded,
+                                      color: _controller.text.isNotEmpty
+                                          ? Colors.white
+                                          : Colors.grey[400],
+                                    ),
+                                    iconSize: 24,
+                                    onPressed: () {
+                                      if (_controller.text.isNotEmpty) {
+                                        viewModel.sendTextMessage(_controller.text);
+                                        _controller.clear();
+                                      }
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            bottomNavigationBar: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(25),
+                  topRight: Radius.circular(25),
+                ),
+              ),
+              child: ClipRRect(
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(25),
+                  topRight: Radius.circular(25),
+                ),
+                child: BottomNavBar(
+                  threadId: widget.threadId,
+                  currentIndex: 2,
+                ),
               ),
             ),
-          ),
-        ),
-      ],
-    ),
-    bottomNavigationBar: BottomNavBar(
-      threadId: threadId,
-      currentIndex: 2,
-    ),
-  );
-}
+          );
+        },
+      ),
+    );
+  }
 }

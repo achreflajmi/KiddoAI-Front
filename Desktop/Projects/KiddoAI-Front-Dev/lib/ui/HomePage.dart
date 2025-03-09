@@ -4,6 +4,7 @@ import 'LessonPage.dart';
 import '../view_models/Lessons_ViewModel.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../services/SubjectService.dart';
+import 'package:front_kiddoai/ui/profile_page.dart';
 
 class SubjectsPage extends StatefulWidget {
   final String threadId;
@@ -71,7 +72,7 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
       duration: Duration(milliseconds: 1000),
     );
 
-    _subjects = SubjectService("https://8fd8-102-154-202-95.ngrok-free.app/KiddoAI").fetchSubjects();
+    _subjects = SubjectService("https://a607-102-27-195-209.ngrok-free.app/KiddoAI").fetchSubjects();
     
     _animationController.forward();
     _headerAnimationController.forward();
@@ -93,513 +94,637 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
     };
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          // Background with subtle pattern
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              image: DecorationImage(
-                image: NetworkImage('https://www.transparenttextures.com/patterns/cubes.png'),
-                fit: BoxFit.cover,
-                opacity: 0.05,
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: Color(0xFFF2FFF0), // Light green background
+    appBar: AppBar(
+      backgroundColor: Color(0xFF4CAF50),
+      elevation: 0,
+      centerTitle: true,
+      title: Container(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.yellow.shade200,
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.yellow.shade300.withOpacity(0.5),
+              blurRadius: 10,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.asset(
+              'assets/spongebob.png',
+              height: 30,
+            ),
+            SizedBox(width: 8),
+            RichText(
+              text: TextSpan(
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Comic Sans MS',
+                ),
+                children: [
+                  TextSpan(
+                    text: 'K',
+                    style: TextStyle(color: Colors.green.shade700),
+                  ),
+                  TextSpan(
+                    text: 'iddo',
+                    style: TextStyle(color: Colors.black),
+                  ),
+                  TextSpan(
+                    text: 'A',
+                    style: TextStyle(color: Colors.blue.shade700),
+                  ),
+                  TextSpan(
+                    text: 'i',
+                    style: TextStyle(color: Colors.black),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        Padding(
+          padding: EdgeInsets.only(right: 16),
+          child: GestureDetector(
+            onTap: () {
+              // Navigate to profile page
+              Navigator.push(context, MaterialPageRoute(builder: (context) => ProfilePage(threadId: widget.threadId)));
+            },
+            child: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: Colors.yellow.shade400,
+                  width: 3,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 4,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: CircleAvatar(
+                backgroundImage: AssetImage('assets/spongebob.png'),
+                radius: 22,
               ),
             ),
           ),
-          
-          CustomScrollView(
-            physics: BouncingScrollPhysics(),
-            slivers: [
-              // Animated SliverAppBar
-              SliverAppBar(
-                expandedHeight: 200.0,
-                floating: false,
-                pinned: true,
-                stretch: true,
-                backgroundColor: Color(0xFF06C167), // Default green like original
-                leading: IconButton(
-                  icon: Icon(Icons.menu, color: Colors.white),
-                  onPressed: () {}, // Menu action
+        ),
+      ],
+    ),
+    body: Stack(
+      children: [
+        // Playful background pattern
+        Positioned.fill(
+          child: Container(
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('assets/spongebob.png'),
+                repeat: ImageRepeat.repeat,
+                opacity: 0.15,
+              ),
+            ),
+          ),
+        ),
+        
+        // Decorative character elements
+        Positioned(
+          top: -40,
+          right: -30,
+          child: Image.asset(
+            'assets/spongebob.png',
+            width: 150,
+            opacity: AlwaysStoppedAnimation(0.2),
+          ),
+        ),
+        
+        Positioned(
+          bottom: -50,
+          left: -30,
+          child: Image.asset(
+            'assets/spongebob.png',
+            width: 180,
+            opacity: AlwaysStoppedAnimation(0.15),
+          ),
+        ),
+
+        // Main content column
+        Column(
+          children: [
+            // Static header instead of animated one to prevent flickering
+            Container(
+              margin: EdgeInsets.fromLTRB(16, 16, 16, 8),
+              padding: EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Color(0xFF66BB6A), 
+                    Color(0xFF43A047),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-                flexibleSpace: FlexibleSpaceBar(
-                  titlePadding: EdgeInsets.only(left: 16, bottom: 16),
-                  title: AnimatedBuilder(
-                    animation: _headerAnimationController,
-                    builder: (context, child) {
-                      return Opacity(
-                        opacity: _headerAnimationController.value,
-                        child: RichText(
-                          text: TextSpan(
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'Poppins',
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.green.withOpacity(0.4),
+                    blurRadius: 10,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Let's Learn Together!",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Comic Sans MS',
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          "Choose a fun subject to explore",
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.9),
+                            fontSize: 16,
+                            fontFamily: 'Comic Sans MS',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    width: 70,
+                    height: 70,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Lottie.asset(
+                      'assets/book_animation.json',
+                      width: 60,
+                      height: 60,
+                      // Use asset instead of network to prevent loading issues
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            // Main content
+            Expanded(
+              child: FutureBuilder<List<String>>(
+                future: _subjects,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Image.asset(
+                            'assets/loading.gif',
+                            height: 180,
+                          ),
+                          SizedBox(height: 20),
+                          Container(
+                            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.yellow.shade100,
+                              borderRadius: BorderRadius.circular(30),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.yellow.shade200.withOpacity(0.5),
+                                  blurRadius: 8,
+                                  offset: Offset(0, 3),
+                                ),
+                              ],
                             ),
+                            child: Text(
+                              "Magic is loading...",
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green.shade700,
+                                fontFamily: 'Comic Sans MS',
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  } else if (snapshot.hasError) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Image.asset(
+                            'assets/error.png',
+                            height: 180,
+                          ),
+                          SizedBox(height: 16),
+                          Container(
+                            margin: EdgeInsets.symmetric(horizontal: 32),
+                            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.red.shade50,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: Colors.red.shade200),
+                            ),
+                            child: Text(
+                              'Oops! Learning adventure paused.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.red.shade700,
+                                fontFamily: 'Comic Sans MS',
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 20),
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              setState(() {
+                                _subjects = SubjectService("https://a607-102-27-195-209.ngrok-free.app/KiddoAI").fetchSubjects();
+                              });
+                            },
+                            icon: Icon(Icons.refresh, color: Colors.white),
+                            label: Text(
+                              "Try Again",
+                              style: TextStyle(
+                                fontFamily: 'Comic Sans MS',
+                                fontSize: 18,
+                                color: Colors.white,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green.shade600,
+                              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              elevation: 5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Lottie.asset(
+                            'assets/empty.json',
+                            height: 180,
+                          ),
+                          SizedBox(height: 16),
+                          Container(
+                            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.shade50,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: Colors.blue.shade200),
+                            ),
+                            child: Text(
+                              'No subjects ready yet!',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blue.shade700,
+                                fontFamily: 'Comic Sans MS',
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 20),
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              setState(() {
+                                _subjects = SubjectService("https://a607-102-27-195-209.ngrok-free.app/KiddoAI").fetchSubjects();
+                              });
+                            },
+                            icon: Icon(Icons.refresh, color: Colors.white),
+                            label: Text(
+                              "Refresh Subjects",
+                              style: TextStyle(
+                                fontFamily: 'Comic Sans MS',
+                                fontSize: 18,
+                                color: Colors.white,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue.shade600,
+                              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              elevation: 5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  // Subjects grid with fixed animations and consistent colors
+                  final subjects = snapshot.data!;
+                  return GridView.builder(
+                    padding: EdgeInsets.fromLTRB(16, 8, 16, 16),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                      childAspectRatio: 0.85,
+                    ),
+                    itemCount: subjects.length,
+                    itemBuilder: (context, index) {
+                      final subject = subjects[index];
+                      // Use fixed color scheme that matches our theme
+                      final Color cardColor = _getSubjectColor(subject, index);
+                      final IconData subjectIcon = _getSubjectIcon(subject);
+                      final String description = _getSubjectDescription(subject);
+                      
+                      return GestureDetector(
+                        onTap: () {
+                          // Navigate to lessons page
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => LessonsPage(subjectName: subject),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                cardColor.withOpacity(0.9),
+                                cardColor,
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(24),
+                            boxShadow: [
+                              BoxShadow(
+                                color: cardColor.withOpacity(0.5),
+                                blurRadius: 10,
+                                offset: Offset(0, 5),
+                              ),
+                            ],
+                          ),
+                          child: Stack(
                             children: [
-                              TextSpan(text: 'K', style: TextStyle(color: Colors.yellow)),
-                              TextSpan(text: 'iddo', style: TextStyle(color: Colors.white)),
-                              TextSpan(text: 'A', style: TextStyle(color: Colors.yellow)),
-                              TextSpan(text: 'I', style: TextStyle(color: Colors.white)),
+                              // Decorative elements
+                              Positioned(
+                                right: -25,
+                                top: -25,
+                                child: Opacity(
+                                  opacity: 0.2,
+                                  child: Icon(
+                                    subjectIcon,
+                                    size: 110,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                              
+                              // Playful bubbles
+                              Positioned(
+                                bottom: 10,
+                                right: 10,
+                                child: Container(
+                                  width: 50,
+                                  height: 50,
+                                  child: Lottie.asset(
+                                    'assets/sparkles.json',
+                                    
+                                  ),
+                                ),
+                              ),
+                              
+                              // Content
+                              Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      padding: EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.25),
+                                        shape: BoxShape.circle,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withOpacity(0.1),
+                                            blurRadius: 5,
+                                            offset: Offset(0, 3),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Icon(
+                                        subjectIcon,
+                                        size: 40,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    SizedBox(height: 16),
+                                    Container(
+                                      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.2),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Text(
+                                        subject,
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          fontFamily: 'Comic Sans MS',
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(height: 8),
+                                    Text(
+                                      description,
+                                      style: TextStyle(
+                                        color: Colors.white.withOpacity(0.9),
+                                        fontSize: 14,
+                                        fontFamily: 'Comic Sans MS',
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              
+                              // Floating "Let's Learn" indicator
+                              Positioned(
+                                bottom: 0,
+                                right: 0,
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.yellow.shade300,
+                                    borderRadius: BorderRadius.only(
+                                      topLeft: Radius.circular(12),
+                                      bottomRight: Radius.circular(24),
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.1),
+                                        blurRadius: 3,
+                                        offset: Offset(0, 1),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.play_circle_fill,
+                                        color: Colors.green.shade700,
+                                        size: 14,
+                                      ),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        "Let's Learn",
+                                        style: TextStyle(
+                                          color: Colors.green.shade800,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                          fontFamily: 'Comic Sans MS',
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              
+                              // Character decoration
+                              Positioned(
+                                bottom: 70,
+                                right: -20,
+                                child: Transform.scale(
+                                  scale: 0.5,
+                                  child: Image.asset(
+                                    'assets/spongebob.png',
+                                    width: 80,
+                                    opacity: AlwaysStoppedAnimation(0.4),
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                         ),
                       );
                     },
-                  ),
-                  background: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topRight,
-                            end: Alignment.bottomLeft,
-                            colors: [
-                              Color(0xFF06C167),
-                              Color(0xFF049a02),
-                            ],
-                          ),
-                        ),
-                      ),
-                      Opacity(
-                        opacity: 0.1,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            image: DecorationImage(
-                              image: NetworkImage('https://www.transparenttextures.com/patterns/cubes.png'),
-                              repeat: ImageRepeat.repeat,
-                            ),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        right: -20,
-                        bottom: -20,
-                        child: AnimatedBuilder(
-                          animation: _headerAnimationController,
-                          builder: (context, child) {
-                            return Transform.rotate(
-                              angle: _headerAnimationController.value * 0.1,
-                              child: Opacity(
-                                opacity: 0.2 * _headerAnimationController.value,
-                                child: Icon(
-                                  Icons.school,
-                                  size: 180,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      Positioned(
-                        left: 20,
-                        bottom: 60,
-                        child: AnimatedBuilder(
-                          animation: _headerAnimationController,
-                          builder: (context, child) {
-                            return Transform.translate(
-                              offset: Offset((1 - _headerAnimationController.value) * -50, 0),
-                              child: Opacity(
-                                opacity: _headerAnimationController.value,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      "Let's Learn",
-                                      style: TextStyle(
-                                        color: Colors.white.withOpacity(0.9),
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                    SizedBox(height: 4),
-                                    Text(
-                                      "Subjects",
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 24,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                actions: [
-                  CircleAvatar(
-                    backgroundColor: Colors.white,
-                    radius: 20,
-                    child: Icon(Icons.person, color: Color(0xFF049a02)),
-                  ),
-                  SizedBox(width: 16),
-                ],
+                  );
+                },
               ),
-
-              // Search bar
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(15),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 10,
-                          offset: Offset(0, 5),
-                        ),
-                      ],
-                    ),
-                    child: TextField(
-                      decoration: InputDecoration(
-                        hintText: "Search for subjects...",
-                        hintStyle: TextStyle(color: Colors.grey.shade400),
-                        prefixIcon: Icon(Icons.search, color: Color(0xFF049a02)),
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(vertical: 15),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
-              // Subjects heading
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 5),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Color(0xFF049a02).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(
-                          Icons.book,
-                          color: Color(0xFF049a02),
-                          size: 20,
-                        ),
-                      ),
-                      SizedBox(width: 12),
-                      Text(
-                        "My Subjects",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      Spacer(),
-                      Container(
-                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: Color(0xFF049a02).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.filter_list,
-                              color: Color(0xFF049a02),
-                              size: 16,
-                            ),
-                            SizedBox(width: 5),
-                            Text(
-                              "All Grades",
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Color(0xFF049a02),
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Subjects grid
-              SliverPadding(
-                padding: const EdgeInsets.all(15.0),
-                sliver: SliverToBoxAdapter(
-                  child: FutureBuilder<List<String>>(
-                    future: _subjects,
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Lottie.network(
-                                'https://assets9.lottiefiles.com/packages/lf20_kkhbsucc.json',
-                                height: 150,
-                              ),
-                              SizedBox(height: 20),
-                              Text(
-                                "Loading your subjects...",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.grey.shade600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      } else if (snapshot.hasError) {
-                        return Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Lottie.network(
-                                'https://assets9.lottiefiles.com/packages/lf20_qpwbiyxf.json',
-                                height: 150,
-                              ),
-                              SizedBox(height: 16),
-                              Text(
-                                'Oops! Something went wrong.',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.red.shade700,
-                                ),
-                              ),
-                              SizedBox(height: 8),
-                              Container(
-                                padding: EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: Colors.red.shade50,
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Text(
-                                  'Error: ${snapshot.error}',
-                                  style: TextStyle(color: Colors.red.shade700),
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                        return Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Lottie.network(
-                                'https://assets9.lottiefiles.com/packages/lf20_wnqlfojb.json',
-                                height: 150,
-                              ),
-                              SizedBox(height: 16),
-                              Text(
-                                'No subjects available yet!',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              SizedBox(height: 10),
-                              ElevatedButton.icon(
-                                onPressed: () {
-                                  setState(() {
-                                    _subjects = SubjectService("https://8fd8-102-154-202-95.ngrok-free.app/KiddoAI").fetchSubjects();
-                                  });
-                                },
-                                icon: Icon(Icons.refresh),
-                                label: Text("Refresh"),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Color(0xFF049a02),
-                                  foregroundColor: Colors.white,
-                                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      } else {
-                        final subjects = snapshot.data!;
-                        return SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.6,
-                          child: GridView.builder(
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 15.0,
-                              mainAxisSpacing: 15.0,
-                              childAspectRatio: 0.85,
-                            ),
-                            itemCount: subjects.length,
-                            itemBuilder: (context, index) {
-                              final animation = Tween<double>(begin: 0.0, end: 1.0).animate(
-                                CurvedAnimation(
-                                  parent: _animationController,
-                                  curve: Interval(
-                                    (index / subjects.length) * 0.5,
-                                    ((index + 1) / subjects.length) * 0.5 + 0.5,
-                                    curve: Curves.easeOut,
-                                  ),
-                                ),
-                              );
-
-                              final subjectAssets = _getSubjectAssets(subjects[index]);
-
-                              return AnimatedBuilder(
-                                animation: animation,
-                                builder: (context, child) {
-                                  return Transform.translate(
-                                    offset: Offset((1 - animation.value) * 100, 0),
-                                    child: Opacity(
-                                      opacity: animation.value,
-                                      child: child,
-                                    ),
-                                  );
-                                },
-                                child: GestureDetector(
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      PageRouteBuilder(
-                                        pageBuilder: (context, animation, secondaryAnimation) =>
-                                            LessonsPage(subjectName: subjects[index]),
-                                        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                                          var begin = Offset(1.0, 0.0);
-                                          var end = Offset.zero;
-                                          var curve = Curves.easeInOut;
-                                          var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-                                          return SlideTransition(
-                                            position: animation.drive(tween),
-                                            child: child,
-                                          );
-                                        },
-                                      ),
-                                    );
-                                  },
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(20),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: subjectAssets['color'].withOpacity(0.15),
-                                          blurRadius: 10,
-                                          offset: Offset(0, 4),
-                                        ),
-                                      ],
-                                      border: Border.all(
-                                        color: subjectAssets['color'].withOpacity(0.1),
-                                        width: 1,
-                                      ),
-                                    ),
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Container(
-                                          width: 70,
-                                          height: 70,
-                                          decoration: BoxDecoration(
-                                            color: subjectAssets['color'].withOpacity(0.1),
-                                            borderRadius: BorderRadius.circular(12),
-                                          ),
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(10.0),
-                                            child: Lottie.network(
-                                              subjectAssets['animation'],
-                                              fit: BoxFit.contain,
-                                            ),
-                                          ),
-                                        ),
-                                        SizedBox(height: 15),
-                                        Text(
-                                          subjects[index],
-                                          style: TextStyle(
-                                            color: Colors.black87,
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        SizedBox(height: 5),
-                                        Text(
-                                          subjectAssets['description'],
-                                          style: TextStyle(
-                                            color: Colors.grey.shade600,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                        SizedBox(height: 10),
-                                        ElevatedButton.icon(
-                                          icon: Icon(Icons.play_circle_outline, size: 18),
-                                          label: Text("Start"),
-                                          onPressed: () {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) => LessonsPage(subjectName: subjects[index]),
-                                              ),
-                                            );
-                                          },
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: subjectAssets['color'],
-                                            foregroundColor: Colors.white,
-                                            padding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(10),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        );
-                      }
-                    },
-                  ),
-                ),
-              ),
-
-              // Bottom padding
-              SliverToBoxAdapter(
-                child: SizedBox(height: 30),
-              ),
-            ],
-          ),
-
-          // Floating action button
-          Positioned(
-            bottom: 20,
-            right: 20,
-            child: FloatingActionButton(
-              onPressed: () {
-                // Quick actions or refresh
-                setState(() {
-                  _subjects = SubjectService("https://8fd8-102-154-202-95.ngrok-free.app/KiddoAI").fetchSubjects();
-                });
-              },
-              backgroundColor: Color(0xFF06C167),
-              child: Icon(Icons.refresh, color: Colors.white),
             ),
+          ],
+        ),
+      ],
+    ),
+    bottomNavigationBar: Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: Offset(0, -2),
           ),
         ],
       ),
-      bottomNavigationBar: BottomNavBar(
+      child: BottomNavBar(
         threadId: widget.threadId,
         currentIndex: 1,
       ),
-    );
+    ),
+  );
+}
+
+// Helper method to get subject colors that match our theme
+Color _getSubjectColor(String subject, int index) {
+  // Use a consistent color scheme that matches the app's theme
+  List<Color> colors = [
+    Color(0xFF4CAF50),  // Green
+    Color(0xFF42A5F5),  // Blue
+    Color(0xFFFFA726),  // Orange
+    Color(0xFFEC407A),  // Pink
+    Color(0xFF7E57C2),  // Purple
+    Color(0xFF26A69A),  // Teal
+  ];
+  
+  // Use modulo to cycle through the colors for any number of subjects
+  return colors[index % colors.length];
+}
+
+// Helper method to get subject icons
+IconData _getSubjectIcon(String subject) {
+  // Convert subject to lowercase for case-insensitive matching
+  String lowercaseSubject = subject.toLowerCase();
+  
+  if (lowercaseSubject.contains('math') || lowercaseSubject.contains('رياضيات')) {
+    return Icons.calculate;
+  } else if (lowercaseSubject.contains('music') || lowercaseSubject.contains('موسيق')) {
+    return Icons.music_note;
+  } else if (lowercaseSubject.contains('science') || lowercaseSubject.contains('علم')) {
+    return Icons.science;
+  } else if (lowercaseSubject.contains('tech') || lowercaseSubject.contains('تكنولوج')) {
+    return Icons.computer;
+  } else if (lowercaseSubject.contains('arab') || lowercaseSubject.contains('عرب')) {
+    return Icons.menu_book;
+  } else if (lowercaseSubject.contains('art') || lowercaseSubject.contains('فن')) {
+    return Icons.color_lens;
+  } else {
+    return Icons.school;  // Default icon
   }
+}
+
+// Helper method to get subject descriptions
+String _getSubjectDescription(String subject) {
+  // Convert subject to lowercase for case-insensitive matching
+  String lowercaseSubject = subject.toLowerCase();
+  
+  if (lowercaseSubject.contains('math') || lowercaseSubject.contains('رياضيات')) {
+    return ""; 
+  } else if (lowercaseSubject.contains('music') || lowercaseSubject.contains('موسيق')) {
+    return ""; 
+  } else if (lowercaseSubject.contains('science') || lowercaseSubject.contains('علم')) {
+    return ""; 
+  } else if (lowercaseSubject.contains('tech') || lowercaseSubject.contains('تكنولوج')) {
+    return ""; 
+  } else if (lowercaseSubject.contains('arab') || lowercaseSubject.contains('عرب')) {
+    return ""; 
+  } else if (lowercaseSubject.contains('art') || lowercaseSubject.contains('فن')) {
+    return ""; 
+  } else {
+    return ""; 
+  }
+}
 }

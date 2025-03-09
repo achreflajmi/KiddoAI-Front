@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter/services.dart';
 import 'package:lottie/lottie.dart';
-import '../services/authentication_service.dart';
+import 'package:provider/provider.dart';
+import '../view_models/authentication_view_model.dart';
 import 'webview_screen.dart';
 
 class AuthPage extends StatefulWidget {
@@ -13,7 +12,7 @@ class AuthPage extends StatefulWidget {
 class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
   late TabController _tabController;
   final _loginFormKey = GlobalKey<FormState>();
-  final _signupFormKey = GlobalKey<FormState>(); // Unique key for signup form
+  final _signupFormKey = GlobalKey<FormState>();
 
   // Signup Controllers
   final TextEditingController _nomController = TextEditingController();
@@ -27,7 +26,6 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
   final TextEditingController _emailLoginController = TextEditingController();
   final TextEditingController _passwordLoginController = TextEditingController();
 
-  bool _isLoading = false;
   bool _passwordVisible = false;
   bool _signupPasswordVisible = false;
 
@@ -40,184 +38,195 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
   @override
   void dispose() {
     _tabController.dispose();
+    _nomController.dispose();
+    _prenomController.dispose();
+    _emailSignupController.dispose();
+    _passwordSignupController.dispose();
+    _favoriteCharacterController.dispose();
+    _dateOfBirthController.dispose();
+    _emailLoginController.dispose();
+    _passwordLoginController.dispose();
     super.dispose();
   }
 
-  Future<void> _handleSignup() async {
+  Future<void> _handleSignup(BuildContext context) async {
     if (!_signupFormKey.currentState!.validate()) return;
 
-    setState(() => _isLoading = true);
+    final viewModel = Provider.of<AuthenticationViewModel>(context, listen: false);
+    
+    final response = await viewModel.signup(
+      _nomController.text,
+      _prenomController.text,
+      _emailSignupController.text,
+      _passwordSignupController.text,
+      _favoriteCharacterController.text,
+      _dateOfBirthController.text,
+    );
 
-    try {
-      final response = await AuthenticationService().signup(
-        _nomController.text,
-        _prenomController.text,
-        _emailSignupController.text,
-        _passwordSignupController.text,
-        _favoriteCharacterController.text,
-        _dateOfBirthController.text,
-      );
-
-      final prefs = await SharedPreferences.getInstance();
-      prefs.setBool('isLoggedIn', true);
-      prefs.setString('threadId', response['threadId']);
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => WebViewIQTestScreen(threadId: response['threadId'])),
-      );
-    } catch (e) {
+    if (response != null) {
+      final threadId = response['threadId'];
+      if (threadId != null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => WebViewIQTestScreen(threadId: threadId)),
+        );
+      }
+    } else if (viewModel.errorMessage != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Signup failed: $e')),
+        SnackBar(content: Text('Signup failed: ${viewModel.errorMessage}')),
       );
-    } finally {
-      setState(() => _isLoading = false);
     }
   }
 
-Future<void> _handleLogin() async {
-  if (!_loginFormKey.currentState!.validate()) return;
+  Future<void> _handleLogin(BuildContext context) async {
+    if (!_loginFormKey.currentState!.validate()) return;
 
-  setState(() => _isLoading = true);
-
-  try {
-    final response = await AuthenticationService().login(
+    final viewModel = Provider.of<AuthenticationViewModel>(context, listen: false);
+    
+    final response = await viewModel.login(
       _emailLoginController.text,
       _passwordLoginController.text,
     );
 
-    final prefs = await SharedPreferences.getInstance();
-    prefs.setBool('isLoggedIn', true);
-    String? threadId = response['threadId'];
-    if (threadId != null) {
-      prefs.setString('threadId', threadId);  // Save threadId
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => WebViewIQTestScreen(threadId: threadId)),
+    if (response != null) {
+      final threadId = response['threadId'];
+      if (threadId != null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => WebViewIQTestScreen(threadId: threadId)),
+        );
+      }
+    } else if (viewModel.errorMessage != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Login failed: ${viewModel.errorMessage}')),
       );
     }
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Login failed: $e')),
-    );
-  } finally {
-    setState(() => _isLoading = false);
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
-      child: Scaffold(
-        backgroundColor: Theme.of(context).colorScheme.background,
-        body: SafeArea(
-          child: Row(
-            mainAxisSize: MainAxisSize.max,
-            children: [
-              Expanded(
-                flex: 8,
-                child: Container(
-                  height: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.background,
-                  ),
-                  alignment: Alignment.topCenter,
-                  child: SingleChildScrollView(
-                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Padding(
-                          padding: EdgeInsets.only(top: 24), // Reduced padding
-                          child: Container(
-                            constraints: BoxConstraints(maxWidth: 600),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                RichText(
-                                  text: TextSpan(
-                                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                    children: [
-                                      TextSpan(
-                                        text: 'K',
-                                        style: TextStyle(color: Color(0xFF049a02)),
+    return Consumer<AuthenticationViewModel>(
+      builder: (context, viewModel, child) {
+        return GestureDetector(
+          onTap: () => FocusScope.of(context).unfocus(),
+          child: Scaffold(
+            backgroundColor: Theme.of(context).colorScheme.background,
+            body: SafeArea(
+              child: Row(
+                mainAxisSize: MainAxisSize.max,
+                children: [
+                  Expanded(
+                    flex: 8,
+                    child: Container(
+                      height: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.background,
+                      ),
+                      alignment: Alignment.topCenter,
+                      child: SingleChildScrollView(
+                        padding: EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _buildHeader(context),
+                            Container(
+                              constraints: BoxConstraints(maxWidth: 600),
+                              child: Padding(
+                                padding: EdgeInsets.all(16),
+                                child: Column(
+                                  children: [
+                                    _buildTabBar(context),
+                                    SizedBox(height: 20),
+                                    Container(
+                                      height: MediaQuery.of(context).size.height - 300,
+                                      child: TabBarView(
+                                        controller: _tabController,
+                                        children: [
+                                          // Login Tab
+                                          _buildLoginForm(context, viewModel),
+                                          // Signup Tab
+                                          _buildSignupForm(context, viewModel),
+                                        ],
                                       ),
-                                      TextSpan(text: 'iddo'),
-                                      TextSpan(
-                                        text: 'A',
-                                        style: TextStyle(color: Color(0xFF049a02)),
-                                      ),
-                                      TextSpan(text: 'i'),
-                                    ],
-                                  ),
+                                    ),
+                                  ],
                                 ),
-                                SizedBox(height: 20),
-                                Center(
-                                  child: Lottie.network(
-                                    'https://assets4.lottiefiles.com/packages/lf20_u4yrau.json',
-                                    height: 150,
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
-                          ),
+                          ],
                         ),
-                        Container(
-                          constraints: BoxConstraints(maxWidth: 600),
-                          child: Padding(
-                            padding: EdgeInsets.all(16),
-                            child: Column(
-                              children: [
-                                Center(
-                                  child: TabBar(
-                                    controller: _tabController,
-                                    labelColor: Color(0xFF049a02),
-                                    unselectedLabelColor: Theme.of(context).colorScheme.secondary,
-                                    indicatorColor: Colors.transparent,
-                                    labelStyle: TextStyle(fontSize: 20), // Increased font size
-                                    tabs: [
-                                      Tab(text: 'Sign In'),
-                                      Tab(text: 'Sign Up'),
-                                    ],
-                                  ),
-                                ),
-                                SizedBox(height: 20),
-                                Container(
-                                  height: MediaQuery.of(context).size.height - 300,
-                                  child: TabBarView(
-                                    controller: _tabController,
-                                    children: [
-                                      // Login Tab
-                                      _buildLoginForm(),
-                                      // Signup Tab
-                                      _buildSignupForm(),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
+        );
+      },
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(top: 24),
+      child: Container(
+        constraints: BoxConstraints(maxWidth: 600),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            RichText(
+              text: TextSpan(
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+                children: [
+                  TextSpan(
+                    text: 'K',
+                    style: TextStyle(color: Color(0xFF049a02)),
+                  ),
+                  TextSpan(text: 'iddo'),
+                  TextSpan(
+                    text: 'A',
+                    style: TextStyle(color: Color(0xFF049a02)),
+                  ),
+                  TextSpan(text: 'i'),
+                ],
+              ),
+            ),
+            SizedBox(height: 20),
+            Center(
+              child: Lottie.network(
+                'https://assets4.lottiefiles.com/packages/lf20_u4yrau.json',
+                height: 150,
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildLoginForm() {
+  Widget _buildTabBar(BuildContext context) {
+    return Center(
+      child: TabBar(
+        controller: _tabController,
+        labelColor: Color(0xFF049a02),
+        unselectedLabelColor: Theme.of(context).colorScheme.secondary,
+        indicatorColor: Colors.transparent,
+        labelStyle: TextStyle(fontSize: 20),
+        tabs: [
+          Tab(text: 'Sign In'),
+          Tab(text: 'Sign Up'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoginForm(BuildContext context, AuthenticationViewModel viewModel) {
     return Form(
-      key: _loginFormKey, // Use a unique key here
+      key: _loginFormKey,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -248,7 +257,8 @@ Future<void> _handleLogin() async {
           SizedBox(height: 24),
           _buildAuthButton(
             text: 'Sign In',
-            onPressed: _handleLogin,
+            onPressed: () => _handleLogin(context),
+            isLoading: viewModel.isLoading,
           ),
           TextButton(
             onPressed: () {},
@@ -262,9 +272,9 @@ Future<void> _handleLogin() async {
     );
   }
 
-  Widget _buildSignupForm() {
+  Widget _buildSignupForm(BuildContext context, AuthenticationViewModel viewModel) {
     return Form(
-      key: _signupFormKey, // Use a unique key here
+      key: _signupFormKey,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -326,7 +336,8 @@ Future<void> _handleLogin() async {
           SizedBox(height: 24),
           _buildAuthButton(
             text: 'Sign Up',
-            onPressed: _handleSignup,
+            onPressed: () => _handleSignup(context),
+            isLoading: viewModel.isLoading,
           ),
         ],
       ),
@@ -368,11 +379,12 @@ Future<void> _handleLogin() async {
   Widget _buildAuthButton({
     required String text,
     required VoidCallback onPressed,
+    required bool isLoading,
   }) {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: _isLoading ? null : onPressed,
+        onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
           backgroundColor: Color(0xFF049a02),
           padding: EdgeInsets.symmetric(vertical: 16),
@@ -380,8 +392,8 @@ Future<void> _handleLogin() async {
             borderRadius: BorderRadius.circular(12),
           ),
         ),
-        child: _isLoading
-            ? CircularProgressIndicator()
+        child: isLoading
+            ? CircularProgressIndicator(color: Colors.white)
             : Text(text, style: TextStyle(fontSize: 16, color: Colors.white)),
       ),
     );

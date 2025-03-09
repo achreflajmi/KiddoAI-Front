@@ -4,7 +4,7 @@ import 'view_models/authentication_view_model.dart';
 import 'view_models/chatbot_viewmodel.dart';
 import 'ui/AuthPage.dart';
 import 'ui/webview_screen.dart';
-
+import 'services/chatbot_service.dart';
 void main() {
   runApp(MyApp());
 }
@@ -15,7 +15,7 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthenticationViewModel()),
-        ChangeNotifierProvider(create: (_) => ChatbotViewModel()),
+        ChangeNotifierProvider(create: (_) => ChatViewModel(ChatbotService())),
       ],
       child: MaterialApp(
         title: 'Chatbot App',

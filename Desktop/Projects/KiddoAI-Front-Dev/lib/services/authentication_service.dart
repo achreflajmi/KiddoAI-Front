@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import '../models/user_model.dart';
 
 class AuthenticationService {
-  final String baseUrl =
-     'https://8fd8-102-154-202-95.ngrok-free.app/KiddoAI'; // CHANGE THIS WITH YOUR IP ADDRESS (ipconfig)
+  final String baseUrl = 'https://a607-102-27-195-209.ngrok-free.app/KiddoAI';
 
   // Signup
   Future<Map<String, dynamic>> signup(String nom, String prenom, String email,
@@ -17,14 +18,16 @@ class AuthenticationService {
         'email': email,
         'password': password,
         'favoriteCharacter': favoriteCharacter,
-        'dateNaissance': dateOfBirth, // Include date of birth in the body
+        'dateNaissance': dateOfBirth,
       }),
     );
 
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      final responseData = jsonDecode(response.body);
+      await _saveUserSession(responseData);
+      return responseData;
     } else {
-      throw Exception('Signup failed');
+      throw Exception('Signup failed: ${response.body}');
     }
   }
 
@@ -40,23 +43,55 @@ class AuthenticationService {
     );
 
     if (response.statusCode == 200) {
-      var responseBody = jsonDecode(response.body);
-      print("Decoded Response: $responseBody"); // Log the decoded response
-
-      // Ensure you have valid accessToken, refreshToken, and threadId
-      if (responseBody['accessToken'] != null &&
-          responseBody['refreshToken'] != null &&
-          responseBody['threadId'] != null)
-          {
-        return responseBody;
-      } else {
-        throw Exception(
-            'Access token, refresh token, or thread ID not found in response');
+      final responseData = jsonDecode(response.body);
+      
+      // Validate response data
+      if (responseData['accessToken'] == null || 
+          responseData['refreshToken'] == null || 
+          responseData['threadId'] == null) {
+        throw Exception('Invalid response data: missing required fields');
       }
+      
+      await _saveUserSession(responseData);
+      return responseData;
     } else {
-      // Throw an error with the status code and body for more details
-      throw Exception(
-          'Login failed: ${response.statusCode} - ${response.body}');
+      throw Exception('Login failed: ${response.statusCode} - ${response.body}');
     }
+  }
+
+  // Save user session data
+  Future<void> _saveUserSession(Map<String, dynamic> data) async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setBool('isLoggedIn', true);
+    
+    if (data['threadId'] != null) {
+      prefs.setString('threadId', data['threadId']);
+    }
+    
+    if (data['accessToken'] != null) {
+      prefs.setString('accessToken', data['accessToken']);
+    }
+    
+    if (data['refreshToken'] != null) {
+      prefs.setString('refreshToken', data['refreshToken']);
+    }
+  }
+
+  // Check if user is logged in
+  Future<bool> isLoggedIn() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('isLoggedIn') ?? false;
+  }
+
+  // Get stored threadId
+  Future<String?> getThreadId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('threadId');
+  }
+
+  // Logout
+  Future<void> logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
   }
 }

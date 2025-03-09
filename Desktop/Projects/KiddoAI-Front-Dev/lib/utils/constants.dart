@@ -1,1 +1,1 @@
-const double defaultIQ = 120.0;
+    const double defaultIQ = 120.0;

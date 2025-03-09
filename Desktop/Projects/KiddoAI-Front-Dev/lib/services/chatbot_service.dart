@@ -1,56 +1,110 @@
+// services/chatbot_service.dart
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import '../models/message.dart';
 
 class ChatbotService {
-  final String baseUrl =
-      'https://8fd8-102-154-202-95.ngrok-free.app/KiddoAI'; // CHANGE THIS WITH YOUR IP ADDRESS (ipconfig)
+  static const String _baseUrl = 'https://a607-102-27-195-209.ngrok-free.app/KiddoAI';
+  static const String _voiceGenerationUrl = 'https://268b-196-184-222-196.ngrok-free.app/generate-voice';
+  static const String _audioUrl = 'http://172.20.10.9:8001/outputlive.wav';
 
-  // Fetch thread ID from the backend
   Future<String> createThread() async {
-    final response = await http.post(Uri.parse('$baseUrl/chat/create_thread'));
+    final response = await http.post(Uri.parse('$_baseUrl/chat/create_thread'));
     if (response.statusCode == 200) {
-      return jsonDecode(
-          response.body)['thread_id']; // Extract thread_id from response
-    } else {
-      throw Exception('Failed to create thread');
+      final threadId = jsonDecode(response.body)['thread_id'];
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('threadId', threadId);
+      return threadId;
     }
+    throw Exception('Failed to create thread');
   }
 
-// Send a message to the chatbot (with threadId)
-  Future<void> sendMessage(String message, String threadId) async {
-    if (message.isEmpty) return;
+  Future<String?> getThreadId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('threadId');
+  }
 
+  Future<void> saveMessages(String threadId, List<Message> messages) async {
+    final prefs = await SharedPreferences.getInstance();
+    final encodedMessages = jsonEncode(messages.map((msg) => msg.toJson()).toList());
+    await prefs.setString('chatMessages_$threadId', encodedMessages);
+  }
+
+  Future<List<Message>> loadMessages(String threadId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedMessages = prefs.getString('chatMessages_$threadId');
+    
+    if (savedMessages != null) {
+      final List<dynamic> decodedMessages = jsonDecode(savedMessages);
+      return decodedMessages.map((msg) => Message.fromJson(msg)).toList();
+    }
+    return [
+      Message(
+        sender: 'bot',
+        content: 'Hi there, friend!\nI\'m so excited to chat\nwith you!',
+        timestamp: DateTime.now(),
+      )
+    ];
+  }
+
+  Future<String> sendMessage(String message, String threadId) async {
+    if (message.isEmpty) return '';
+    
     final response = await http.post(
-      Uri.parse(
-          '$baseUrl/chat/send?threadId=$threadId'), // Pass threadId as a query parameter
-      body: jsonEncode({
-        'userInput': message, // Send 'userInput' in the body as JSON
-      }),
+      Uri.parse('$_baseUrl/chat/send'),
       headers: {"Content-Type": "application/json"},
+      body: jsonEncode({'threadId': threadId, 'userInput': message}),
     );
 
     if (response.statusCode == 200) {
-      print("Chatbot response: ${jsonDecode(response.body)['response']}");
-    } else {
-      print("Error: ${response.body}");
+      final jsonResponse = jsonDecode(response.body);
+      String botResponse = jsonResponse['response'];
+      return botResponse.trim().replaceAll(RegExp(r'^"|"$'), '');
     }
+    throw Exception('Failed to send message');
   }
 
-// Send a welcoming message to the chatbot
+  Future<String?> sendAudioMessage(List<int> audioBytes, String threadId) async {
+    final uri = Uri.parse('$_baseUrl/chat/transcribe');
+    final request = http.MultipartRequest('POST', uri)
+      ..fields['threadId'] = threadId
+      ..files.add(http.MultipartFile.fromBytes('audio', audioBytes, filename: 'audio.wav'));
+
+    final response = await request.send();
+    if (response.statusCode == 200) {
+      return await response.stream.bytesToString();
+    }
+    return null;
+  }
+
+  Future<String> generateVoice(String text) async {
+    final response = await http.post(
+      Uri.parse(_voiceGenerationUrl),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({"text": text, "speaker_wav": "sounds/SpongBob.wav"}),
+    );
+
+    if (response.statusCode == 200) {
+      return _audioUrl;
+    }
+    throw Exception('Failed to generate voice');
+  }
+
   Future<String> sendWelcomeMessage(String threadId, double niveauIQ) async {
     final response = await http.post(
-      Uri.parse(
-          '$baseUrl/chat/welcome?threadId=$threadId'), // Pass threadId as a query parameter
+      Uri.parse('$_baseUrl/chat/welcome'),
+      headers: {"Content-Type": "application/json"},
       body: jsonEncode({
+        'threadId': threadId,
         'niveauIQ': niveauIQ.toString(),
       }),
-      headers: {"Content-Type": "application/json"},
     );
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body)['response'];
-    } else {
-      throw Exception('Failed to send welcome message');
     }
+    throw Exception('Failed to send welcome message');
   }
 }

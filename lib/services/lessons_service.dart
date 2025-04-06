@@ -1,10 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert' show utf8;
 
 class LessonsService {
-  // Base URL - Replace with your actual backend URL
+  // Updated base URL for teach endpoint to use the new API
   final String _baseUrl;
   final String _baseTeachLessonUrl;
   final String _baseActivityUrl;
@@ -15,33 +14,33 @@ class LessonsService {
 
   // Constructor to initialize the URLs
   LessonsService()
-      : _baseUrl = 'https://a607-102-27-195-209.ngrok-free.app',
-        _baseTeachLessonUrl = 'https://a607-102-27-195-209.ngrok-free.app/KiddoAI/chat/teach_lesson',
+      : _baseUrl = 'https://b736-2c0f-4280-0-6132-b43c-1e54-c386-db5d.ngrok-free.app',
+        // Updated teach endpoint (Flask route is /teach)
+        _baseTeachLessonUrl = 'https://2789-41-226-166-49.ngrok-free.app/teach',
         _baseActivityUrl = 'http://172.20.10.13:8083/KiddoAI/Activity/saveProblem',
         _baseVoiceGenerationUrl = 'https://268b-196-184-222-196.ngrok-free.app/generate-voice',
         _baseAudioUrl = 'http://172.20.10.9:8001/outputlive.wav',
         _activityPageUrl = 'http://172.20.10.13:8080/',
-        _baseLessonsUrl = 'https://a607-102-27-195-209.ngrok-free.app/KiddoAI/Lesson/bySubject'; // Updated to match ngrok logs
+        _baseLessonsUrl = 'https://b736-2c0f-4280-0-6132-b43c-1e54-c386-db5d.ngrok-free.app/KiddoAI/Lesson/bySubject';
 
   Future<List<Map<String, dynamic>>> fetchLessons(String subjectName) async {
     try {
-      // Encode the subject name to ensure proper URL formatting
       final encodedSubject = Uri.encodeComponent(subjectName);
       final url = Uri.parse('$_baseLessonsUrl/$encodedSubject');
-      print('Fetching lessons from: $url'); // Debug log
+      print('Fetching lessons from: $url');
       final response = await http.get(
         url,
         headers: {'Content-Type': 'application/json'},
       );
 
-      print('Response status: ${response.statusCode}'); // Debug log
-      print('Response body: ${response.body}'); // Debug log
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final List<dynamic> lessonsJson = jsonDecode(response.body);
         return lessonsJson.map((lesson) => {
           'name': lesson['name'] as String? ?? 'Unnamed Lesson',
-          'description': lesson['description'] as String? ?? 'No description available', // Adjust if 'description' is missing
+          'description': lesson['description'] as String? ?? 'No description available',
         }).toList();
       } else {
         throw Exception('Failed to fetch lessons: Status code ${response.statusCode} - ${response.body}');
@@ -51,7 +50,27 @@ class LessonsService {
     }
   }
 
-  Future<String> teachLesson(String lessonName, String subjectName) async {
+ Future<String> createThread() async {
+  // Replace with your actual create_thread endpoint URL.
+  final String baseCreateThreadUrl =
+      'https://2789-41-226-166-49.ngrok-free.app/create_thread';
+  final response = await http.post(
+    Uri.parse(baseCreateThreadUrl),
+    headers: {'Content-Type': 'application/json'},
+  );
+  if (response.statusCode == 201) {
+    final decodedResponse = jsonDecode(response.body);
+    return decodedResponse['thread_id'] as String;
+  } else {
+    throw Exception(
+        'Failed to create thread: ${response.statusCode} - ${response.body}');
+  }
+}
+
+
+  /// Updated teachLesson method to work with the new chatbot endpoint.
+  /// This method now only accepts a [userInput] string.
+  Future<String> teachLesson(String userInput) async {
     final prefs = await SharedPreferences.getInstance();
     final threadId = prefs.getString('threadId') ?? '';
     
@@ -64,21 +83,16 @@ class LessonsService {
         Uri.parse(_baseTeachLessonUrl),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'threadId': threadId,
-          'lessonName': lessonName,
-          'subjectName': subjectName,
+          'thread_id': threadId, // Note the underscore in the key
+          'text': userInput,     // Send the user’s chat message as text
         }),
       );
       
       if (response.statusCode == 200) {
-        try {
-          final decodedResponse = jsonDecode(response.body);
-          if (decodedResponse is Map && decodedResponse.containsKey('response')) {
-            return decodedResponse['response'] as String? ?? '';
-          } else {
-            return response.body;
-          }
-        } catch (_) {
+        final decodedResponse = jsonDecode(response.body);
+        if (decodedResponse is Map && decodedResponse.containsKey('response')) {
+          return decodedResponse['response'] as String? ?? '';
+        } else {
           return response.body;
         }
       } else {

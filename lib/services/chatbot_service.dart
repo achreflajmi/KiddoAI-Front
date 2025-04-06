@@ -6,7 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/message.dart';
 
 class ChatbotService {
-  static const String _baseUrl = 'https://a607-102-27-195-209.ngrok-free.app/KiddoAI';
+  static const String _baseUrl = 'https://b736-2c0f-4280-0-6132-b43c-1e54-c386-db5d.ngrok-free.app/KiddoAI';
   static const String _voiceGenerationUrl = 'https://268b-196-184-222-196.ngrok-free.app/generate-voice';
   static const String _audioUrl = 'http://172.20.10.9:8001/outputlive.wav';
 

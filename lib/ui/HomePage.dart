@@ -72,7 +72,7 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
       duration: Duration(milliseconds: 1000),
     );
 
-    _subjects = SubjectService("http://172.20.10.13:8083/KiddoAI").fetchSubjects();
+    _subjects = SubjectService("https://b736-2c0f-4280-0-6132-b43c-1e54-c386-db5d.ngrok-free.app/KiddoAI").fetchSubjects();
     
     _animationController.forward();
     _headerAnimationController.forward();
@@ -365,7 +365,7 @@ Widget build(BuildContext context) {
                           ElevatedButton.icon(
                             onPressed: () {
                               setState(() {
-                                _subjects = SubjectService("http://172.20.10.13:8083/KiddoAI").fetchSubjects();
+                                _subjects = SubjectService("https://b736-2c0f-4280-0-6132-b43c-1e54-c386-db5d.ngrok-free.app/KiddoAI").fetchSubjects();
                               });
                             },
                             icon: Icon(Icons.refresh, color: Colors.white),
@@ -420,7 +420,7 @@ Widget build(BuildContext context) {
                           ElevatedButton.icon(
                             onPressed: () {
                               setState(() {
-                                _subjects = SubjectService("http://172.20.10.13:8083/KiddoAI").fetchSubjects();
+                                _subjects = SubjectService("https://b736-2c0f-4280-0-6132-b43c-1e54-c386-db5d.ngrok-free.app/KiddoAI").fetchSubjects();
                               });
                             },
                             icon: Icon(Icons.refresh, color: Colors.white),

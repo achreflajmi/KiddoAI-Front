@@ -2,16 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lottie/lottie.dart';
 import '../view_models/Lessons_ViewModel.dart';
+import 'package:front_kiddoai/services/lessons_service.dart';
 import '../widgets/loading_animation_widget.dart';
 import 'webview_activity_widget.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:front_kiddoai/ui/profile_page.dart';
 
 class LessonsPage extends StatefulWidget {
   final String subjectName;
 
-  const LessonsPage({super.key, required this.subjectName});
+  const LessonsPage({Key? key, required this.subjectName}) : super(key: key);
 
   @override
   State<LessonsPage> createState() => _LessonsPageState();
@@ -19,36 +21,52 @@ class LessonsPage extends StatefulWidget {
 
 class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin {
   final LessonsViewModel _viewModel = LessonsViewModel();
+
+  /// For loading states (e.g., creating a thread).
   bool _isLoading = false;
-  String _lessonExplanation = '';
+
+  /// Stores the chatbot messages (user + assistant).
+  final List<Map<String, String>> _messages = [];
+
+  /// Controller for the chatbot text input.
+  final TextEditingController _chatController = TextEditingController();
+
+  /// Audio player for any TTS or future expansions.
   final AudioPlayer _audioPlayer = AudioPlayer();
+
+  /// Animation controllers for list + header.
   late AnimationController _listAnimationController;
-  late AnimationController _explanationAnimationController;
   late AnimationController _headerAnimationController;
-  bool _showExplanation = false;
+
+  /// Toggles whether the chatbot is visible.
+  bool _showChatbot = false;
+
+  /// Toggles whether audio is currently playing.
   bool _isPlayingAudio = false;
 
-  // Map of subject names to their respective colors
-  final Map<String, Color> _subjectColors = {
-    'Math': Color(0xFF4CAF50),
-    'Science': Color(0xFF2196F3),
-    'English': Color(0xFFF44336),
-    'History': Color(0xFFFF9800),
-    'Art': Color(0xFF9C27B0),
-    'Music': Color(0xFF3F51B5),
-  };
+  /// Subject color is **always** green in the new UI, or you can map by subject if you prefer.
+  Color _getSubjectColor() => const Color(0xFF4CAF50);
 
-  // Map of subject names to their respective icons
-  final Map<String, IconData> _subjectIcons = {
-    'Math': Icons.calculate,
-    'Science': Icons.science,
-    'English': Icons.menu_book,
-    'History': Icons.history_edu,
-    'Art': Icons.palette,
-    'Music': Icons.music_note,
-  };
+  /// For demonstration, you can still map icons by subject if desired.
+  IconData _getSubjectIcon() {
+    final lower = widget.subjectName.toLowerCase();
+    if (lower.contains('math') || lower.contains('رياضيات')) {
+      return Icons.calculate;
+    } else if (lower.contains('science') || lower.contains('علوم')) {
+      return Icons.science;
+    } else if (lower.contains('english') || lower.contains('انجليزي')) {
+      return Icons.menu_book;
+    } else if (lower.contains('history') || lower.contains('تاريخ')) {
+      return Icons.history_edu;
+    } else if (lower.contains('art') || lower.contains('فن')) {
+      return Icons.palette;
+    } else if (lower.contains('music') || lower.contains('موسيقى')) {
+      return Icons.music_note;
+    }
+    return Icons.school;
+  }
 
-  // Map of subject names to their respective background images
+  /// Optional background images for each subject (not mandatory).
   final Map<String, String> _subjectBackgrounds = {
     'Math': 'https://img.freepik.com/free-vector/hand-drawn-math-background_23-2148157511.jpg',
     'Science': 'https://img.freepik.com/free-vector/hand-drawn-science-background_23-2148499325.jpg',
@@ -58,6 +76,10 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
     'Music': 'https://img.freepik.com/free-vector/hand-drawn-music-background_23-2148523557.jpg',
   };
 
+  String _getSubjectBackground() {
+    return _subjectBackgrounds[widget.subjectName] ?? '';
+  }
+
   @override
   void initState() {
     super.initState();
@@ -65,17 +87,11 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
 
     _listAnimationController = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 800),
     );
-
-    _explanationAnimationController = AnimationController(
-      vsync: this,
-      duration: Duration(milliseconds: 500),
-    );
-
     _headerAnimationController = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds: 1000),
+      duration: const Duration(milliseconds: 1000),
     );
 
     _listAnimationController.forward();
@@ -83,7 +99,7 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
 
     _audioPlayer.onPlayerStateChanged.listen((state) {
       setState(() {
-        _isPlayingAudio = state == PlayerState.playing;
+        _isPlayingAudio = (state == PlayerState.playing);
       });
     });
   }
@@ -91,180 +107,182 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
   @override
   void dispose() {
     _listAnimationController.dispose();
-    _explanationAnimationController.dispose();
     _headerAnimationController.dispose();
     _audioPlayer.dispose();
+    _chatController.dispose();
     super.dispose();
   }
 
-  Color _getSubjectColor() {
-    return _subjectColors[widget.subjectName] ?? Color(0xFF795548);
-  }
-
-  IconData _getSubjectIcon() {
-    return _subjectIcons[widget.subjectName] ?? Icons.school;
-  }
-
-  String _getSubjectBackground() {
-    return _subjectBackgrounds[widget.subjectName] ?? '';
-  }
-
- Future<void> _initializeVoice(String text) async {
-  try {
-    final baseUrl = 'https://f661-196-184-87-113.ngrok-free.app';
-    final response = await http.post(
-      Uri.parse('$baseUrl/initialize-voice'),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({
-        "text": text,
-        "speaker_wav": "sounds/SpongBob.wav",
-      }),
-    );
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      final requestId = data['request_id'] as String;
-      final totalParts = data['total_parts'] as int;
-      print("Initialized with requestId: $requestId, totalParts: $totalParts");
-
-      // Start polling and playing parts
-      int currentPart = 1;
-      while (currentPart <= totalParts) {
-        String? audioUrl;
-        while (audioUrl == null) {
-          final statusResponse = await http.get(
-            Uri.parse('$baseUrl/part-status/$requestId/$currentPart'),
-          );
-          if (statusResponse.statusCode == 200) {
-            final statusData = jsonDecode(statusResponse.body);
-            if (statusData['status'] == 'done') {
-              audioUrl = statusData['audio_url'];
-              print("Part $currentPart ready: $audioUrl");
-            } else {
-              print("Waiting for part $currentPart to be ready...");
-              await Future.delayed(Duration(seconds: 1));
-            }
-          } else {
-            throw Exception('Error checking status for part $currentPart: ${statusResponse.body}');
-          }
-        }
-
-        // Play the part as soon as it's ready
-        print("Playing part $currentPart: $audioUrl");
-        await _audioPlayer.play(UrlSource(audioUrl));
-        await _audioPlayer.onPlayerComplete.first;
-        print("Finished playing part $currentPart");
-        currentPart++;
-      }
-      print("All parts played successfully");
-    } else {
-      print("Error initializing voice: ${response.body}");
-    }
-  } catch (e) {
-    print("Error in voice initialization/playback: $e");
-  }
-}
-
-
-  // Helper function to fetch audio URL
-  Future<String> _getAudioUrl(String requestId, int partNumber) async {
-    final baseUrl = 'https://f661-196-184-87-113.ngrok-free.app';
-    final partResponse = await http.get(
-      Uri.parse('$baseUrl/get-part/$requestId/$partNumber'),
-    );
-    if (partResponse.statusCode == 200) {
-      final partData = jsonDecode(partResponse.body);
-      return '$baseUrl${partData['audio_file']}';
-    } else {
-      throw Exception('Error fetching part $partNumber: ${partResponse.body}');
-    }
-  }
-
-  Future<void> _teachLesson(String lessonName, String subjectName) async {
-    setState(() {
-      _isLoading = true;
-      _lessonExplanation = '';
-      _showExplanation = false;
-    });
-
-    final prefs = await SharedPreferences.getInstance();
-    final threadId = prefs.getString('threadId') ?? '';
-
-    if (threadId.isEmpty) {
-      setState(() {
-        _lessonExplanation = 'No threadId found. Please login again.';
-        _isLoading = false;
-      });
-      return;
-    }
-
-    final url = Uri.parse('https://a607-102-27-195-209.ngrok-free.app/KiddoAI/chat/teach_lesson');
-
+  // =========================
+  //  TTS Initialization (Optional)
+  // =========================
+  Future<void> _initializeVoice(String text) async {
     try {
+      final baseUrl = 'https://f661-196-184-87-113.ngrok-free.app';
       final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
+        Uri.parse('$baseUrl/initialize-voice'),
+        headers: {"Content-Type": "application/json"},
         body: jsonEncode({
-          'threadId': threadId,
-          'lessonName': lessonName,
-          'subjectName': subjectName,
+          "text": text,
+          "speaker_wav": "sounds/SpongBob.wav",
         }),
       );
 
       if (response.statusCode == 200) {
-        // Try to decode as JSON first
-        try {
-          final decodedResponse = jsonDecode(response.body);
-          if (decodedResponse is Map && decodedResponse.containsKey('response')) {
-            setState(() {
-              _lessonExplanation = decodedResponse['response'] as String? ?? '';
-              _isLoading = false;
-              _showExplanation = true;
-            });
-          } else {
-            // If not a valid JSON object with 'response', treat it as plain text
-            setState(() {
-              _lessonExplanation = response.body;
-              _isLoading = false;
-              _showExplanation = true;
-            });
+        final data = jsonDecode(response.body);
+        final requestId = data['request_id'] as String;
+        final totalParts = data['total_parts'] as int;
+
+        int currentPart = 1;
+        while (currentPart <= totalParts) {
+          String? audioUrl;
+          while (audioUrl == null) {
+            final statusResponse = await http.get(
+              Uri.parse('$baseUrl/part-status/$requestId/$currentPart'),
+            );
+            if (statusResponse.statusCode == 200) {
+              final statusData = jsonDecode(statusResponse.body);
+              if (statusData['status'] == 'done') {
+                audioUrl = statusData['audio_url'];
+              } else {
+                await Future.delayed(const Duration(seconds: 1));
+              }
+            } else {
+              throw Exception('Error checking status for part $currentPart');
+            }
           }
-        } catch (e) {
-          // If JSON decoding fails, assume it's plain text
-          setState(() {
-            _lessonExplanation = response.body;
-            _isLoading = false;
-            _showExplanation = true;
-          });
+          await _audioPlayer.play(UrlSource(audioUrl));
+          await _audioPlayer.onPlayerComplete.first;
+          currentPart++;
         }
-
-        _explanationAnimationController.reset();
-        _explanationAnimationController.forward();
-
-        _initializeVoice(_lessonExplanation);
       } else {
-        throw Exception('Failed to load lesson explanation: Status code ${response.statusCode}');
+        print("Error initializing voice: ${response.body}");
       }
     } catch (e) {
-      print('Error: $e');
+      print("Error in voice initialization/playback: $e");
+    }
+  }
+
+  // =========================
+  //  Chatbot Logic
+  // =========================
+
+  /// Called when user clicks "Learn". Creates a new thread, opens chatbot, and sends the first message.
+  Future<void> _teachLesson(String lessonName, String subjectName) async {
+    setState(() {
+      _isLoading = true;
+      _messages.clear();
+      _showChatbot = false; // reset to hide, then show after success
+    });
+
+    try {
+      // 1) Create new thread
+      final newThreadId = await LessonsService().createThread();
+
+      // 2) Save thread in SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('threadId', newThreadId);
+
+      // 3) Show chatbot UI
+      setState(() {
+        _showChatbot = true;
+        _isLoading = false;
+      });
+
+      // 4) Construct and send initial message
+      String initialMessage = "اشرحلي درس $lessonName في $subjectName";
+      await _sendMessage(initialMessage);
+    } catch (e) {
       setState(() {
         _isLoading = false;
-        _lessonExplanation = 'Failed to load lesson. Please try again.';
-        _showExplanation = true;
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Error loading lesson: $e"),
+          content: Text("Error creating thread: $e"),
           backgroundColor: Colors.red.shade700,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          margin: EdgeInsets.all(10),
         ),
       );
     }
   }
 
-Future<void> _checkAndOpenActivity(String lessonName,String subjectName,int level) async {
+  /// Sends a message (user input) to the server, awaits response, and updates the chat.
+  Future<void> _sendMessage(String userText) async {
+    if (userText.trim().isEmpty) return;
+
+    // 1) Add user message locally
+    setState(() {
+      _messages.add({"sender": "user", "text": userText});
+      _chatController.clear();
+    });
+
+    // 2) Retrieve thread ID from local storage
+    final prefs = await SharedPreferences.getInstance();
+    final threadId = prefs.getString('threadId') ?? '';
+    if (threadId.isEmpty) {
+      // No thread => show error in chat
+      setState(() {
+        _messages.add({
+          "sender": "assistant",
+          "text": "No threadId found. Please login again."
+        });
+      });
+      return;
+    }
+
+    // 3) Send user message to server
+    final url = Uri.parse('https://2789-41-226-166-49.ngrok-free.app/teach');
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'thread_id': threadId,
+          'text': userText,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        String botReply = "";
+
+        // If the JSON has a "response" key, use that; otherwise, fallback to raw body
+        if (decoded is Map && decoded.containsKey('response')) {
+          botReply = decoded['response'] as String? ?? "No response found.";
+        } else {
+          botReply = response.body;
+        }
+
+        // 4) Add assistant response to chat
+        setState(() {
+          _messages.add({"sender": "assistant", "text": botReply});
+        });
+
+        // Optionally use TTS:
+        // _initializeVoice(botReply);
+
+      } else {
+        setState(() {
+          _messages.add({
+            "sender": "assistant",
+            "text": "Oops, failed to get response from server."
+          });
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _messages.add({
+          "sender": "assistant",
+          "text": "Error sending message: $e"
+        });
+      });
+    }
+  }
+
+  // =========================
+  //  Activity Logic
+  // =========================
+
+  Future<void> _checkAndOpenActivity(String lessonName, String subjectName, int level) async {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -274,36 +292,35 @@ Future<void> _checkAndOpenActivity(String lessonName,String subjectName,int leve
     final activityUrl = "http://172.20.10.13:8083/KiddoAI/Activity/saveProblem";
     final activityPageUrl = "http://172.20.10.13:8080/";
 
-    bool isActivityReady = false;
-
     try {
-     
-        final response = await http.post(
-          Uri.parse(activityUrl),
-          headers: {"Content-Type": "application/json"},
-          body: jsonEncode({
-            "lesson": lessonName,
-            "subject": subjectName,
-            "level": level,
-          }), 
-        );
-        //final react_run = await http.get(Uri.parse("https://f086-102-157-72-42.ngrok-free.app/openActivity"));
-
-        if (response.statusCode == 200) {// && react_run.statusCode == 200) {
-          isActivityReady = true;
-        } else {
-          await Future.delayed(Duration(seconds: 2));
-        }
-     
+      final response = await http.post(
+        Uri.parse(activityUrl),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "lesson": lessonName,
+          "subject": subjectName,
+          "level": level,
+        }),
+      );
 
       Navigator.pop(context);
 
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => WebViewActivityWidget(activityUrl: activityPageUrl),
-        ),
-      );
+      if (response.statusCode == 200) {
+        // Open WebView
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => WebViewActivityWidget(activityUrl: activityPageUrl),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text("Error: Could not prepare activity."),
+            backgroundColor: Colors.red.shade700,
+          ),
+        );
+      }
     } catch (e) {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -312,11 +329,151 @@ Future<void> _checkAndOpenActivity(String lessonName,String subjectName,int leve
           backgroundColor: Colors.red.shade700,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          margin: EdgeInsets.all(10),
+          margin: const EdgeInsets.all(10),
         ),
       );
     }
   }
+
+  // =========================
+  //  Chatbot UI
+  // =========================
+
+  Widget _buildChatbotSection(Color subjectColor) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: subjectColor.withOpacity(0.15),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+        border: Border.all(
+          color: subjectColor.withOpacity(0.1),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.fromLTRB(20, 20, 10, 15),
+            decoration: BoxDecoration(
+              color: subjectColor.withOpacity(0.05),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: subjectColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(Icons.chat, color: subjectColor, size: 22),
+                ),
+                const SizedBox(width: 15),
+                Text(
+                  "Lesson Chatbot",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: subjectColor,
+                    fontFamily: 'Comic Sans MS',
+                  ),
+                ),
+                const Spacer(),
+                IconButton(
+                  icon: Icon(Icons.close, color: Colors.grey.shade700),
+                  onPressed: () {
+                    setState(() {
+                      _showChatbot = false;
+                      _audioPlayer.stop();
+                    });
+                  },
+                ),
+              ],
+            ),
+          ),
+
+          // Messages list
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.all(8),
+              itemCount: _messages.length,
+              itemBuilder: (context, index) {
+                final msg = _messages[index];
+                final isUser = (msg["sender"] == "user");
+                return Align(
+                  alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    padding: const EdgeInsets.all(10),
+                    constraints: BoxConstraints(
+                      maxWidth: MediaQuery.of(context).size.width * 0.7,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isUser
+                          ? subjectColor.withOpacity(0.2)
+                          : Colors.grey.shade200,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      msg["text"] ?? "",
+                      style: const TextStyle(
+                        fontSize: 15,
+                        color: Colors.black87,
+                        fontFamily: 'Comic Sans MS',
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+
+          // Input field + send button
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            decoration: BoxDecoration(
+              border: Border(top: BorderSide(color: Colors.grey.shade300)),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _chatController,
+                    decoration: const InputDecoration(
+                      hintText: "Type your question...",
+                      border: InputBorder.none,
+                    ),
+                    onSubmitted: (value) => _sendMessage(value),
+                    style: const TextStyle(fontFamily: 'Comic Sans MS'),
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(Icons.send, color: subjectColor),
+                  onPressed: () => _sendMessage(_chatController.text),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // =========================
+  //  Main Build
+  // =========================
 
   @override
   Widget build(BuildContext context) {
@@ -325,228 +482,114 @@ Future<void> _checkAndOpenActivity(String lessonName,String subjectName,int leve
     final String backgroundImage = _getSubjectBackground();
 
     return Scaffold(
-      body: Stack(
-        children: [
-          // Background with pattern
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              image: backgroundImage.isNotEmpty
-                  ? DecorationImage(
-                      image: NetworkImage(backgroundImage),
-                      fit: BoxFit.cover,
-                      opacity: 0.05,
-                    )
-                  : null,
+      backgroundColor: const Color(0xFFF2FFF0), // Light green background
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF4CAF50),
+        elevation: 0,
+        centerTitle: true,
+        title: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.yellow.shade200,
+            borderRadius: BorderRadius.circular(30),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.yellow.shade300.withOpacity(0.5),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.asset('assets/spongebob.png', height: 30),
+              const SizedBox(width: 8),
+              RichText(
+                text: const TextSpan(
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Comic Sans MS',
+                  ),
+                  children: [
+                    TextSpan(text: 'K', style: TextStyle(color: Colors.green)),
+                    TextSpan(text: 'iddo', style: TextStyle(color: Colors.black)),
+                    TextSpan(text: 'A', style: TextStyle(color: Colors.blue)),
+                    TextSpan(text: 'i', style: TextStyle(color: Colors.black)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: GestureDetector(
+              onTap: () {
+                // Example: Navigate to profile page
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ProfilePage(threadId: '')),
+                );
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.yellow.shade400, width: 3),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const CircleAvatar(
+                  backgroundImage: AssetImage('assets/spongebob.png'),
+                  radius: 22,
+                ),
+              ),
             ),
           ),
-          
-          CustomScrollView(
-            physics: BouncingScrollPhysics(),
-            slivers: [
-              // Animated Header
-              SliverAppBar(
-                expandedHeight: 200.0,
-                floating: false,
-                pinned: true,
-                stretch: true,
-                backgroundColor: subjectColor,
-                leading: IconButton(
-                  icon: Icon(Icons.arrow_back_ios_new, color: Colors.white),
-                  onPressed: () => Navigator.pop(context),
-                ),
-                flexibleSpace: LayoutBuilder(
-                  builder: (BuildContext context, BoxConstraints constraints) {
-                    return FlexibleSpaceBar(
-                      titlePadding: EdgeInsets.only(left: 16, bottom: 16),
-                      title: AnimatedBuilder(
-                        animation: _headerAnimationController,
-                        builder: (context, child) {
-                          return Opacity(
-                            opacity: _headerAnimationController.value,
-                            child: child,
-                          );
-                        },
-                        child: Text(
-                          "${widget.subjectName} Lessons",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20,
-                          ),
-                        ),
-                      ),
-                      background: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          // Gradient background
-                          Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topRight,
-                                end: Alignment.bottomLeft,
-                                colors: [
-                                  subjectColor,
-                                  subjectColor.withOpacity(0.7),
-                                ],
-                              ),
-                            ),
-                          ),
-                          
-                          // Pattern overlay
-                          Opacity(
-                            opacity: 0.1,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                image: DecorationImage(
-                                  image: NetworkImage(
-                                    'https://www.transparenttextures.com/patterns/cubes.png',
-                                  ),
-                                  repeat: ImageRepeat.repeat,
-                                ),
-                              ),
-                            ),
-                          ),
-                          
-                          // Subject icon (large, decorative)
-                          Positioned(
-                            right: -20,
-                            bottom: -20,
-                            child: AnimatedBuilder(
-                              animation: _headerAnimationController,
-                              builder: (context, child) {
-                                return Transform.rotate(
-                                  angle: _headerAnimationController.value * 0.1,
-                                  child: Opacity(
-                                    opacity: 0.2 * _headerAnimationController.value,
-                                    child: Icon(
-                                      subjectIcon,
-                                      size: 180,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                          
-                          // Content
-                          Positioned(
-                            left: 20,
-                            bottom: 60,
-                            child: AnimatedBuilder(
-                              animation: _headerAnimationController,
-                              builder: (context, child) {
-                                return Transform.translate(
-                                  offset: Offset(
-                                    (1 - _headerAnimationController.value) * -50,
-                                    0,
-                                  ),
-                                  child: Opacity(
-                                    opacity: _headerAnimationController.value,
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          padding: EdgeInsets.all(8),
-                                          decoration: BoxDecoration(
-                                            color: Colors.white.withOpacity(0.2),
-                                            borderRadius: BorderRadius.circular(12),
-                                          ),
-                                          child: Icon(
-                                            subjectIcon,
-                                            size: 30,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                        SizedBox(width: 15),
-                                        Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              "Let's explore",
-                                              style: TextStyle(
-                                                color: Colors.white.withOpacity(0.9),
-                                                fontSize: 14,
-                                              ),
-                                            ),
-                                            SizedBox(height: 4),
-                                            Text(
-                                              widget.subjectName,
-                                              style: TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 24,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-                actions: [
-                  IconButton(
-                    icon: Icon(Icons.info_outline, color: Colors.white),
-                    onPressed: () {
-                      // Show info about the subject
-                      showDialog(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: Row(
-                            children: [
-                              Icon(subjectIcon, color: subjectColor),
-                              SizedBox(width: 10),
-                              Text("About ${widget.subjectName}"),
-                            ],
-                          ),
-                          content: Text(
-                            "This section contains all the lessons for ${widget.subjectName}. "
-                            "Tap on 'Learn' to get an explanation or 'Start Activity' to practice what you've learned!",
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context),
-                              child: Text("Got it!"),
-                              style: TextButton.styleFrom(
-                                foregroundColor: subjectColor,
-                              ),
-                            ),
-                          ],
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.bookmark_border, color: Colors.white),
-                    onPressed: () {
-                      // Bookmark functionality
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text("Subject bookmarked!"),
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          margin: EdgeInsets.all(10),
-                          backgroundColor: subjectColor,
-                        ),
-                      );
-                    },
-                  ),
-                  SizedBox(width: 8),
-                ],
+        ],
+      ),
+      body: Stack(
+        children: [
+          // Repeating SpongeBob background
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                image: backgroundImage.isNotEmpty
+                    ? DecorationImage(
+                        image: NetworkImage(backgroundImage),
+                        fit: BoxFit.cover,
+                        opacity: 0.05,
+                      )
+                    : null,
               ),
-              
-              // Loading indicator
+            ),
+          ),
+
+          // For a playful repeated pattern, if desired (comment out if not needed):
+          // Positioned.fill(
+          //   child: Container(
+          //     decoration: const BoxDecoration(
+          //       image: DecorationImage(
+          //         image: AssetImage('assets/spongebob.png'),
+          //         repeat: ImageRepeat.repeat,
+          //         opacity: 0.1,
+          //       ),
+          //     ),
+          //   ),
+          // ),
+
+          // Main scrollable content
+          CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              // If we are loading a new lesson thread, show a Sliver with a loading animation
               if (_isLoading)
                 SliverToBoxAdapter(
                   child: Center(
@@ -564,8 +607,8 @@ Future<void> _checkAndOpenActivity(String lessonName,String subjectName,int leve
                               );
                             },
                           ),
-                          SizedBox(height: 20),
-                          Text(
+                          const SizedBox(height: 20),
+                          const Text(
                             "Loading your lesson...",
                             style: TextStyle(
                               fontSize: 18,
@@ -573,7 +616,7 @@ Future<void> _checkAndOpenActivity(String lessonName,String subjectName,int leve
                               color: Colors.black87,
                             ),
                           ),
-                          SizedBox(height: 10),
+                          const SizedBox(height: 10),
                           Text(
                             "This might take a moment",
                             style: TextStyle(
@@ -586,282 +629,84 @@ Future<void> _checkAndOpenActivity(String lessonName,String subjectName,int leve
                     ),
                   ),
                 ),
-              
-              // Lesson explanation card
-              if (_showExplanation)
+
+              // If chatbot is active, show it in a Sliver so it can scroll
+              if (_showChatbot)
                 SliverToBoxAdapter(
-                  child: AnimatedBuilder(
-                    animation: _explanationAnimationController,
-                    builder: (context, child) {
-                      return Transform.translate(
-                        offset: Offset(
-                          0,
-                          (1 - _explanationAnimationController.value) * 50,
-                        ),
-                        child: Opacity(
-                          opacity: _explanationAnimationController.value,
-                          child: child,
-                        ),
-                      );
-                    },
-                    child: Container(
-                      margin: EdgeInsets.fromLTRB(16, 16, 16, 8),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: subjectColor.withOpacity(0.15),
-                            blurRadius: 15,
-                            offset: Offset(0, 5),
-                          ),
-                        ],
-                        border: Border.all(
-                          color: subjectColor.withOpacity(0.1),
-                          width: 1,
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Header with close button
-                          Container(
-                            padding: EdgeInsets.fromLTRB(20, 20, 10, 15),
-                            decoration: BoxDecoration(
-                              color: subjectColor.withOpacity(0.05),
-                              borderRadius: BorderRadius.only(
-                                topLeft: Radius.circular(20),
-                                topRight: Radius.circular(20),
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  padding: EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    color: subjectColor.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Icon(
-                                    Icons.lightbulb,
-                                    color: subjectColor,
-                                    size: 22,
-                                  ),
-                                ),
-                                SizedBox(width: 15),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      "Lesson Explanation",
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: subjectColor,
-                                      ),
-                                    ),
-                                    Text(
-                                      "Listen and learn",
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey.shade600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                Spacer(),
-                                IconButton(
-                                  icon: Icon(Icons.close, color: Colors.grey.shade700),
-                                  onPressed: () {
-                                    setState(() {
-                                      _showExplanation = false;
-                                      _audioPlayer.stop();
-                                    });
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),
-                          
-                          // Content
-                          Padding(
-                            padding: EdgeInsets.all(20),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Audio status indicator
-                                if (_isPlayingAudio)
-                                  Container(
-                                    margin: EdgeInsets.only(bottom: 15),
-                                    padding: EdgeInsets.symmetric(horizontal: 15, vertical: 8),
-                                    decoration: BoxDecoration(
-                                      color: subjectColor.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(30),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Container(
-                                          width: 8,
-                                          height: 8,
-                                          decoration: BoxDecoration(
-                                            color: subjectColor,
-                                            shape: BoxShape.circle,
-                                          ),
-                                        ),
-                                        SizedBox(width: 8),
-                                        Text(
-                                          "Audio playing...",
-                                          style: TextStyle(
-                                            color: subjectColor,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                
-                                // Explanation text
-                                Text(
-                                  _lessonExplanation,
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    height: 1.6,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                                
-                                // Audio controls
-                                Container(
-                                  margin: EdgeInsets.only(top: 20),
-                                  padding: EdgeInsets.all(15),
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey.shade50,
-                                    borderRadius: BorderRadius.circular(15),
-                                    border: Border.all(
-                                      color: Colors.grey.shade200,
-                                    ),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.volume_up,
-                                        color: subjectColor,
-                                        size: 22,
-                                      ),
-                                      SizedBox(width: 10),
-                                      Expanded(
-                                        child: Text(
-                                          "Audio narration",
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w500,
-                                            color: Colors.grey.shade700,
-                                          ),
-                                        ),
-                                      ),
-                                      _isPlayingAudio
-                                          ? ElevatedButton.icon(
-                                              icon: Icon(Icons.pause, size: 18),
-                                              label: Text("Pause"),
-                                              onPressed: () {
-                                                _audioPlayer.pause();
-                                              },
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: subjectColor,
-                                                foregroundColor: Colors.white,
-                                                padding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius: BorderRadius.circular(10),
-                                                ),
-                                              ),
-                                            )
-                                          : ElevatedButton.icon(
-                                              icon: Icon(Icons.play_arrow, size: 18),
-                                              label: Text("Play"),
-                                              onPressed: () {
-                                                _initializeVoice(_lessonExplanation);
-                                              },
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: subjectColor,
-                                                foregroundColor: Colors.white,
-                                                padding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius: BorderRadius.circular(10),
-                                                ),
-                                              ),
-                                            ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                  child: SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.6,
+                    child: _buildChatbotSection(subjectColor),
                   ),
                 ),
-              
-              // Available Lessons header
+
+              // "Available Lessons" title
               SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(20, _showExplanation ? 10 : 20, 20, 5),
+                child: Container(
+                  margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        subjectColor.withOpacity(0.9),
+                        subjectColor,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: subjectColor.withOpacity(0.4),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
                   child: Row(
                     children: [
-                      Container(
-                        padding: EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: subjectColor.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(
-                          Icons.book,
-                          color: subjectColor,
-                          size: 20,
-                        ),
-                      ),
-                      SizedBox(width: 12),
-                      Text(
-                        "Available Lessons",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      Spacer(),
-                      Container(
-                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: subjectColor.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(
-                              Icons.filter_list,
-                              color: subjectColor,
-                              size: 16,
-                            ),
-                            SizedBox(width: 5),
-                            Text(
-                              "Filter",
+                            const Text(
+                              "Let's Learn Together!",
                               style: TextStyle(
-                                fontSize: 12,
-                                color: subjectColor,
-                                fontWeight: FontWeight.w500,
+                                color: Colors.white,
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Comic Sans MS',
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              "Explore lessons in ${widget.subjectName}",
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.9),
+                                fontSize: 16,
+                                fontFamily: 'Comic Sans MS',
                               ),
                             ),
                           ],
+                        ),
+                      ),
+                      Container(
+                        width: 70,
+                        height: 70,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Lottie.asset(
+                          'assets/book_animation.json',
+                          width: 60,
+                          height: 60,
                         ),
                       ),
                     ],
                   ),
                 ),
               ),
-              
+
               // Lessons list
               ValueListenableBuilder<List<Map<String, dynamic>>>(
                 valueListenable: _viewModel.lessons,
@@ -876,31 +721,32 @@ Future<void> _checkAndOpenActivity(String lessonName,String subjectName,int leve
                               'https://assets10.lottiefiles.com/packages/lf20_wnqlfojb.json',
                               height: 150,
                               errorBuilder: (context, error, stackTrace) {
-                                return Icon(Icons.error, size: 50, color: Colors.red);
+                                return const Icon(Icons.error, size: 50, color: Colors.red);
                               },
                             ),
-                            SizedBox(height: 20),
+                            const SizedBox(height: 20),
                             Text(
                               'No lessons available yet!',
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.grey.shade700,
+                                fontFamily: 'Comic Sans MS',
                               ),
                             ),
-                            SizedBox(height: 10),
+                            const SizedBox(height: 10),
                             ElevatedButton.icon(
                               onPressed: () {
                                 setState(() {
                                   _viewModel.fetchLessons(widget.subjectName);
                                 });
                               },
-                              icon: Icon(Icons.refresh),
-                              label: Text("Refresh"),
+                              icon: const Icon(Icons.refresh),
+                              label: Text("Refresh", style: const TextStyle(fontFamily: 'Comic Sans MS')),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: subjectColor,
                                 foregroundColor: Colors.white,
-                                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -916,11 +762,10 @@ Future<void> _checkAndOpenActivity(String lessonName,String subjectName,int leve
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
                         final lesson = lessons[index];
-                        //final description = lesson['description'];
                         final name = lesson['name'];
                         final level = lesson['level'];
 
-                        // Create a staggered animation for each item
+                        // Staggered animation for each item
                         final animation = Tween<double>(begin: 0.0, end: 1.0).animate(
                           CurvedAnimation(
                             parent: _listAnimationController,
@@ -936,10 +781,7 @@ Future<void> _checkAndOpenActivity(String lessonName,String subjectName,int leve
                           animation: animation,
                           builder: (context, child) {
                             return Transform.translate(
-                              offset: Offset(
-                                (1 - animation.value) * 100,
-                                0,
-                              ),
+                              offset: Offset((1 - animation.value) * 100, 0),
                               child: Opacity(
                                 opacity: animation.value,
                                 child: child,
@@ -947,7 +789,7 @@ Future<void> _checkAndOpenActivity(String lessonName,String subjectName,int leve
                             );
                           },
                           child: Container(
-                            margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(16),
@@ -955,7 +797,7 @@ Future<void> _checkAndOpenActivity(String lessonName,String subjectName,int leve
                                 BoxShadow(
                                   color: Colors.black.withOpacity(0.05),
                                   blurRadius: 10,
-                                  offset: Offset(0, 4),
+                                  offset: const Offset(0, 4),
                                 ),
                               ],
                               border: Border.all(
@@ -968,10 +810,10 @@ Future<void> _checkAndOpenActivity(String lessonName,String subjectName,int leve
                               child: InkWell(
                                 borderRadius: BorderRadius.circular(16),
                                 onTap: () {
-                                  _checkAndOpenActivity(name,widget.subjectName,level);
+                                  _checkAndOpenActivity(name, widget.subjectName, level);
                                 },
                                 child: Padding(
-                                  padding: EdgeInsets.all(16),
+                                  padding: const EdgeInsets.all(16),
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
@@ -990,20 +832,21 @@ Future<void> _checkAndOpenActivity(String lessonName,String subjectName,int leve
                                               size: 30,
                                             ),
                                           ),
-                                          SizedBox(width: 16),
+                                          const SizedBox(width: 16),
                                           Expanded(
                                             child: Column(
                                               crossAxisAlignment: CrossAxisAlignment.start,
                                               children: [
                                                 Text(
                                                   name,
-                                                  style: TextStyle(
+                                                  style: const TextStyle(
                                                     fontSize: 16,
                                                     fontWeight: FontWeight.bold,
                                                     color: Colors.black87,
+                                                    fontFamily: 'Comic Sans MS',
                                                   ),
                                                 ),
-                                                SizedBox(height: 4),
+                                                const SizedBox(height: 4),
                                                 Row(
                                                   children: [
                                                     Icon(
@@ -1011,15 +854,16 @@ Future<void> _checkAndOpenActivity(String lessonName,String subjectName,int leve
                                                       size: 14,
                                                       color: Colors.grey.shade600,
                                                     ),
-                                                    SizedBox(width: 4),
+                                                    const SizedBox(width: 4),
                                                     Text(
                                                       "10-15 min",
                                                       style: TextStyle(
                                                         fontSize: 12,
                                                         color: Colors.grey.shade600,
+                                                        fontFamily: 'Comic Sans MS',
                                                       ),
                                                     ),
-                                                    SizedBox(width: 10),
+                                                    const SizedBox(width: 10),
                                                     Container(
                                                       width: 4,
                                                       height: 4,
@@ -1028,18 +872,19 @@ Future<void> _checkAndOpenActivity(String lessonName,String subjectName,int leve
                                                         shape: BoxShape.circle,
                                                       ),
                                                     ),
-                                                    SizedBox(width: 10),
-                                                    Icon(
+                                                    const SizedBox(width: 10),
+                                                    const Icon(
                                                       Icons.star,
                                                       size: 14,
                                                       color: Colors.amber,
                                                     ),
-                                                    SizedBox(width: 4),
+                                                    const SizedBox(width: 4),
                                                     Text(
                                                       "Beginner",
                                                       style: TextStyle(
                                                         fontSize: 12,
                                                         color: Colors.grey.shade600,
+                                                        fontFamily: 'Comic Sans MS',
                                                       ),
                                                     ),
                                                   ],
@@ -1049,39 +894,40 @@ Future<void> _checkAndOpenActivity(String lessonName,String subjectName,int leve
                                           ),
                                         ],
                                       ),
-                                      SizedBox(height: 15),
+                                      const SizedBox(height: 15),
                                       Row(
                                         children: [
                                           Expanded(
                                             child: OutlinedButton.icon(
-                                              icon: Icon(Icons.play_circle_outline, size: 18),
-                                              label: Text("Start Activity"),
+                                              icon: const Icon(Icons.play_circle_outline, size: 18),
+                                              label: Text("Start Activity", style: const TextStyle(fontFamily: 'Comic Sans MS')),
                                               onPressed: () {
-                                                _checkAndOpenActivity(name,widget.subjectName,level);
+                                                _checkAndOpenActivity(name, widget.subjectName, level);
                                               },
                                               style: OutlinedButton.styleFrom(
                                                 foregroundColor: subjectColor,
                                                 side: BorderSide(color: subjectColor),
-                                                padding: EdgeInsets.symmetric(vertical: 12),
+                                                padding: const EdgeInsets.symmetric(vertical: 12),
                                                 shape: RoundedRectangleBorder(
                                                   borderRadius: BorderRadius.circular(10),
                                                 ),
                                               ),
                                             ),
                                           ),
-                                          SizedBox(width: 10),
+                                          const SizedBox(width: 10),
                                           Expanded(
                                             child: ElevatedButton.icon(
-                                              icon: Icon(Icons.lightbulb_outline, size: 18),
-                                              label: Text("Learn"),
+                                              icon: const Icon(Icons.lightbulb_outline, size: 18),
+                                              label: Text("Learn", style: const TextStyle(fontFamily: 'Comic Sans MS')),
                                               onPressed: () {
+                                                // Open the chatbot UI for this lesson
                                                 _teachLesson(name, widget.subjectName);
                                               },
                                               style: ElevatedButton.styleFrom(
                                                 backgroundColor: subjectColor,
                                                 foregroundColor: Colors.white,
                                                 elevation: 0,
-                                                padding: EdgeInsets.symmetric(vertical: 12),
+                                                padding: const EdgeInsets.symmetric(vertical: 12),
                                                 shape: RoundedRectangleBorder(
                                                   borderRadius: BorderRadius.circular(10),
                                                 ),
@@ -1103,110 +949,107 @@ Future<void> _checkAndOpenActivity(String lessonName,String subjectName,int leve
                   );
                 },
               ),
-              
-              // Bottom padding
-              SliverToBoxAdapter(
-                child: SizedBox(height: 30),
-              ),
+
+              // Bottom spacing
+              SliverToBoxAdapter(child: SizedBox(height: 30)),
             ],
-          ),
-          
-          // Floating action button for quick actions
-          Positioned(
-            bottom: 20,
-            right: 20,
-            child: FloatingActionButton(
-              onPressed: () {
-                // Show quick actions menu
-                showModalBottomSheet(
-                  context: context,
-                  backgroundColor: Colors.transparent,
-                  builder: (context) => Container(
-                    padding: EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(20),
-                        topRight: Radius.circular(20),
-                      ),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 5,
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade300,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          margin: EdgeInsets.only(bottom: 20),
-                        ),
-                        Text(
-                          "Quick Actions",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: 20),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            _buildQuickActionItem(
-                              icon: Icons.bookmark,
-                              label: "Bookmark",
-                              color: Colors.blue,
-                              onTap: () {
-                                Navigator.pop(context);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text("Subject bookmarked!"),
-                                    behavior: SnackBarBehavior.floating,
-                                  ),
-                                );
-                              },
-                            ),
-                            _buildQuickActionItem(
-                              icon: Icons.share,
-                              label: "Share",
-                              color: Colors.green,
-                              onTap: () {
-                                Navigator.pop(context);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text("Sharing is not available yet"),
-                                    behavior: SnackBarBehavior.floating,
-                                  ),
-                                );
-                              },
-                            ),
-                            _buildQuickActionItem(
-                              icon: Icons.help_outline,
-                              label: "Help",
-                              color: Colors.orange,
-                              onTap: () {
-                                Navigator.pop(context);
-                                // Show help dialog
-                              },
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 20),
-                      ],
-                    ),
-                  ),
-                );
-              },
-              backgroundColor: subjectColor,
-              child: Icon(Icons.add, color: Colors.white),
-            ),
           ),
         ],
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          // Quick Actions menu
+          showModalBottomSheet(
+            context: context,
+            backgroundColor: Colors.transparent,
+            builder: (context) => Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  topRight: Radius.circular(20),
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    margin: const EdgeInsets.only(bottom: 20),
+                  ),
+                  const Text(
+                    "Quick Actions",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Comic Sans MS',
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _buildQuickActionItem(
+                        icon: Icons.bookmark,
+                        label: "Bookmark",
+                        color: Colors.blue,
+                        onTap: () {
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Text("Subject bookmarked!", style: TextStyle(fontFamily: 'Comic Sans MS')),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        },
+                      ),
+                      _buildQuickActionItem(
+                        icon: Icons.share,
+                        label: "Share",
+                        color: Colors.green,
+                        onTap: () {
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Text("Sharing is not available yet", style: TextStyle(fontFamily: 'Comic Sans MS')),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        },
+                      ),
+                      _buildQuickActionItem(
+                        icon: Icons.help_outline,
+                        label: "Help",
+                        color: Colors.orange,
+                        onTap: () {
+                          Navigator.pop(context);
+                          // Show help dialog if needed
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              ),
+            ),
+          );
+        },
+        backgroundColor: _getSubjectColor(),
+        child: const Icon(Icons.add, color: Colors.white),
+      ),
     );
   }
-  
+
+  // =========================
+  //  Quick Actions Widget
+  // =========================
+
   Widget _buildQuickActionItem({
     required IconData icon,
     required String label,
@@ -1224,18 +1067,15 @@ Future<void> _checkAndOpenActivity(String lessonName,String subjectName,int leve
               color: color.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              icon,
-              color: color,
-              size: 24,
-            ),
+            child: Icon(icon, color: color, size: 24),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             label,
             style: TextStyle(
               fontSize: 12,
               color: Colors.grey.shade700,
+              fontFamily: 'Comic Sans MS',
             ),
           ),
         ],

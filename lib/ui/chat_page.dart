@@ -259,7 +259,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
 
   try {
     final response = await http.post(
-      Uri.parse('https://a607-102-27-195-209.ngrok-free.app/KiddoAI/chat/send'),
+      Uri.parse('https://b736-2c0f-4280-0-6132-b43c-1e54-c386-db5d.ngrok-free.app/KiddoAI/chat/send'),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({'threadId': threadId, 'userInput': message}),
     );
@@ -442,7 +442,7 @@ Future<void> _initializeVoice(String text) async {
   }
 
   Future<String?> _sendAudioToBackend(List<int> audioBytes) async {
-    final uri = Uri.parse('https://a607-102-27-195-209.ngrok-free.app/KiddoAI/chat/transcribe');
+    final uri = Uri.parse('https://b736-2c0f-4280-0-6132-b43c-1e54-c386-db5d.ngrok-free.app/KiddoAI/chat/transcribe');
 
     final request = http.MultipartRequest('POST', uri)
       ..fields['threadId'] = threadId

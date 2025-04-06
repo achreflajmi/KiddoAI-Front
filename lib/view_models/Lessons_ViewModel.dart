@@ -10,7 +10,7 @@ class LessonsViewModel {
     isLoading.value = true;
     lessons.value = [];
 
-    final url = Uri.parse("http://172.20.10.13:8083/KiddoAI/Lesson/bySubject/$subjectName");
+    final url = Uri.parse("https://b736-2c0f-4280-0-6132-b43c-1e54-c386-db5d.ngrok-free.app/KiddoAI/Lesson/bySubject/$subjectName");
 
     try {
       final response = await http.get(url);

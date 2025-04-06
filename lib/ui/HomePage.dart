@@ -5,6 +5,7 @@ import '../view_models/Lessons_ViewModel.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../services/SubjectService.dart';
 import 'package:front_kiddoai/ui/profile_page.dart';
+import '../utils/constants.dart';
 
 class SubjectsPage extends StatefulWidget {
   final String threadId;
@@ -72,7 +73,7 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
       duration: Duration(milliseconds: 1000),
     );
 
-    _subjects = SubjectService("http://172.20.10.13:8083/KiddoAI").fetchSubjects();
+    _subjects = SubjectService(CurrentIP+":8083/KiddoAI").fetchSubjects();
     
     _animationController.forward();
     _headerAnimationController.forward();
@@ -365,7 +366,7 @@ Widget build(BuildContext context) {
                           ElevatedButton.icon(
                             onPressed: () {
                               setState(() {
-                                _subjects = SubjectService("http://172.20.10.13:8083/KiddoAI").fetchSubjects();
+                                _subjects = SubjectService(CurrentIP +":8083/KiddoAI").fetchSubjects();
                               });
                             },
                             icon: Icon(Icons.refresh, color: Colors.white),
@@ -420,7 +421,7 @@ Widget build(BuildContext context) {
                           ElevatedButton.icon(
                             onPressed: () {
                               setState(() {
-                                _subjects = SubjectService("http://172.20.10.13:8083/KiddoAI").fetchSubjects();
+                                _subjects = SubjectService(CurrentIP +":8083/KiddoAI").fetchSubjects();
                               });
                             },
                             icon: Icon(Icons.refresh, color: Colors.white),

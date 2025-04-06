@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import '../utils/constants.dart';
+
 
 class LessonsViewModel {
   final ValueNotifier<List<Map<String, dynamic>>> lessons = ValueNotifier<List<Map<String, dynamic>>>([]);
@@ -10,7 +12,7 @@ class LessonsViewModel {
     isLoading.value = true;
     lessons.value = [];
 
-    final url = Uri.parse("http://172.20.10.13:8083/KiddoAI/Lesson/bySubject/$subjectName");
+    final url = Uri.parse(CurrentIP +":8083/KiddoAI/Lesson/bySubject/$subjectName");
 
     try {
       final response = await http.get(url);

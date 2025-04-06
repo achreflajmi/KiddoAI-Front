@@ -7,6 +7,8 @@ import 'webview_activity_widget.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:audioplayers/audioplayers.dart';
+import '../utils/constants.dart';
+
 
 class LessonsPage extends StatefulWidget {
   final String subjectName;
@@ -271,8 +273,8 @@ Future<void> _checkAndOpenActivity(String lessonName,String subjectName,int leve
       builder: (context) => const LoadingAnimationWidget(),
     );
 
-    final activityUrl = "http://172.20.10.13:8083/KiddoAI/Activity/saveProblem";
-    final activityPageUrl = "http://172.20.10.13:8080/";
+    final activityUrl = CurrentIP + ":8083/KiddoAI/Activity/saveProblem";
+    final activityPageUrl = CurrentIP +":8080/";
 
     bool isActivityReady = false;
 
@@ -287,14 +289,13 @@ Future<void> _checkAndOpenActivity(String lessonName,String subjectName,int leve
             "level": level,
           }), 
         );
-        //final react_run = await http.get(Uri.parse("https://f086-102-157-72-42.ngrok-free.app/openActivity"));
+        final react_run = await http.get(Uri.parse(ngrokUrl +"/openActivity"));
 
-        if (response.statusCode == 200) {// && react_run.statusCode == 200) {
+        if (response.statusCode == 200 && react_run.statusCode == 200) {
           isActivityReady = true;
         } else {
           await Future.delayed(Duration(seconds: 2));
         }
-     
 
       Navigator.pop(context);
 

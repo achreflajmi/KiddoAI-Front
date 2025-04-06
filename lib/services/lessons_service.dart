@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert' show utf8;
+import '../utils/constants.dart';
+
 
 class LessonsService {
   // Base URL - Replace with your actual backend URL
@@ -20,8 +22,8 @@ class LessonsService {
         _baseActivityUrl = 'http://172.20.10.13:8083/KiddoAI/Activity/saveProblem',
         _baseVoiceGenerationUrl = 'https://268b-196-184-222-196.ngrok-free.app/generate-voice',
         _baseAudioUrl = 'http://172.20.10.9:8001/outputlive.wav',
-        _activityPageUrl = 'http://172.20.10.13:8080/',
-        _baseLessonsUrl = 'https://a607-102-27-195-209.ngrok-free.app/KiddoAI/Lesson/bySubject'; // Updated to match ngrok logs
+        _activityPageUrl = CurrentIP + ':8083/',
+        _baseLessonsUrl = ngrokUrl +'/KiddoAI/Lesson/bySubject'; // Updated to match ngrok logs
 
   Future<List<Map<String, dynamic>>> fetchLessons(String subjectName) async {
     try {

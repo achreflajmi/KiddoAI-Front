@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           primarySwatch: Colors.blue,
         ),
-        home: AuthPage(), // WebViewIQTestScreen(threadId: "thread_3eowA2qOhI50eTg4lhGcSyc7",),
+        home:   WebViewIQTestScreen(threadId: "thread_3eowA2qOhI50eTg4lhGcSyc7",), //AuthPage(),
       ),
     );
   }

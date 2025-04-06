@@ -319,7 +319,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
 */
 Future<void> _initializeVoice(String text) async {
   try {
-    final baseUrl = 'https://f661-196-184-87-113.ngrok-free.app';
+    final baseUrl = 'https://b930-102-156-133-241.ngrok-free.app';
     final response = await http.post(
       Uri.parse('$baseUrl/initialize-voice'),
       headers: {"Content-Type": "application/json"},
@@ -376,7 +376,7 @@ Future<void> _initializeVoice(String text) async {
 
   // Helper function to fetch audio URL
   Future<String> _getAudioUrl(String requestId, int partNumber) async {
-    final baseUrl = 'https://f661-196-184-87-113.ngrok-free.app';
+    final baseUrl = 'https://b930-102-156-133-241.ngrok-free.app';
     final partResponse = await http.get(
       Uri.parse('$baseUrl/get-part/$requestId/$partNumber'),
     );

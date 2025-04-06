@@ -21,6 +21,7 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
   final TextEditingController _passwordSignupController = TextEditingController();
   final TextEditingController _favoriteCharacterController = TextEditingController();
   final TextEditingController _dateOfBirthController = TextEditingController();
+  final TextEditingController _parentPhoneController = TextEditingController();
 
   // Login Controllers
   final TextEditingController _emailLoginController = TextEditingController();
@@ -46,6 +47,7 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
     _dateOfBirthController.dispose();
     _emailLoginController.dispose();
     _passwordLoginController.dispose();
+    _parentPhoneController.dispose();
     super.dispose();
   }
 
@@ -61,6 +63,7 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
       _passwordSignupController.text,
       _favoriteCharacterController.text,
       _dateOfBirthController.text,
+       _parentPhoneController.text,
     );
 
     if (response != null) {
@@ -138,18 +141,19 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
                                   children: [
                                     _buildTabBar(context),
                                     SizedBox(height: 20),
-                                    Container(
-                                      height: MediaQuery.of(context).size.height - 300,
-                                      child: TabBarView(
-                                        controller: _tabController,
-                                        children: [
-                                          // Login Tab
-                                          _buildLoginForm(context, viewModel),
-                                          // Signup Tab
-                                          _buildSignupForm(context, viewModel),
-                                        ],
-                                      ),
-                                    ),
+                                  Container(
+                                constraints: BoxConstraints(
+                                  maxHeight: MediaQuery.of(context).size.height * 0.7,
+                                ),
+                                child: TabBarView(
+                                  controller: _tabController,
+                                  children: [
+                                    _buildLoginForm(context, viewModel),
+                                    _buildSignupForm(context, viewModel),
+                                  ],
+                                ),
+                              ),
+
                                   ],
                                 ),
                               ),
@@ -224,17 +228,15 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildLoginForm(BuildContext context, AuthenticationViewModel viewModel) {
-    return Form(
+Widget _buildLoginForm(BuildContext context, AuthenticationViewModel viewModel) {
+  return SingleChildScrollView(
+    child: Form(
       key: _loginFormKey,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            'Let\'s get started!',
-            style: Theme.of(context).textTheme.bodyLarge,
-          ),
+          Text('Let\'s get started!', style: Theme.of(context).textTheme.bodyLarge),
           SizedBox(height: 24),
           _buildTextField(
             controller: _emailLoginController,
@@ -269,36 +271,26 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
-  Widget _buildSignupForm(BuildContext context, AuthenticationViewModel viewModel) {
-    return Form(
+
+Widget _buildSignupForm(BuildContext context, AuthenticationViewModel viewModel) {
+  return SingleChildScrollView(
+    child: Form(
       key: _signupFormKey,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            'Create your account',
-            style: Theme.of(context).textTheme.bodyLarge,
-          ),
+          Text('Create your account', style: Theme.of(context).textTheme.bodyLarge),
           SizedBox(height: 24),
-          _buildTextField(
-            controller: _nomController,
-            label: 'First Name',
-          ),
+          _buildTextField(controller: _nomController, label: 'First Name'),
           SizedBox(height: 16),
-          _buildTextField(
-            controller: _prenomController,
-            label: 'Last Name',
-          ),
+          _buildTextField(controller: _prenomController, label: 'Last Name'),
           SizedBox(height: 16),
-          _buildTextField(
-            controller: _emailSignupController,
-            label: 'Email',
-            keyboardType: TextInputType.emailAddress,
-          ),
+          _buildTextField(controller: _emailSignupController, label: 'Email', keyboardType: TextInputType.emailAddress),
           SizedBox(height: 16),
           _buildTextField(
             controller: _passwordSignupController,
@@ -313,10 +305,7 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
             ),
           ),
           SizedBox(height: 16),
-          _buildTextField(
-            controller: _favoriteCharacterController,
-            label: 'Favorite Character',
-          ),
+          _buildTextField(controller: _favoriteCharacterController, label: 'Favorite Character'),
           SizedBox(height: 16),
           _buildTextField(
             controller: _dateOfBirthController,
@@ -333,6 +322,13 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
               }
             },
           ),
+          SizedBox(height: 16),
+_buildTextField(
+  controller: _parentPhoneController,
+  label: 'Parent Phone Number',
+  keyboardType: TextInputType.phone,
+),
+
           SizedBox(height: 24),
           _buildAuthButton(
             text: 'Sign Up',
@@ -341,8 +337,10 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
+
 
   Widget _buildTextField({
     required TextEditingController controller,

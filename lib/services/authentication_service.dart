@@ -8,7 +8,7 @@ class AuthenticationService {
 
   // Signup
   Future<Map<String, dynamic>> signup(String nom, String prenom, String email,
-      String password, String favoriteCharacter, String dateOfBirth) async {
+      String password, String favoriteCharacter, String dateOfBirth, String parentPhoneNumber, ) async {
     final response = await http.post(
       Uri.parse('$baseUrl/auth/signup'),
       headers: {'Content-Type': 'application/json'},
@@ -19,6 +19,8 @@ class AuthenticationService {
         'password': password,
         'favoriteCharacter': favoriteCharacter,
         'dateNaissance': dateOfBirth,
+        'parentPhoneNumber': parentPhoneNumber,
+        
       }),
     );
 

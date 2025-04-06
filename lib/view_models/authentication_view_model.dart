@@ -35,13 +35,13 @@ class AuthenticationViewModel extends ChangeNotifier {
   }
 
   Future<Map<String, dynamic>?> signup(String nom, String prenom, String email, 
-      String password, String favoriteCharacter, String dateOfBirth) async {
+      String password, String favoriteCharacter, String dateOfBirth, String parentPhoneNumber) async {
     _setLoading(true);
     _setError(null);
     
     try {
       final response = await _authService.signup(
-        nom, prenom, email, password, favoriteCharacter, dateOfBirth);
+        nom, prenom, email, password, favoriteCharacter, dateOfBirth, parentPhoneNumber);
       return response;
     } catch (e) {
       _setError(e.toString());

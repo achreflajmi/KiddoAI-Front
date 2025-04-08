@@ -3,6 +3,9 @@ import 'dart:ffi';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart'; 
 import 'package:http/http.dart' as http;
+import '../utils/constants.dart';
+import '../widgets/saving_animation_widget.dart';
+
 
 
 class WebViewActivityWidget extends StatefulWidget {
@@ -36,13 +39,29 @@ class _WebViewActivityWidgetState extends State<WebViewActivityWidget> {
             // TODO: Update score and accuracy in the database
             print("Score: $score, Accuracy: $accuracy");
            final response = await http.post(
-          Uri.parse("http://172.20.10.13:8083/KiddoAI/Activity/updateActivityLesson"),//172.20.10.13
+          Uri.parse(CurrentIP +":8083/KiddoAI/Activity/updateActivityLesson"),//172.20.10.13
           headers: {"Content-Type": "application/json"},
           body: jsonEncode({"accuracy": accuracy}), 
         );
+        final react_run = await http.get(Uri.parse(ngrokUrl +"/closeActivity"));
 
-            if (mounted) {
-              Navigator.pop(context); // Navigate back
+
+            if (mounted && response.statusCode == 200 && react_run.statusCode == 200) {
+             
+               // Show fullscreen loading animation dialog
+                showGeneralDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  barrierColor: Colors.black.withOpacity(0.5),
+                  transitionDuration: const Duration(milliseconds: 300),
+                  pageBuilder: (context, animation, secondaryAnimation) {
+                    return const LoadingAnimationWidget(); // Your widget here
+                  },
+                );
+            await Future.delayed(const Duration(seconds: 5));
+              // Then pop back to previous screen
+             Navigator.pop(context); // pop WebViewActivityWidget
+             Navigator.pop(context); // pop the previous screen
             }
           } catch (e) {
             print("Error processing message: $e");

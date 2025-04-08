@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'view_models/authentication_view_model.dart';
 import 'view_models/chatbot_viewmodel.dart';
 import 'ui/AuthPage.dart';
-import 'ui/webview_screen.dart';
+import 'ui/Iq_test_screen.dart';
 import 'services/chatbot_service.dart';
 void main() {
   runApp(MyApp());

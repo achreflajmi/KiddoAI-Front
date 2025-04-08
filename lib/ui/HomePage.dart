@@ -5,6 +5,7 @@ import '../view_models/Lessons_ViewModel.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../services/SubjectService.dart';
 import 'package:front_kiddoai/ui/profile_page.dart';
+import '../utils/constants.dart';
 
 class SubjectsPage extends StatefulWidget {
   final String threadId;
@@ -72,8 +73,9 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
       duration: Duration(milliseconds: 1000),
     );
 
-    _subjects = SubjectService("https://b736-2c0f-4280-0-6132-b43c-1e54-c386-db5d.ngrok-free.app/KiddoAI").fetchSubjects();
-    
+     _subjects = SubjectService(CurrentIP+":8083/KiddoAI").fetchSubjects();
+
+   
     _animationController.forward();
     _headerAnimationController.forward();
   }
@@ -199,7 +201,7 @@ Widget build(BuildContext context) {
             ),
           ),
         ),
-        
+       
         // Decorative character elements
         Positioned(
           top: -40,
@@ -210,7 +212,7 @@ Widget build(BuildContext context) {
             opacity: AlwaysStoppedAnimation(0.2),
           ),
         ),
-        
+       
         Positioned(
           bottom: -50,
           left: -30,
@@ -231,7 +233,7 @@ Widget build(BuildContext context) {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Color(0xFF66BB6A), 
+                    Color(0xFF66BB6A),
                     Color(0xFF43A047),
                   ],
                   begin: Alignment.topLeft,
@@ -290,7 +292,7 @@ Widget build(BuildContext context) {
                 ],
               ),
             ),
-            
+           
             // Main content
             Expanded(
               child: FutureBuilder<List<String>>(
@@ -365,7 +367,8 @@ Widget build(BuildContext context) {
                           ElevatedButton.icon(
                             onPressed: () {
                               setState(() {
-                                _subjects = SubjectService("https://b736-2c0f-4280-0-6132-b43c-1e54-c386-db5d.ngrok-free.app/KiddoAI").fetchSubjects();
+                                    _subjects = SubjectService(CurrentIP+":8083/KiddoAI").fetchSubjects();
+
                               });
                             },
                             icon: Icon(Icons.refresh, color: Colors.white),
@@ -420,7 +423,8 @@ Widget build(BuildContext context) {
                           ElevatedButton.icon(
                             onPressed: () {
                               setState(() {
-                                _subjects = SubjectService("https://b736-2c0f-4280-0-6132-b43c-1e54-c386-db5d.ngrok-free.app/KiddoAI").fetchSubjects();
+                                    _subjects = SubjectService(CurrentIP+":8083/KiddoAI").fetchSubjects();
+
                               });
                             },
                             icon: Icon(Icons.refresh, color: Colors.white),
@@ -463,7 +467,7 @@ Widget build(BuildContext context) {
                       final Color cardColor = _getSubjectColor(subject, index);
                       final IconData subjectIcon = _getSubjectIcon(subject);
                       final String description = _getSubjectDescription(subject);
-                      
+                     
                       return GestureDetector(
                         onTap: () {
                           // Navigate to lessons page
@@ -508,7 +512,7 @@ Widget build(BuildContext context) {
                                   ),
                                 ),
                               ),
-                              
+                             
                               // Playful bubbles
                               Positioned(
                                 bottom: 10,
@@ -518,11 +522,11 @@ Widget build(BuildContext context) {
                                   height: 50,
                                   child: Lottie.asset(
                                     'assets/sparkles.json',
-                                    
+                                   
                                   ),
                                 ),
                               ),
-                              
+                             
                               // Content
                               Padding(
                                 padding: const EdgeInsets.all(16.0),
@@ -579,7 +583,7 @@ Widget build(BuildContext context) {
                                   ],
                                 ),
                               ),
-                              
+                             
                               // Floating "Let's Learn" indicator
                               Positioned(
                                 bottom: 0,
@@ -622,7 +626,7 @@ Widget build(BuildContext context) {
                                   ),
                                 ),
                               ),
-                              
+                             
                               // Character decoration
                               Positioned(
                                 bottom: 70,
@@ -679,7 +683,7 @@ Color _getSubjectColor(String subject, int index) {
     Color(0xFF7E57C2),  // Purple
     Color(0xFF26A69A),  // Teal
   ];
-  
+ 
   // Use modulo to cycle through the colors for any number of subjects
   return colors[index % colors.length];
 }
@@ -688,7 +692,7 @@ Color _getSubjectColor(String subject, int index) {
 IconData _getSubjectIcon(String subject) {
   // Convert subject to lowercase for case-insensitive matching
   String lowercaseSubject = subject.toLowerCase();
-  
+ 
   if (lowercaseSubject.contains('math') || lowercaseSubject.contains('رياضيات')) {
     return Icons.calculate;
   } else if (lowercaseSubject.contains('music') || lowercaseSubject.contains('موسيق')) {
@@ -710,21 +714,21 @@ IconData _getSubjectIcon(String subject) {
 String _getSubjectDescription(String subject) {
   // Convert subject to lowercase for case-insensitive matching
   String lowercaseSubject = subject.toLowerCase();
-  
+ 
   if (lowercaseSubject.contains('math') || lowercaseSubject.contains('رياضيات')) {
-    return ""; 
+    return "";
   } else if (lowercaseSubject.contains('music') || lowercaseSubject.contains('موسيق')) {
-    return ""; 
+    return "";
   } else if (lowercaseSubject.contains('science') || lowercaseSubject.contains('علم')) {
-    return ""; 
+    return "";
   } else if (lowercaseSubject.contains('tech') || lowercaseSubject.contains('تكنولوج')) {
-    return ""; 
+    return "";
   } else if (lowercaseSubject.contains('arab') || lowercaseSubject.contains('عرب')) {
-    return ""; 
+    return "";
   } else if (lowercaseSubject.contains('art') || lowercaseSubject.contains('فن')) {
-    return ""; 
+    return "";
   } else {
-    return ""; 
+    return "";
   }
 }
 }

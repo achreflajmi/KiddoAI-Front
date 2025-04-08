@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import '../view_models/authentication_view_model.dart';
-import 'webview_screen.dart';
+import 'iq_test_screen.dart';
+
 
 class AuthPage extends StatefulWidget {
   @override
@@ -71,7 +72,7 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
       if (threadId != null) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => WebViewIQTestScreen(threadId: threadId)),
+          MaterialPageRoute(builder: (context) => IQTestScreen(threadId: threadId)),
         );
       }
     } else if (viewModel.errorMessage != null) {
@@ -96,7 +97,7 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
       if (threadId != null) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => WebViewIQTestScreen(threadId: threadId)),
+          MaterialPageRoute(builder: (context) => IQTestScreen(threadId: threadId)),
         );
       }
     } else if (viewModel.errorMessage != null) {

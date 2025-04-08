@@ -38,6 +38,7 @@ dependencies:
   flutter_animated_icons: ^1.0.1
   flutter_sound: ^9.0.0
   permission_handler: ^10.2.0
+  image_picker: ^1.0.7
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -61,6 +62,11 @@ dev_dependencies:
 # The following section is specific to Flutter packages.
 flutter:
   assets:
+    - assets/avatars/hellokitty.png
+    - assets/avatars/spiderman.png
+    - assets/avatars/gumball.png
+    - assets/avatars/spongebob.png
+    - assets/bouncing_ball.json
     - assets/spongebob.png
     - assets/classroom.jpg
     - assets/rocket.gif
@@ -73,60 +79,56 @@ flutter:
     - assets/pencil_1r.png
     - assets/pencil_3d.png
     - assets/pencil_1l1d1r.png
-    # Question 3: Shape Grid
-    - assets/shape1_pattern.png
-    - assets/shape1_option_a.png
-    - assets/shape1_option_b.png
-    - assets/shape1_option_c.png
-    - assets/shape1_option_d.png
-    # Question 6: Colored Shapes
-    - assets/colored_shapes_pattern.png
-    - assets/colored_shapes_option_a.png
-    - assets/colored_shapes_option_b.png
-    - assets/colored_shapes_option_c.png
-    - assets/colored_shapes_option_d.png
-    # Question 11: Colored Octagons
-    - assets/colored_octagons_pattern.png
-    - assets/colored_octagons_option_a.png
-    - assets/colored_octagons_option_b.png
-    - assets/colored_octagons_option_c.png
-    - assets/colored_octagons_option_d.png
-    # Question 7: Number Sequence
-    - assets/number_sequence_pattern.png
-    - assets/number_sequence_option_a.png
-    - assets/number_sequence_option_b.png
-    - assets/number_sequence_option_c.png
-    - assets/number_sequence_option_d.png
-    # Question 8: Colored Circles
-    - assets/colored_circles_pattern.png
-    - assets/colored_circles_option_a.png
-    - assets/colored_circles_option_b.png
-    - assets/colored_circles_option_c.png
-    - assets/colored_circles_option_d.png
+# Question 1: Pencils
+    - assets/pencil_3l.png
+    - assets/pencil_2rd.png
+    - assets/pencil_1r.png
+    - assets/pencil_3d.png
+    - assets/pencil_1l1d1r.png
     # Question 2: Cross with Colored Dots
     - assets/cross_dots_pattern.png
     - assets/cross_dots_option_a.png
     - assets/cross_dots_option_b.png
     - assets/cross_dots_option_c.png
     - assets/cross_dots_option_d.png
+    # Question 3: Shape Grid
+    - assets/shape1_pattern.png
+    - assets/shape1_option_a.png
+    - assets/shape1_option_b.png
+    - assets/shape1_option_c.png
+    - assets/shape1_option_d.png
     # Question 4: 3x3 Colored Grid
     - assets/colored_grid_pattern.png
     - assets/colored_grid_option_a.png
     - assets/colored_grid_option_b.png
     - assets/colored_grid_option_c.png
     - assets/colored_grid_option_d.png
-    # Question 9: Numerical Sequence
-    - assets/number_sequence2_pattern.png
-    - assets/number_sequence2_option_a.png
-    - assets/number_sequence2_option_b.png
-    - assets/number_sequence2_option_c.png
-    - assets/number_sequence2_option_d.png
-    # Question 10: Pyramid with Numbers
-    - assets/pyramid_numbers_pattern.png
-    - assets/pyramid_numbers_option_a.png
-    - assets/pyramid_numbers_option_b.png
-    - assets/pyramid_numbers_option_c.png
-    - assets/pyramid_numbers_option_d.png
+    #Question 5: Colored Squares
+    - assets/colored_squares_pattern.png
+    - assets/colored_squares_option_a.png
+    - assets/colored_squares_option_b.png
+    - assets/colored_squares_option_c.png
+    - assets/colored_squares_option_d.png
+    # Question 6: Colored Shapes
+    - assets/colored_shapes_pattern.png
+    - assets/colored_shapes_option_a.png
+    - assets/colored_shapes_option_b.png
+    - assets/colored_shapes_option_c.png
+    - assets/colored_shapes_option_d.png
+    # Question 7: Number Sequence
+    - assets/number_sequence_pattern.png
+    - assets/number_sequence_option_a.png
+    - assets/number_sequence_option_b.png
+    - assets/number_sequence_option_c.png
+    - assets/number_sequence_option_d.png
+    # Sounds: 
+    - assets/sounds/correct.mp3
+    - assets/sounds/oops.mp3
+    - assets/sounds/instruction_drag.mp3
+    - assets/sounds/yay_got_it.mp3
+    - assets/sounds/try_again.mp3
+
+
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.

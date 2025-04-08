@@ -1,52 +1,50 @@
-// widgets/bottom_nav_bar.dart
+// Enhanced Bottom Navigation Bar with Themed Avatars and Correct Selection
 import 'package:flutter/material.dart';
 import '../ui/chat_page.dart';
-import '../ui/webview_screen.dart';
-import '../ui/HomePage.dart'; // Fixed import case
+import '../ui/HomePage.dart';
 import '../ui/profile_page.dart';
 import '../ui/iq_test_screen.dart';
+import '../models/avatar_settings.dart';
+
 class BottomNavBar extends StatelessWidget {
   final String threadId;
   final int currentIndex;
 
   const BottomNavBar({
-    Key? key,
+    super.key,
     required this.threadId,
     required this.currentIndex,
-  }) : super(key: key);
+  });
 
-  Widget _buildNavItem(IconData icon, int index, BuildContext context) {
-    final isActive = index == currentIndex;
-    return GestureDetector(
-      onTap: () => _handleNavigation(index, context),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isActive ? const Color(0xFF4CAF50).withOpacity(0.15) : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              color: isActive ? const Color(0xFF4CAF50) : Colors.grey[600],
-              size: 24,
-            ),
-            if (isActive)
-              Container(
-                margin: const EdgeInsets.only(top: 4),
-                height: 3,
-                width: 3,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF4CAF50),
-                  shape: BoxShape.circle,
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
+  Future<Map<String, dynamic>> _getAvatarTheme() async {
+    final avatar = await AvatarSettings.getCurrentAvatar();
+    switch (avatar['name']) {
+      case 'SpongeBob':
+        return {
+          'color': Color(0xFFFFEB3B),
+          'activeColor': Color(0xFFFFC107),
+        };
+      case 'Gumball':
+        return {
+          'color': Color(0xFF2196F3),
+          'activeColor': Color(0xFF1976D2),
+        };
+      case 'SpiderMan':
+        return {
+          'color': Color(0xFFE51C23),
+          'activeColor': Color(0xFFB71C1C),
+        };
+      case 'HelloKitty':
+        return {
+          'color': Color(0xFFFF80AB),
+          'activeColor': Color(0xFFF50057),
+        };
+      default:
+        return {
+          'color': Colors.grey,
+          'activeColor': Colors.teal,
+        };
+    }
   }
 
   void _handleNavigation(int index, BuildContext context) {
@@ -78,30 +76,80 @@ class BottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildNavItem(Icons.home_rounded, 0, context),
-              _buildNavItem(Icons.show_chart_rounded, 1, context),
-              _buildNavItem(Icons.chat_bubble_rounded, 2, context),
-              _buildNavItem(Icons.person, 3, context),
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _getAvatarTheme(),
+      builder: (context, snapshot) {
+        final themeColor =
+            snapshot.data != null ? snapshot.data!['color'] : Colors.grey;
+        final activeColor =
+            snapshot.data != null ? snapshot.data!['activeColor'] : Colors.blue;
+
+        return Container(
+          decoration: BoxDecoration(
+            color: themeColor.withOpacity(0.1),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 8,
+                offset: const Offset(0, -2),
+              ),
             ],
           ),
+          child: SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildNavItem(Icons.home_rounded, 0, context, activeColor),
+                  _buildNavItem(
+                      Icons.show_chart_rounded, 1, context, activeColor),
+                  _buildNavItem(
+                      Icons.chat_bubble_rounded, 2, context, activeColor),
+                  _buildNavItem(Icons.person, 3, context, activeColor),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildNavItem(
+      IconData icon, int index, BuildContext context, Color activeColor) {
+    final isActive = index == currentIndex;
+
+    return GestureDetector(
+      onTap: () => _handleNavigation(index, context),
+      child: AnimatedContainer(
+        duration: Duration(milliseconds: 250),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isActive ? activeColor.withOpacity(0.2) : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: isActive ? activeColor : Colors.grey[600],
+              size: isActive ? 26 : 22,
+            ),
+            if (isActive)
+              AnimatedContainer(
+                duration: Duration(milliseconds: 300),
+                margin: const EdgeInsets.only(top: 4),
+                height: 4,
+                width: 4,
+                decoration: BoxDecoration(
+                  color: activeColor,
+                  shape: BoxShape.circle,
+                ),
+              ),
+          ],
         ),
       ),
     );

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import '../utils/constants.dart';
 
 class LessonsService {
   // Updated base URL for teach endpoint to use the new API
@@ -16,12 +17,12 @@ class LessonsService {
   LessonsService()
       : _baseUrl = 'https://b736-2c0f-4280-0-6132-b43c-1e54-c386-db5d.ngrok-free.app',
         // Updated teach endpoint (Flask route is /teach)
-        _baseTeachLessonUrl = 'https://2789-41-226-166-49.ngrok-free.app/teach',
-        _baseActivityUrl = 'http://172.20.10.13:8083/KiddoAI/Activity/saveProblem',
+        _baseTeachLessonUrl = 'https://b584-160-159-94-45.ngrok-free.app/teach',
+        _baseActivityUrl = CurrentIP + ':8083/KiddoAI/Activity/saveProblem',
         _baseVoiceGenerationUrl = 'https://268b-196-184-222-196.ngrok-free.app/generate-voice',
         _baseAudioUrl = 'http://172.20.10.9:8001/outputlive.wav',
-        _activityPageUrl = 'http://172.20.10.13:8080/',
-        _baseLessonsUrl = 'https://b736-2c0f-4280-0-6132-b43c-1e54-c386-db5d.ngrok-free.app/KiddoAI/Lesson/bySubject';
+        _activityPageUrl = CurrentIP + ':8083/',
+        _baseLessonsUrl = ngrokUrl +'/KiddoAI/Lesson/bySubject'; //
 
   Future<List<Map<String, dynamic>>> fetchLessons(String subjectName) async {
     try {
@@ -53,7 +54,7 @@ class LessonsService {
  Future<String> createThread() async {
   // Replace with your actual create_thread endpoint URL.
   final String baseCreateThreadUrl =
-      'https://2789-41-226-166-49.ngrok-free.app/create_thread';
+      'https://b584-160-159-94-45.ngrok-free.app/create_thread';
   final response = await http.post(
     Uri.parse(baseCreateThreadUrl),
     headers: {'Content-Type': 'application/json'},

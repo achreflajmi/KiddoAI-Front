@@ -9,6 +9,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:front_kiddoai/ui/profile_page.dart';
+import '../utils/constants.dart';
 
 class LessonsPage extends StatefulWidget {
   final String subjectName;
@@ -230,7 +231,7 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
     }
 
     // 3) Send user message to server
-    final url = Uri.parse('https://2789-41-226-166-49.ngrok-free.app/teach');
+    final url = Uri.parse('https://b584-160-159-94-45.ngrok-free.app/teach');
     try {
       final response = await http.post(
         url,
@@ -289,38 +290,37 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
       builder: (context) => const LoadingAnimationWidget(),
     );
 
-    final activityUrl = "http://172.20.10.13:8083/KiddoAI/Activity/saveProblem";
-    final activityPageUrl = "http://172.20.10.13:8080/";
+    final activityUrl = CurrentIP + ":8083/KiddoAI/Activity/saveProblem";
+    final activityPageUrl = CurrentIP +":8080/";
+ bool isActivityReady = false;
 
     try {
-      final response = await http.post(
-        Uri.parse(activityUrl),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "lesson": lessonName,
-          "subject": subjectName,
-          "level": level,
-        }),
-      );
+     
+        final response = await http.post(
+          Uri.parse(activityUrl),
+          headers: {"Content-Type": "application/json"},
+          body: jsonEncode({
+            "lesson": lessonName,
+            "subject": subjectName,
+            "level": level,
+          }), 
+        );
+        final react_run = await http.get(Uri.parse(ngrokUrl +"/openActivity"));
+
+        if (response.statusCode == 200 && react_run.statusCode == 200) {
+          isActivityReady = true;
+        } else {
+          await Future.delayed(Duration(seconds: 2));
+        }
 
       Navigator.pop(context);
 
-      if (response.statusCode == 200) {
-        // Open WebView
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => WebViewActivityWidget(activityUrl: activityPageUrl),
-          ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text("Error: Could not prepare activity."),
-            backgroundColor: Colors.red.shade700,
-          ),
-        );
-      }
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => WebViewActivityWidget(activityUrl: activityPageUrl),
+        ),
+      );
     } catch (e) {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(

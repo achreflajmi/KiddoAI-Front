@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:front_kiddoai/ui/profile_page.dart';
 import 'package:http/http.dart' as http;
@@ -206,56 +207,64 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
     }
   }
 
-  Future<void> _sendMessage(String message) async {
-    if (message.isEmpty) return;
+Future<void> _sendMessage(String message) async {
+  if (message.isEmpty) return;
 
-    final DateTime timestamp = DateTime.now();
+  final DateTime timestamp = DateTime.now();
 
-    setState(() {
-      messages.add(Message(sender: 'user', content: message, timestamp: timestamp));
-      _isSending = true;
-    });
+  setState(() {
+    messages.add(Message(sender: 'user', content: message, timestamp: timestamp));
+    _isSending = true;
+    // 👇 Add temporary "typing..." message
+    messages.add(Message(sender: 'bot', content: 'typing_indicator', timestamp: DateTime.now()));
+  });
 
-    _saveMessages();
-    Future.delayed(Duration(milliseconds: 100), () => _scrollToBottom());
+  _saveMessages();
+  Future.delayed(Duration(milliseconds: 100), () => _scrollToBottom());
 
-    try {
-      final response = await http.post(
-        Uri.parse('https://b736-2c0f-4280-0-6132-b43c-1e54-c386-db5d.ngrok-free.app/KiddoAI/chat/send'),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({'threadId': threadId, 'userInput': message}),
-      );
+  try {
+    final response = await http.post(
+      Uri.parse('https://7aaf-41-226-166-49.ngrok-free.app/KiddoAI/chat/send'),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({'threadId': threadId, 'userInput': message}),
+    );
 
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
-        String botResponse = jsonResponse['response'];
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
+      String botResponse = jsonResponse['response'];
 
-        if (botResponse.startsWith('"') && botResponse.endsWith('"')) {
-          botResponse = botResponse.substring(1, botResponse.length - 1);
-        }
-        botResponse = botResponse.trim();
-
-        setState(() {
-          messages.add(Message(sender: 'bot', content: botResponse, timestamp: DateTime.now()));
-          _isSending = false;
-        });
-
-        _saveMessages();
-        _scrollToBottom();
-        _initializeVoice(botResponse);
-      } else {
-        setState(() {
-          _isSending = false;
-          messages.add(Message(sender: 'bot', content: "Oops! Please try again!", timestamp: DateTime.now()));
-        });
+      if (botResponse.startsWith('"') && botResponse.endsWith('"')) {
+        botResponse = botResponse.substring(1, botResponse.length - 1);
       }
-    } catch (e) {
+      botResponse = botResponse.trim();
+
+      setState(() {
+        // Remove the "typing..." indicator
+        messages.removeWhere((m) => m.content == 'typing_indicator');
+        // Add real bot response
+        messages.add(Message(sender: 'bot', content: botResponse, timestamp: DateTime.now()));
+        _isSending = false;
+      });
+
+      _saveMessages();
+      _scrollToBottom();
+      _initializeVoice(botResponse);
+    } else {
       setState(() {
         _isSending = false;
-        messages.add(Message(sender: 'bot', content: "Connection error!", timestamp: DateTime.now()));
+        messages.removeWhere((m) => m.content == 'typing_indicator');
+        messages.add(Message(sender: 'bot', content: "Oops! Please try again!", timestamp: DateTime.now()));
       });
     }
+  } catch (e) {
+    setState(() {
+      _isSending = false;
+      messages.removeWhere((m) => m.content == 'typing_indicator');
+      messages.add(Message(sender: 'bot', content: "Connection error!", timestamp: DateTime.now()));
+    });
   }
+}
+
 
   Future<void> _initializeVoice(String text) async {
     try {
@@ -372,7 +381,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
   }
 
   Future<String?> _sendAudioToBackend(List<int> audioBytes) async {
-    final uri = Uri.parse('https://b736-2c0f-4280-0-6132-b43c-1e54-c386-db5d.ngrok-free.app/KiddoAI/chat/transcribe');
+    final uri = Uri.parse('https://7aaf-41-226-166-49.ngrok-free.app/KiddoAI/chat/transcribe');
 
     final request = http.MultipartRequest('POST', uri)
       ..fields['threadId'] = threadId
@@ -385,135 +394,173 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
     return null;
   }
 
-  Widget _buildMessage(Message message, int index) {
-    final isUser = message.sender == 'user';
-    final isLastMessage = index == messages.length - 1;
-    final showTimestamp = isLastMessage || 
-                          (index + 1 < messages.length &&
-                           messages[index + 1].sender != message.sender);
+Widget _buildMessage(Message message, int index) {
+  final isUser = message.sender == 'user';
+  final isTypingIndicator = message.content == 'typing_indicator';
+  final isLastMessage = index == messages.length - 1;
+  final showTimestamp = isLastMessage || 
+                        (index + 1 < messages.length &&
+                         messages[index + 1].sender != message.sender);
 
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (!isUser) ...[
-            GestureDetector(
-              onTap: () => _initializeVoice(message.content),
-              child: CircleAvatar(
-                backgroundImage: AssetImage(_currentAvatarImage),
-                radius: 16,
-              ),
+  return Padding(
+    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    child: Row(
+      mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (!isUser) ...[
+          GestureDetector(
+            onTap: () => _initializeVoice(message.content),
+            child: CircleAvatar(
+              backgroundImage: AssetImage(_currentAvatarImage),
+              radius: 16,
             ),
-            SizedBox(width: 8),
-          ],
-          Flexible(
-            child: GestureDetector(
-              onTap: !isUser ? () => _initializeVoice(message.content) : null,
-              child: Container(
-                constraints: BoxConstraints(
-                  maxWidth: MediaQuery.of(context).size.width * 0.75,
+          ),
+          SizedBox(width: 8),
+        ],
+        Flexible(
+          child: GestureDetector(
+            onTap: !isUser && !isTypingIndicator ? () => _initializeVoice(message.content) : null,
+            child: Container(
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 0.75,
+              ),
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: isUser ? Color(0xFF4CAF50) : Colors.white,
+                border: isUser ? null : Border.all(color: _currentAvatarColor, width: 2),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  topRight: Radius.circular(20),
+                  bottomLeft: isUser ? Radius.circular(20) : Radius.circular(4),
+                  bottomRight: isUser ? Radius.circular(4) : Radius.circular(20),
                 ),
-                padding: EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: isUser ? Color(0xFF4CAF50) : Colors.white,
-                  border: isUser ? null : Border.all(color: _currentAvatarColor, width: 2),
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(20),
-                    topRight: Radius.circular(20),
-                    bottomLeft: isUser ? Radius.circular(20) : Radius.circular(4),
-                    bottomRight: isUser ? Radius.circular(4) : Radius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 5,
+                    offset: Offset(0, 2),
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 5,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      message.content,
-                      style: TextStyle(
-                        color: isUser ? Colors.white : Colors.black87,
-                        fontSize: 16,
-                        height: 1.4,
-                      ),
-                    ),
-                    if (showTimestamp)
-                      Padding(
-                        padding: EdgeInsets.only(top: 6),
-                        child: Text(
-                          "${message.timestamp.hour}:${message.timestamp.minute.toString().padLeft(2, '0')}",
+                ],
+              ),
+              child: isTypingIndicator
+                  ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: List.generate(3, (i) {
+                        final controller = AnimationController(
+                          vsync: this,
+                          duration: Duration(milliseconds: 600),
+                        )..repeat(reverse: true);
+
+                        final delay = i * 200;
+
+                        return AnimatedBuilder(
+                          animation: controller,
+                          builder: (context, child) {
+                            final value = Curves.easeInOut.transform(controller.value);
+                            return Container(
+                              margin: EdgeInsets.symmetric(horizontal: 3),
+                              child: Transform.translate(
+                                offset: Offset(0, -6 * value * (i == 1 ? 1.2 : 1.0)),
+                                child: Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      }),
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          message.content,
                           style: TextStyle(
-                            color: isUser ? Colors.white.withOpacity(0.7) : Colors.black54,
-                            fontSize: 10,
+                            color: isUser ? Colors.white : Colors.black87,
+                            fontSize: 16,
+                            height: 1.4,
                           ),
                         ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (threadId.isEmpty) {
-      return Scaffold(
-        body: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: _currentAvatarGradient,
-            ),
-          ),
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                LottieBuilder.network(
-                  'https://assets9.lottiefiles.com/packages/lf20_kkhbsucc.json',
-                  height: 180,
-                ),
-                SizedBox(height: 24),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(30),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 10,
-                        offset: Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Text(
-                    "Loading your magical chat...",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: _currentAvatarColor,
+                        if (showTimestamp)
+                          Padding(
+                            padding: EdgeInsets.only(top: 6),
+                            child: Text(
+                              "${message.timestamp.hour}:${message.timestamp.minute.toString().padLeft(2, '0')}",
+                              style: TextStyle(
+                                color: isUser ? Colors.white.withOpacity(0.7) : Colors.black54,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
-                  ),
-                ),
-              ],
             ),
           ),
         ),
-      );
-    }
+      ],
+    ),
+  );
+}
+
+
+
+
+  @override
+  Widget build(BuildContext context) {
+if (threadId.isEmpty) {
+  return Scaffold(
+    body: Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: _currentAvatarGradient,
+        ),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            LottieBuilder.network(
+                'assets/loadingChat.json',
+              onLoaded: (composition) {
+                debugPrint("✅ Lottie loaded: ${composition.duration}");
+              },
+              errorBuilder: (context, error, stackTrace) {
+                debugPrint("❌ Lottie load failed: $error");
+                debugPrint("🧠 Stack trace: $stackTrace");
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.warning, size: 40, color: Colors.red),
+                    Text('Animation failed.', style: TextStyle(color: Colors.red)),
+                  ],
+                );
+              },
+            ),
+            SizedBox(height: 20),
+            Text(
+              "Loading your magical chat...",
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: _currentAvatarColor,
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+  
 
     return Scaffold(
       backgroundColor: _currentAvatarGradient.last,
@@ -696,7 +743,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
                               Positioned.fill(
                                 child: ClipOval(
                                   child: Lottie.network(
-                                    'https://assets1.lottiefiles.com/packages/lf20_vctzcozn.json',
+                                     'assets/loadingChat.json',
                                     fit: BoxFit.cover,
                                   ),
                                 ),
@@ -730,42 +777,48 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
                             ? Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  LottieBuilder.network(
-                                    'https://assets3.lottiefiles.com/packages/lf20_tzjnbj0d.json',
-                                    width: 30,
-                                    height: 30,
-                                  ),
-                                  SizedBox(width: 8),
-                                  Text(
-                                    "I'm listening... $_recordingDuration",
-                                    style: TextStyle(
-                                      color: Colors.red,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                      fontFamily: 'Comic Sans MS',
-                                    ),
-                                  ),
+                                LottieBuilder.network(
+   'assets/loadingChat.json',
+  onLoaded: (composition) {
+    debugPrint("✅ Lottie loaded: ${composition.duration}");
+  },
+  errorBuilder: (context, error, stackTrace) {
+    debugPrint("❌ Lottie load failed: $error");
+    debugPrint("🧠 Stack trace: $stackTrace");
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.warning, size: 40, color: Colors.red),
+        Text('Animation failed.', style: TextStyle(color: Colors.red)),
+      ],
+    );
+  },
+),
+
                                 ],
                               )
                             : _isSending
                                 ? Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      LottieBuilder.network(
-                                        'https://assets9.lottiefiles.com/packages/lf20_nw19osms.json',
-                                        width: 30,
-                                        height: 30,
-                                      ),
-                                      SizedBox(width: 8),
-                                      Text(
-                                        "Hmm, let me think...",
-                                        style: TextStyle(
-                                          color: Colors.blue,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16,
-                                          fontFamily: 'Comic Sans MS',
-                                        ),
-                                      ),
+                                     LottieBuilder.network(
+  'https://lottie.host/68b34055-5678-4629-996e-e97d3d801d2b/SY8CEFTaQe.json',
+  onLoaded: (composition) {
+    debugPrint("✅ Lottie loaded: ${composition.duration}");
+  },
+  errorBuilder: (context, error, stackTrace) {
+    debugPrint("❌ Lottie load failed: $error");
+    debugPrint("🧠 Stack trace: $stackTrace");
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.warning, size: 40, color: Colors.red),
+        Text('Animation failed.', style: TextStyle(color: Colors.red)),
+      ],
+    );
+  },
+),
+
                                     ],
                                   )
                                 : Row(

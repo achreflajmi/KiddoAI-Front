@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_model.dart';
 
 class AuthenticationService {
-  final String baseUrl = 'https://b736-2c0f-4280-0-6132-b43c-1e54-c386-db5d.ngrok-free.app/KiddoAI';
+  final String baseUrl = 'https://7aaf-41-226-166-49.ngrok-free.app/KiddoAI';
 
   // Signup
   Future<Map<String, dynamic>> signup(String nom, String prenom, String email,

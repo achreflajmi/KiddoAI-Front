@@ -15,7 +15,7 @@ class LessonsService {
 
   // Constructor to initialize the URLs
   LessonsService()
-      : _baseUrl = 'https://b736-2c0f-4280-0-6132-b43c-1e54-c386-db5d.ngrok-free.app',
+      : _baseUrl = 'https://7aaf-41-226-166-49.ngrok-free.app',
         // Updated teach endpoint (Flask route is /teach)
         _baseTeachLessonUrl = 'https://b584-160-159-94-45.ngrok-free.app/teach',
         _baseActivityUrl = CurrentIP + ':8083/KiddoAI/Activity/saveProblem',

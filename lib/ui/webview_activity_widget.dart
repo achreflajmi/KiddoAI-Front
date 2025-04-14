@@ -39,7 +39,7 @@ class _WebViewActivityWidgetState extends State<WebViewActivityWidget> {
             // TODO: Update score and accuracy in the database
             print("Score: $score, Accuracy: $accuracy");
            final response = await http.post(
-          Uri.parse(CurrentIP +":8083/KiddoAI/Activity/updateActivityLesson"),//172.20.10.13
+          Uri.parse(CurrentIP +":8081/KiddoAI/Activity/updateActivityLesson"),//172.20.10.13
           headers: {"Content-Type": "application/json"},
           body: jsonEncode({"accuracy": accuracy}), 
         );

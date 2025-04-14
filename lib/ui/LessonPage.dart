@@ -10,6 +10,10 @@ import 'dart:convert';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:front_kiddoai/ui/profile_page.dart';
 import '../utils/constants.dart';
+// --- Tutorial Imports ---
+import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
+import 'dart:ui' show ImageFilter; // Needed for blur effect
+
 
 class LessonsPage extends StatefulWidget {
   final String subjectName;
@@ -45,7 +49,25 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
   /// Toggles whether audio is currently playing.
   bool _isPlayingAudio = false;
 
-  /// Subject color is **always** green in the new UI, or you can map by subject if you prefer.
+  // --- Tutorial Setup Variables ---
+  late TutorialCoachMark tutorialCoachMark;
+  List<TargetFocus> targets = [];
+
+  // --- Tutorial Keys ---
+  // Key for the main header section ("Let's Learn Together!")
+  final GlobalKey _keyHeader = GlobalKey();
+  // Key for the "Start Activity" button of the first lesson item
+  final GlobalKey _keyFirstLessonActivityButton = GlobalKey();
+  // Key for the "Learn" button of the first lesson item
+  final GlobalKey _keyFirstLessonLearnButton = GlobalKey();
+  // Key for the profile icon in the AppBar
+  final GlobalKey _keyProfileIcon = GlobalKey();
+
+  // --- Preference Key for this page's tutorial ---
+  final String _tutorialPreferenceKey = 'lessonsPageTutorialSeen';
+  // --- End Tutorial Setup Variables ---
+
+  /// Subject color is *always* green in the new UI, or you can map by subject if you prefer.
   Color _getSubjectColor() => const Color(0xFF4CAF50);
 
   /// For demonstration, you can still map icons by subject if desired.
@@ -103,6 +125,10 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
         _isPlayingAudio = (state == PlayerState.playing);
       });
     });
+     // --- Tutorial Initialization ---
+    // Check if the tutorial needs to be shown when the page loads
+    _checkIfTutorialShouldBeShown();
+    // --- End Tutorial Initialization ---
   }
 
   @override
@@ -111,6 +137,15 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
     _headerAnimationController.dispose();
     _audioPlayer.dispose();
     _chatController.dispose();
+
+ // --- Tutorial Dispose ---
+    // Dismiss the tutorial if it's showing when the page is disposed
+    // Note: tutorial_coach_mark might handle this internally, but it's good practice.
+    if (tutorialCoachMark?.isShowing ?? false) {
+       tutorialCoachMark.finish();
+    }
+    // --- End Tutorial Dispose ---
+
     super.dispose();
   }
 
@@ -231,7 +266,7 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
     }
 
     // 3) Send user message to server
-    final url = Uri.parse('https://b584-160-159-94-45.ngrok-free.app/teach');
+    final url = Uri.parse('https://b6dd-41-62-239-187.ngrok-free.app/teach');
     try {
       final response = await http.post(
         url,
@@ -290,20 +325,23 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
       builder: (context) => const LoadingAnimationWidget(),
     );
 
-    final activityUrl = CurrentIP + ":8083/KiddoAI/Activity/saveProblem";
-    final activityPageUrl = CurrentIP +":8080/";
+    final activityUrl = CurrentIP + ":8081/KiddoAI/Activity/saveProblem";
+    final activityPageUrl = CurrentReactIP +":8080/";
+    
  bool isActivityReady = false;
 
     try {
-     
+         final prefs = await SharedPreferences.getInstance();
         final response = await http.post(
-          Uri.parse(activityUrl),
-          headers: {"Content-Type": "application/json"},
-          body: jsonEncode({
-            "lesson": lessonName,
-            "subject": subjectName,
-            "level": level,
-          }), 
+      Uri.parse(activityUrl),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: jsonEncode({
+        "lesson": lessonName,
+        "subject": subjectName,
+        "level": level,
+      }), 
         );
         final react_run = await http.get(Uri.parse(ngrokUrl +"/openActivity"));
 
@@ -471,6 +509,219 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
     );
   }
 
+  
+  // --- Tutorial Functions ---
+
+  /// Checks SharedPreferences to see if the tutorial should be shown.
+  void _checkIfTutorialShouldBeShown() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    // Default to 'false' if the key doesn't exist
+    bool tutorialSeen = prefs.getBool(_tutorialPreferenceKey) ?? false;
+
+    // If tutorial hasn't been seen, initialize and schedule it to show
+    if (!tutorialSeen) {
+      _initTargets(); // Prepare the tutorial steps
+
+      // Ensure the UI frame is rendered before trying to find widgets
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        // Add a small delay to ensure dynamic list items are built
+        Future.delayed(const Duration(milliseconds: 500), () {
+           // Check if the widget is still mounted before showing
+           if (mounted) {
+              _showTutorial();
+           }
+        });
+      });
+    }
+  }
+
+  /// Defines the steps (TargetFocus) for the tutorial.
+  void _initTargets() {
+    targets.clear(); // Clear previous targets if any
+
+    // Target 1: Header
+    targets.add(
+      TargetFocus(
+        identify: "header",
+        keyTarget: _keyHeader,
+        alignSkip: Alignment.topRight,
+        enableOverlayTab: true,
+        contents: [
+          TargetContent(
+            align: ContentAlign.bottom,
+            child: _buildTutorialContent(
+             title: "مرحبًا أيها المستكشف!",
+          description: "هذا يعرض الموضوع الذي أنت على وشك تعلمه. مستعد للمتعة؟",
+
+            ),
+          ),
+        ],
+        shape: ShapeLightFocus.RRect,
+        radius: 20,
+      ),
+    );
+
+    // Target 2: Start Activity Button (on the first lesson)
+    // Note: This relies on _keyFirstLessonActivityButton being assigned correctly in build()
+    targets.add(
+      TargetFocus(
+        identify: "startActivityButton",
+        keyTarget: _keyFirstLessonActivityButton,
+        alignSkip: Alignment.topRight,
+        enableOverlayTab: true,
+        contents: [
+          TargetContent(
+            align: ContentAlign.top, // Show description above the button
+            child: _buildTutorialContent(
+             title: "ابدأ نشاطًا!",
+              description: "اضغط هنا للانطلاق في لعبة ممتعة أو تحدي لهذا الدرس! 🎉",               
+            ),
+          ),
+        ],
+        shape: ShapeLightFocus.RRect,
+        radius: 10,
+      ),
+    );
+
+    // Target 3: Learn Button (on the first lesson)
+    // Note: This relies on _keyFirstLessonLearnButton being assigned correctly in build()
+    targets.add(
+      TargetFocus(
+        identify: "learnButton",
+        keyTarget: _keyFirstLessonLearnButton,
+        alignSkip: Alignment.topLeft,
+        enableOverlayTab: true,
+        contents: [
+          TargetContent(
+            align: ContentAlign.top, // Show description above the button
+            child: _buildTutorialContent(
+             title: "تعلم مع الروبوت!",
+              description: "تحتاج إلى مساعدة في الفهم؟ اضغط هنا للدردشة مع روبوتنا الودود! 🤖",
+            ),
+          ),
+        ],
+        shape: ShapeLightFocus.RRect,
+        radius: 10,
+      ),
+    );
+
+     // Target 4: Profile Icon
+    targets.add(
+      TargetFocus(
+        identify: "profileIcon",
+        keyTarget: _keyProfileIcon,
+        alignSkip: Alignment.bottomLeft,
+        enableOverlayTab: true,
+        contents: [
+          TargetContent(
+            align: ContentAlign.bottom,
+            child: _buildTutorialContent(
+             title: "ملفك الشخصي!",
+            description: "تحقق من تقدمك وإعداداتك هنا! ✨",
+            ),
+          ),
+        ],
+        shape: ShapeLightFocus.Circle, // Circle shape for the icon
+      ),
+    );
+  }
+
+ /// Builds the content widget displayed for each tutorial step.
+  Widget _buildTutorialContent({required String title, required String description}) {
+    return Container(
+      padding: const EdgeInsets.all(16.0),
+      margin: const EdgeInsets.only(bottom: 20.0, left: 20.0, right: 20.0), // Add margin
+      decoration: BoxDecoration(
+        color: Colors.deepPurple, // Fun color for kids
+        borderRadius: BorderRadius.circular(12.0),
+        boxShadow: const [ // Add a subtle shadow
+           BoxShadow(
+             color: Colors.black26,
+             blurRadius: 8,
+             offset: Offset(0, 4),
+           )
+        ]
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            title,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.yellowAccent, // Bright title color
+              fontSize: 20,
+              fontFamily: 'Comic Sans MS', // Use consistent fun font
+            ),
+          ),
+          const SizedBox(height: 8.0),
+          Text(
+            description,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontFamily: 'Comic Sans MS', // Use consistent fun font
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Creates and shows the tutorial coach mark sequence.
+  void _showTutorial() {
+    // Ensure targets are not empty and keys are likely available
+     if (targets.isEmpty || _keyHeader.currentContext == null) {
+       print("Tutorial aborted: Targets not ready or header context missing.");
+       return;
+     }
+
+    tutorialCoachMark = TutorialCoachMark(
+      targets: targets,
+      colorShadow: Colors.black.withOpacity(0.8),
+      textSkip: "SKIP",
+      paddingFocus: 5, // Smaller padding around highlight
+      opacityShadow: 0.8,
+      imageFilter: ImageFilter.blur(sigmaX: 5, sigmaY: 5), // Apply blur
+      skipWidget: Container( // Custom Skip Button
+         padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+         decoration: BoxDecoration(
+            color: Colors.redAccent,
+            borderRadius: BorderRadius.circular(20),
+         ),
+         child: const Text("Skip All", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+      ),
+      onFinish: () {
+        print("Tutorial Finished");
+        _markTutorialAsSeen(); // Mark as seen when finished
+      },
+      onClickTarget: (target) {
+        print('onClickTarget: ${target.identify}');
+      },
+      onClickTargetWithTapPosition: (target, tapDetails) {
+        print("target: ${target.identify}");
+        print("clicked at position local: ${tapDetails.localPosition} - global: ${tapDetails.globalPosition}");
+      },
+      onClickOverlay: (target) {
+        print('onClickOverlay: ${target.identify}');
+      },
+      onSkip: () {
+        print("Tutorial Skipped");
+        _markTutorialAsSeen(); // Also mark as seen if skipped
+        return true; // Return true to allow skip
+      },
+    )..show(context: context); // Use cascade notation for clarity
+  }
+
+  /// Saves a flag to SharedPreferences indicating the tutorial has been seen.
+  void _markTutorialAsSeen() async {
+     SharedPreferences prefs = await SharedPreferences.getInstance();
+     await prefs.setBool(_tutorialPreferenceKey, true);
+     print("Marked '$_tutorialPreferenceKey' as seen.");
+  }
+   // --- End Tutorial Functions ---
+
   // =========================
   //  Main Build
   // =========================
@@ -527,6 +778,8 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
           Padding(
             padding: const EdgeInsets.only(right: 16),
             child: GestureDetector(
+              //Tutorial 
+               key: _keyProfileIcon,
               onTap: () {
                 // Example: Navigate to profile page
                 Navigator.push(
@@ -642,6 +895,8 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
               // "Available Lessons" title
               SliverToBoxAdapter(
                 child: Container(
+                   // --- Assign Key: Header Tutorial  ---
+                  key: _keyHeader, // Assign key to the header container
                   margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                   padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
                   decoration: BoxDecoration(
@@ -899,6 +1154,8 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
                                         children: [
                                           Expanded(
                                             child: OutlinedButton.icon(
+                                              // --- Assign Key: First Lesson Activity Button (Conditional) Tutorial  ---
+                                              key: index == 0 ? _keyFirstLessonActivityButton : null,
                                               icon: const Icon(Icons.play_circle_outline, size: 18),
                                               label: Text("Start Activity", style: const TextStyle(fontFamily: 'Comic Sans MS')),
                                               onPressed: () {
@@ -917,6 +1174,8 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
                                           const SizedBox(width: 10),
                                           Expanded(
                                             child: ElevatedButton.icon(
+                                              // --- Assign Key: First Lesson Learn Button (Conditional) Tutorial ---
+                                              key: index == 0 ? _keyFirstLessonLearnButton : null,
                                               icon: const Icon(Icons.lightbulb_outline, size: 18),
                                               label: Text("Learn", style: const TextStyle(fontFamily: 'Comic Sans MS')),
                                               onPressed: () {

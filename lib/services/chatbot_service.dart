@@ -66,18 +66,26 @@ class ChatbotService {
     throw Exception('Failed to send message');
   }
 
-  Future<String?> sendAudioMessage(List<int> audioBytes, String threadId) async {
-    final uri = Uri.parse('$_baseUrl/chat/transcribe');
-    final request = http.MultipartRequest('POST', uri)
-      ..fields['threadId'] = threadId
-      ..files.add(http.MultipartFile.fromBytes('audio', audioBytes, filename: 'audio.wav'));
-
-    final response = await request.send();
-    if (response.statusCode == 200) {
-      return await response.stream.bytesToString();
-    }
-    return null;
+Future<String?> sendAudioMessage(List<int> audioBytes, String threadId) async {
+  final prefs = await SharedPreferences.getInstance();
+  final accessToken = prefs.getString('accessToken');
+  if (accessToken == null) {
+    throw Exception('Access token is missing');
   }
+
+  final uri = Uri.parse('$_baseUrl/chat/transcribe');
+  final request = http.MultipartRequest('POST', uri)
+    ..fields['threadId'] = threadId
+    ..headers["Authorization"] = "Bearer $accessToken"  // add token here
+    ..files.add(http.MultipartFile.fromBytes('audio', audioBytes, filename: 'audio.wav'));
+
+  final response = await request.send();
+  if (response.statusCode == 200) {
+    return await response.stream.bytesToString();
+  }
+  return null;
+}
+
 
   Future<String> generateVoice(String text) async {
     final response = await http.post(

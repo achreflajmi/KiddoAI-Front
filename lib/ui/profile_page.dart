@@ -7,6 +7,7 @@ import 'dart:convert';
 import 'dart:io';
 import '../widgets/bottom_nav_bar.dart';
 import '../models/avatar_settings.dart';
+import 'WhiteboardScreen.dart';
 
 class ProfilePage extends StatefulWidget {
   final String threadId;
@@ -120,7 +121,11 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
 
   Future<void> _takePicture() async {
     try {
-      final XFile? photo = await _picker.pickImage(source: ImageSource.camera);
+      final XFile? photo = await _picker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 100, // No compression
+        preferredCameraDevice: CameraDevice.rear,
+      );
       if (photo != null) {
         setState(() => _isProcessing = true);
         await _processImage(File(photo.path));
@@ -130,25 +135,12 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
     }
   }
 
-  Future<void> _uploadImage() async {
-    try {
-      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-      if (image != null) {
-        setState(() => _isProcessing = true);
-        await _processImage(File(image.path));
-      }
-    } catch (e) {
-      _showError('Error uploading image: $e');
-    }
-  }
-
   Future<void> _processImage(File imageFile) async {
     try {
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse('https://8f36-160-159-94-45.ngrok-free.app/ocr'), // Update this URL as needed
+        Uri.parse('https://7d70-41-226-166-49.ngrok-free.app/ocr'), // ⚠️ Update with current ngrok URL
       );
-      
       request.files.add(await http.MultipartFile.fromPath('image', imageFile.path));
       
       final response = await request.send();
@@ -328,7 +320,6 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                             _selectedAvatarName = avatar['name'];
                             _selectedVoicePath = avatar['voicePath'];
                           });
-
                           await AvatarSettings.saveAvatar(
                             _selectedAvatarName,
                             _selectedAvatar,
@@ -341,9 +332,7 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: isSelected
-                                  ? avatar['color']
-                                  : Colors.transparent,
+                              color: isSelected ? avatar['color'] : Colors.transparent,
                               width: 3,
                             ),
                           ),
@@ -363,26 +352,21 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                     children: [
                       TextFormField(
                         controller: _firstNameController,
-                        decoration: _buildInputDecoration(
-                            'First Name', Icons.person, mainColor),
-                        validator: (value) =>
-                            value!.isEmpty ? 'Required' : null,
+                        decoration: _buildInputDecoration('First Name', Icons.person, mainColor),
+                        validator: (value) => value!.isEmpty ? 'Required' : null,
                       ),
                       SizedBox(height: 15),
                       TextFormField(
                         controller: _lastNameController,
-                        decoration: _buildInputDecoration(
-                            'Last Name', Icons.person_outline, mainColor),
-                        validator: (value) =>
-                            value!.isEmpty ? 'Required' : null,
+                        decoration: _buildInputDecoration('Last Name', Icons.person_outline, mainColor),
+                        validator: (value) => value!.isEmpty ? 'Required' : null,
                       ),
                       SizedBox(height: 15),
                       TextFormField(
                         controller: _dobController,
                         readOnly: true,
                         onTap: _selectDate,
-                        decoration: _buildInputDecoration(
-                            'Date of Birth', Icons.cake, mainColor),
+                        decoration: _buildInputDecoration('Date of Birth', Icons.cake, mainColor),
                       ),
                       SizedBox(height: 30),
                       ElevatedButton(
@@ -396,11 +380,11 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                           ),
                         ),
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 40.0, vertical: 14.0),
-                          child: Text('Save Profile',
-                              style:
-                                  TextStyle(color: Colors.white, fontSize: 16)),
+                          padding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 14.0),
+                          child: Text(
+                            'Save Profile',
+                            style: TextStyle(color: Colors.white, fontSize: 16),
+                          ),
                         ),
                       ),
                     ],
@@ -429,9 +413,26 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                               ),
                             ),
                             ElevatedButton.icon(
-                              onPressed: _isProcessing ? null : _uploadImage,
-                              icon: Icon(Icons.upload),
-                              label: Text('Upload'),
+                              onPressed: _isProcessing
+                                  ? null
+                                  : () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => WhiteboardScreen(
+                                            onImageSaved: (imagePath) {
+                                              setState(() => _isProcessing = true);
+                                              _processImage(File(imagePath));
+                                            },
+                                            avatarImagePath: _selectedAvatar,
+                                            avatarColor: mainColor,
+                                            avatarGradient: bgGradient,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                              icon: Icon(Icons.brush),
+                              label: Text('Whiteboard'),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: mainColor,
                                 foregroundColor: Colors.white,

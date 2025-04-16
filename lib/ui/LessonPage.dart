@@ -325,7 +325,7 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
       builder: (context) => const LoadingAnimationWidget(),
     );
 
-    final activityUrl = CurrentIP + ":8081/KiddoAI/Activity/saveProblem";
+    final activityUrl = CurrentIP + ":8083/KiddoAI/Activity/saveProblem";
     final activityPageUrl = CurrentReactIP +":8080/";
     
  bool isActivityReady = false;

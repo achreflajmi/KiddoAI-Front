@@ -38,15 +38,15 @@ class _WebViewActivityWidgetState extends State<WebViewActivityWidget> {
 
             // TODO: Update score and accuracy in the database
             print("Score: $score, Accuracy: $accuracy");
-           final response = await http.post(
-          Uri.parse(CurrentIP +":8081/KiddoAI/Activity/updateActivityLesson"),//172.20.10.13
-          headers: {"Content-Type": "application/json"},
-          body: jsonEncode({"accuracy": accuracy}), 
-        );
+        //    final response = await http.post(
+        //   Uri.parse(CurrentIP +":8083/KiddoAI/Activity/updateActivityLesson"),//172.20.10.13
+        //   headers: {"Content-Type": "application/json"},
+        //   body: jsonEncode({"accuracy": accuracy}), 
+        // );
         final react_run = await http.get(Uri.parse(ngrokUrl +"/closeActivity"));
 
 
-            if (mounted && response.statusCode == 200 && react_run.statusCode == 200) {
+            if (mounted &&  react_run.statusCode == 200) {//response.statusCode == 200 &&
              
                // Show fullscreen loading animation dialog
                 showGeneralDialog(

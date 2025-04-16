@@ -139,7 +139,7 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
     try {
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse('https://7d70-41-226-166-49.ngrok-free.app/ocr'), // ⚠️ Update with current ngrok URL
+        Uri.parse('https://3d0b-196-225-150-229.ngrok-free.app/ocr'), // ⚠️ Update with current ngrok URL
       );
       request.files.add(await http.MultipartFile.fromPath('image', imageFile.path));
       

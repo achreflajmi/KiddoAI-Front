@@ -12,7 +12,7 @@ class LessonsViewModel {
     isLoading.value = true;
     lessons.value = [];
 
-    final url = Uri.parse(CurrentIP + ":8081/KiddoAI/Lesson/bySubject/$subjectName");
+    final url = Uri.parse(CurrentIP + ":8083/KiddoAI/Lesson/bySubject/$subjectName");
 
     try {
       // Retrieve the access token from SharedPreferences

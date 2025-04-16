@@ -73,7 +73,7 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
       duration: Duration(milliseconds: 1000),
     );
 
-     _subjects = SubjectService(CurrentIP+":8081/KiddoAI").fetchSubjects();
+     _subjects = SubjectService(CurrentIP+":8083/KiddoAI").fetchSubjects();
 
    
     _animationController.forward();
@@ -367,7 +367,7 @@ Widget build(BuildContext context) {
                           ElevatedButton.icon(
                             onPressed: () {
                               setState(() {
-                                    _subjects = SubjectService(CurrentIP+":8081/KiddoAI").fetchSubjects();
+                                    _subjects = SubjectService(CurrentIP+":8083/KiddoAI").fetchSubjects();
 
                               });
                             },
@@ -423,7 +423,7 @@ Widget build(BuildContext context) {
                           ElevatedButton.icon(
                             onPressed: () {
                               setState(() {
-                                    _subjects = SubjectService(CurrentIP+":8081/KiddoAI").fetchSubjects();
+                                    _subjects = SubjectService(CurrentIP+":8083/KiddoAI").fetchSubjects();
 
                               });
                             },

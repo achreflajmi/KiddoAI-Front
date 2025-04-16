@@ -114,7 +114,12 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
         _selectedVoicePath,
       );
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Profile updated successfully!')),
+        SnackBar(
+          content: Text(
+            'تم تحديث الملف الشخصي بنجاح!', // Translated
+            textDirection: TextDirection.rtl,
+          ),
+        ),
       );
     }
   }
@@ -123,7 +128,7 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
     try {
       final XFile? photo = await _picker.pickImage(
         source: ImageSource.camera,
-        imageQuality: 100, // No compression
+        imageQuality: 100,
         preferredCameraDevice: CameraDevice.rear,
       );
       if (photo != null) {
@@ -131,7 +136,7 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
         await _processImage(File(photo.path));
       }
     } catch (e) {
-      _showError('Error taking picture: $e');
+      _showError('خطأ في التقاط الصورة: $e'); // Translated
     }
   }
 
@@ -139,13 +144,13 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
     try {
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse('https://3d0b-196-225-150-229.ngrok-free.app/ocr'), // ⚠️ Update with current ngrok URL
+        Uri.parse('https://fa58-196-225-150-229.ngrok-free.app/ocr'),
       );
       request.files.add(await http.MultipartFile.fromPath('image', imageFile.path));
-      
+
       final response = await request.send();
       final respStr = await response.stream.bytesToString();
-      
+
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(respStr);
         setState(() {
@@ -153,17 +158,22 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
           _isProcessing = false;
         });
       } else {
-        throw Exception('Server error: ${response.statusCode}');
+        throw Exception('خطأ في الخادم: ${response.statusCode}'); // Translated
       }
     } catch (e) {
-      _showError('Error processing image: $e');
+      _showError('خطأ في معالجة الصورة: $e'); // Translated
       setState(() => _isProcessing = false);
     }
   }
 
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
+      SnackBar(
+        content: Text(
+          message,
+          textDirection: TextDirection.rtl,
+        ),
+      ),
     );
   }
 
@@ -189,6 +199,7 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
       initialDate: DateTime.now(),
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
+      locale: const Locale('ar', 'SA'), // Added for Arabic date picker
     );
     if (picked != null) {
       setState(() {
@@ -197,275 +208,320 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
     }
   }
 
-  InputDecoration _buildInputDecoration(String label, IconData icon, Color color) {
-    return InputDecoration(
-      labelText: label,
-      prefixIcon: Icon(icon, color: color),
-      filled: true,
-      fillColor: Colors.white,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(25),
+ InputDecoration _buildInputDecoration(String label, IconData icon, Color color) {
+  return InputDecoration(
+    label: Text(
+      label,
+      textDirection: TextDirection.rtl, // ✅ moved here
+      style: TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w400,
+        color: Colors.grey[700],
       ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(25),
-        borderSide: BorderSide(color: color, width: 2),
-      ),
-    );
-  }
+    ),
+    prefixIcon: Icon(icon, color: color),
+    filled: true,
+    fillColor: Colors.white,
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(25),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(25),
+      borderSide: BorderSide(color: color, width: 2),
+    ),
+    alignLabelWithHint: true, // RTL visual alignment
+  );
+}
+
 
   @override
   Widget build(BuildContext context) {
     final Color mainColor = _getAvatarColor();
     final List<Color> bgGradient = _getAvatarGradient();
 
-    return Scaffold(
-      backgroundColor: bgGradient.last,
-      resizeToAvoidBottomInset: true,
-      body: SafeArea(
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: bgGradient,
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
+    return Directionality(
+      textDirection: TextDirection.rtl, // Added for RTL
+      child: Scaffold(
+        backgroundColor: bgGradient.last,
+        resizeToAvoidBottomInset: true,
+        body: SafeArea(
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: bgGradient,
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
             ),
-          ),
-          child: SingleChildScrollView(
-            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    RichText(
-                      text: TextSpan(
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: 'Comic Sans MS',
-                        ),
-                        children: [
-                          TextSpan(
-                            text: 'K',
-                            style: TextStyle(
-                              color: _selectedAvatarName == 'SpongeBob'
-                                  ? const Color.fromARGB(255, 66, 66, 66)
-                                  : Colors.yellow,
-                            ),
-                          ),
-                          TextSpan(
-                              text: 'iddo',
-                              style: TextStyle(color: Colors.white)),
-                          TextSpan(
-                            text: 'A',
-                            style: TextStyle(
-                              color: _selectedAvatarName == 'SpongeBob'
-                                  ? const Color.fromARGB(255, 66, 66, 66)
-                                  : Colors.yellow,
-                            ),
-                          ),
-                          TextSpan(
-                              text: 'i', style: TextStyle(color: Colors.white)),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 20),
-                ScaleTransition(
-                  scale: _avatarScale,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: mainColor, width: 4),
-                      boxShadow: [
-                        BoxShadow(
-                          color: mainColor.withOpacity(0.4),
-                          blurRadius: 10,
-                          spreadRadius: 2,
-                        )
-                      ],
-                    ),
-                    padding: EdgeInsets.all(4),
-                    child: CircleAvatar(
-                      radius: 60,
-                      backgroundImage: AssetImage(_selectedAvatar),
-                    ),
-                  ),
-                ),
-                SizedBox(height: 10),
-                Text(
-                  _selectedAvatarName,
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                Lottie.asset(
-                  'assets/bouncing_ball.json',
-                  height: 100,
-                ),
-                Text('Choose your character:'),
-                SizedBox(height: 10),
-                SizedBox(
-                  height: 100,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: _avatars.length,
-                    itemBuilder: (context, index) {
-                      final avatar = _avatars[index];
-                      final isSelected = avatar['imagePath'] == _selectedAvatar;
-
-                      return GestureDetector(
-                        onTap: () async {
-                          setState(() {
-                            _selectedAvatar = avatar['imagePath'];
-                            _selectedAvatarName = avatar['name'];
-                            _selectedVoicePath = avatar['voicePath'];
-                          });
-                          await AvatarSettings.saveAvatar(
-                            _selectedAvatarName,
-                            _selectedAvatar,
-                            _selectedVoicePath,
-                          );
-                        },
-                        child: Container(
-                          margin: EdgeInsets.symmetric(horizontal: 8),
-                          padding: EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: isSelected ? avatar['color'] : Colors.transparent,
-                              width: 3,
-                            ),
-                          ),
-                          child: CircleAvatar(
-                            radius: 40,
-                            backgroundImage: AssetImage(avatar['imagePath']),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                SizedBox(height: 30),
-                Form(
-                  key: _formKey,
-                  child: Column(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      TextFormField(
-                        controller: _firstNameController,
-                        decoration: _buildInputDecoration('First Name', Icons.person, mainColor),
-                        validator: (value) => value!.isEmpty ? 'Required' : null,
-                      ),
-                      SizedBox(height: 15),
-                      TextFormField(
-                        controller: _lastNameController,
-                        decoration: _buildInputDecoration('Last Name', Icons.person_outline, mainColor),
-                        validator: (value) => value!.isEmpty ? 'Required' : null,
-                      ),
-                      SizedBox(height: 15),
-                      TextFormField(
-                        controller: _dobController,
-                        readOnly: true,
-                        onTap: _selectDate,
-                        decoration: _buildInputDecoration('Date of Birth', Icons.cake, mainColor),
-                      ),
-                      SizedBox(height: 30),
-                      ElevatedButton(
-                        onPressed: _saveProfile,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: mainColor,
-                          elevation: 4,
-                          shadowColor: mainColor.withOpacity(0.5),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(25),
+                      RichText(
+                        text: TextSpan(
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Comic Sans MS',
                           ),
+                          children: [
+                            TextSpan(
+                              text: 'K',
+                              style: TextStyle(
+                                color: _selectedAvatarName == 'SpongeBob'
+                                    ? const Color.fromARGB(255, 66, 66, 66)
+                                    : Colors.yellow,
+                              ),
+                            ),
+                            TextSpan(
+                                text: 'iddo',
+                                style: TextStyle(color: Colors.white)),
+                            TextSpan(
+                              text: 'A',
+                              style: TextStyle(
+                                color: _selectedAvatarName == 'SpongeBob'
+                                    ? const Color.fromARGB(255, 66, 66, 66)
+                                    : Colors.yellow,
+                              ),
+                            ),
+                            TextSpan(
+                                text: 'i', style: TextStyle(color: Colors.white)),
+                          ],
                         ),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 14.0),
-                          child: Text(
-                            'Save Profile',
-                            style: TextStyle(color: Colors.white, fontSize: 16),
-                          ),
-                        ),
+                        textDirection: TextDirection.ltr, // KiddoAI is LTR
                       ),
                     ],
                   ),
-                ),
-                SizedBox(height: 20),
-                Card(
-                  elevation: 4,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
+                  SizedBox(height: 20),
+                  ScaleTransition(
+                    scale: _avatarScale,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: mainColor, width: 4),
+                        boxShadow: [
+                          BoxShadow(
+                            color: mainColor.withOpacity(0.4),
+                            blurRadius: 10,
+                            spreadRadius: 2,
+                          )
+                        ],
+                      ),
+                      padding: EdgeInsets.all(4),
+                      child: CircleAvatar(
+                        radius: 60,
+                        backgroundImage: AssetImage(_selectedAvatar),
+                      ),
+                    ),
                   ),
-                  child: Padding(
-                    padding: EdgeInsets.all(16),
+                  SizedBox(height: 10),
+                  Text(
+                    _selectedAvatarName,
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    textDirection: TextDirection.rtl,
+                  ),
+                  Lottie.asset(
+                    'assets/bouncing_ball.json',
+                    height: 100,
+                  ),
+                  Text(
+                    'اختر شخصيتك!', // Translated: Choose your character:
+                    textDirection: TextDirection.rtl,
+                  ),
+                  SizedBox(height: 10),
+                  SizedBox(
+                    height: 100,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      reverse: true, // Reversed for RTL
+                      itemCount: _avatars.length,
+                      itemBuilder: (context, index) {
+                        final avatar = _avatars[index];
+                        final isSelected = avatar['imagePath'] == _selectedAvatar;
+
+                        return GestureDetector(
+                          onTap: () async {
+                            setState(() {
+                              _selectedAvatar = avatar['imagePath'];
+                              _selectedAvatarName = avatar['name'];
+                              _selectedVoicePath = avatar['voicePath'];
+                            });
+                            await AvatarSettings.saveAvatar(
+                              _selectedAvatarName,
+                              _selectedAvatar,
+                              _selectedVoicePath,
+                            );
+                          },
+                          child: Container(
+                            margin: EdgeInsets.symmetric(horizontal: 8),
+                            padding: EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: isSelected ? avatar['color'] : Colors.transparent,
+                                width: 3,
+                              ),
+                            ),
+                            child: CircleAvatar(
+                              radius: 40,
+                              backgroundImage: AssetImage(avatar['imagePath']),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  SizedBox(height: 30),
+                  Form(
+                    key: _formKey,
                     child: Column(
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            ElevatedButton.icon(
-                              onPressed: _isProcessing ? null : _takePicture,
-                              icon: Icon(Icons.camera_alt),
-                              label: Text('Camera'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: mainColor,
-                                foregroundColor: Colors.white,
-                              ),
-                            ),
-                            ElevatedButton.icon(
-                              onPressed: _isProcessing
-                                  ? null
-                                  : () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => WhiteboardScreen(
-                                            onImageSaved: (imagePath) {
-                                              setState(() => _isProcessing = true);
-                                              _processImage(File(imagePath));
-                                            },
-                                            avatarImagePath: _selectedAvatar,
-                                            avatarColor: mainColor,
-                                            avatarGradient: bgGradient,
-                                          ),
-                                        ),
-                                      );
-                                    },
-                              icon: Icon(Icons.brush),
-                              label: Text('Whiteboard'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: mainColor,
-                                foregroundColor: Colors.white,
-                              ),
-                            ),
-                          ],
+                        TextFormField(
+                          controller: _firstNameController,
+                          decoration: _buildInputDecoration(
+                            'الاسم الأول', // Translated: First Name
+                            Icons.person,
+                            mainColor,
+                          ),
+                          validator: (value) => value!.isEmpty ? 'مطلوب' : null, // Translated: Required
+                          textDirection: TextDirection.rtl,
+                          textAlign: TextAlign.right, // Added for RTL
                         ),
-                        if (_isProcessing)
-                          Padding(
-                            padding: EdgeInsets.only(top: 16),
-                            child: CircularProgressIndicator(),
+                        SizedBox(height: 15),
+                        TextFormField(
+                          controller: _lastNameController,
+                          decoration: _buildInputDecoration(
+                            'الاسم الأخير', // Translated: Last Name
+                            Icons.person_outline,
+                            mainColor,
                           ),
-                        if (_recognizedText != null && !_isProcessing)
-                          Padding(
-                            padding: EdgeInsets.only(top: 16),
-                            child: Text(
-                              'Recognized Text: $_recognizedText',
-                              style: TextStyle(fontSize: 16),
-                              textAlign: TextAlign.center,
+                          validator: (value) => value!.isEmpty ? 'مطلوب' : null, // Translated: Required
+                          textDirection: TextDirection.rtl,
+                          textAlign: TextAlign.right, // Added for RTL
+                        ),
+                        SizedBox(height: 15),
+                        TextFormField(
+                          controller: _dobController,
+                          readOnly: true,
+                          onTap: _selectDate,
+                          decoration: _buildInputDecoration(
+                            'تاريخ الميلاد', // Translated: Date of Birth
+                            Icons.cake,
+                            mainColor,
+                          ),
+                          textDirection: TextDirection.rtl,
+                          textAlign: TextAlign.right, // Added for RTL
+                        ),
+                        SizedBox(height: 30),
+                        ElevatedButton(
+                          onPressed: _saveProfile,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: mainColor,
+                            elevation: 4,
+                            shadowColor: mainColor.withOpacity(0.5),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(25),
                             ),
                           ),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 14.0),
+                            child: Text(
+                              'حفظ الملف الشخصي', // Translated: Save Profile
+                              style: TextStyle(color: Colors.white, fontSize: 16),
+                              textDirection: TextDirection.rtl,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                ),
-              ],
+                  SizedBox(height: 20),
+                  Card(
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              ElevatedButton.icon(
+                                onPressed: _isProcessing ? null : _takePicture,
+                                icon: Icon(Icons.camera_alt),
+                                label: Text(
+                                  'الكاميرا', // Translated: Camera
+                                  textDirection: TextDirection.rtl,
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: mainColor,
+                                  foregroundColor: Colors.white,
+                                ),
+                              ),
+                              ElevatedButton.icon(
+                                onPressed: _isProcessing
+                                    ? null
+                                    : () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => WhiteboardScreen(
+                                              onImageSaved: (imagePath) {
+                                                setState(() => _isProcessing = true);
+                                                _processImage(File(imagePath));
+                                              },
+                                              avatarImagePath: _selectedAvatar,
+                                              avatarColor: mainColor,
+                                              avatarGradient: bgGradient,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                icon: Icon(Icons.brush),
+                                label: Text(
+                                  'السبورة', // Translated: Whiteboard
+                                  textDirection: TextDirection.rtl,
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: mainColor,
+                                  foregroundColor: Colors.white,
+                                ),
+                              ),
+                            ].reversed.toList(), // Reversed for RTL
+                          ),
+                          if (_isProcessing)
+                            Padding(
+                              padding: EdgeInsets.only(top: 16),
+                              child: CircularProgressIndicator(),
+                            ),
+                          if (_recognizedText != null && !_isProcessing)
+                            Padding(
+                              padding: EdgeInsets.only(top: 16),
+                              child: Text(
+                                'النص المعترف به: $_recognizedText', // Translated: Recognized Text
+                                style: TextStyle(fontSize: 16),
+                                textAlign: TextAlign.center,
+                                textDirection: TextDirection.rtl,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
-      ),
-      bottomNavigationBar: BottomNavBar(
-        threadId: widget.threadId,
-        currentIndex: 3,
+        bottomNavigationBar: BottomNavBar(
+          threadId: widget.threadId,
+          currentIndex: 3,
+        ),
       ),
     );
   }

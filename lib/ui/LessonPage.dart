@@ -14,7 +14,6 @@ import '../utils/constants.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import 'dart:ui' show ImageFilter; // Needed for blur effect
 
-
 class LessonsPage extends StatefulWidget {
   final String subjectName;
 
@@ -54,7 +53,7 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
   List<TargetFocus> targets = [];
 
   // --- Tutorial Keys ---
-  // Key for the main header section ("Let's Learn Together!")
+  // Key for the main header section
   final GlobalKey _keyHeader = GlobalKey();
   // Key for the "Start Activity" button of the first lesson item
   final GlobalKey _keyFirstLessonActivityButton = GlobalKey();
@@ -97,6 +96,12 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
     'History': 'https://img.freepik.com/free-vector/hand-drawn-history-background_23-2148161527.jpg',
     'Art': 'https://img.freepik.com/free-vector/hand-drawn-art-background_23-2149483554.jpg',
     'Music': 'https://img.freepik.com/free-vector/hand-drawn-music-background_23-2148523557.jpg',
+    'رياضيات': 'https://img.freepik.com/free-vector/hand-drawn-math-background_23-2148157511.jpg',
+    'علوم': 'https://img.freepik.com/free-vector/hand-drawn-science-background_23-2148499325.jpg',
+    'انجليزي': 'https://img.freepik.com/free-vector/hand-drawn-english-background_23-2149483602.jpg',
+    'تاريخ': 'https://img.freepik.com/free-vector/hand-drawn-history-background_23-2148161527.jpg',
+    'فن': 'https://img.freepik.com/free-vector/hand-drawn-art-background_23-2149483554.jpg',
+    'موسيقى': 'https://img.freepik.com/free-vector/hand-drawn-music-background_23-2148523557.jpg',
   };
 
   String _getSubjectBackground() {
@@ -125,8 +130,7 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
         _isPlayingAudio = (state == PlayerState.playing);
       });
     });
-     // --- Tutorial Initialization ---
-    // Check if the tutorial needs to be shown when the page loads
+    // --- Tutorial Initialization ---
     _checkIfTutorialShouldBeShown();
     // --- End Tutorial Initialization ---
   }
@@ -138,11 +142,9 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
     _audioPlayer.dispose();
     _chatController.dispose();
 
- // --- Tutorial Dispose ---
-    // Dismiss the tutorial if it's showing when the page is disposed
-    // Note: tutorial_coach_mark might handle this internally, but it's good practice.
-    if (tutorialCoachMark?.isShowing ?? false) {
-       tutorialCoachMark.finish();
+    // --- Tutorial Dispose ---
+    if (tutorialCoachMark.isShowing) {
+      tutorialCoachMark.finish();
     }
     // --- End Tutorial Dispose ---
 
@@ -184,7 +186,7 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
                 await Future.delayed(const Duration(seconds: 1));
               }
             } else {
-              throw Exception('Error checking status for part $currentPart');
+              throw Exception('خطأ في التحقق من حالة الجزء $currentPart'); // Translated
             }
           }
           await _audioPlayer.play(UrlSource(audioUrl));
@@ -192,10 +194,10 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
           currentPart++;
         }
       } else {
-        print("Error initializing voice: ${response.body}");
+        print("خطأ في تهيئة الصوت: ${response.body}"); // Translated
       }
     } catch (e) {
-      print("Error in voice initialization/playback: $e");
+      print("خطأ في تهيئة الصوت/التشغيل: $e"); // Translated
     }
   }
 
@@ -203,29 +205,23 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
   //  Chatbot Logic
   // =========================
 
-  /// Called when user clicks "Learn". Creates a new thread, opens chatbot, and sends the first message.
   Future<void> _teachLesson(String lessonName, String subjectName) async {
     setState(() {
       _isLoading = true;
       _messages.clear();
-      _showChatbot = false; // reset to hide, then show after success
+      _showChatbot = false;
     });
 
     try {
-      // 1) Create new thread
       final newThreadId = await LessonsService().createThread();
-
-      // 2) Save thread in SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('threadId', newThreadId);
 
-      // 3) Show chatbot UI
       setState(() {
         _showChatbot = true;
         _isLoading = false;
       });
 
-      // 4) Construct and send initial message
       String initialMessage = "اشرحلي درس $lessonName في $subjectName";
       await _sendMessage(initialMessage);
     } catch (e) {
@@ -234,38 +230,36 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Error creating thread: $e"),
+          content: Text(
+            "خطأ في إنشاء المحادثة: $e", // Translated
+            textDirection: TextDirection.rtl,
+          ),
           backgroundColor: Colors.red.shade700,
         ),
       );
     }
   }
 
-  /// Sends a message (user input) to the server, awaits response, and updates the chat.
   Future<void> _sendMessage(String userText) async {
     if (userText.trim().isEmpty) return;
 
-    // 1) Add user message locally
     setState(() {
       _messages.add({"sender": "user", "text": userText});
       _chatController.clear();
     });
 
-    // 2) Retrieve thread ID from local storage
     final prefs = await SharedPreferences.getInstance();
     final threadId = prefs.getString('threadId') ?? '';
     if (threadId.isEmpty) {
-      // No thread => show error in chat
       setState(() {
         _messages.add({
           "sender": "assistant",
-          "text": "No threadId found. Please login again."
+          "text": "لم يتم العثور على معرّف المحادثة. الرجاء تسجيل الدخول مرة أخرى." // Translated
         });
       });
       return;
     }
 
-    // 3) Send user message to server
     final url = Uri.parse('https://b6dd-41-62-239-187.ngrok-free.app/teach');
     try {
       final response = await http.post(
@@ -281,26 +275,23 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
         final decoded = jsonDecode(response.body);
         String botReply = "";
 
-        // If the JSON has a "response" key, use that; otherwise, fallback to raw body
         if (decoded is Map && decoded.containsKey('response')) {
-          botReply = decoded['response'] as String? ?? "No response found.";
+          botReply = decoded['response'] as String? ?? "لم يتم العثور على رد.";
         } else {
           botReply = response.body;
         }
 
-        // 4) Add assistant response to chat
         setState(() {
           _messages.add({"sender": "assistant", "text": botReply});
         });
 
         // Optionally use TTS:
         // _initializeVoice(botReply);
-
       } else {
         setState(() {
           _messages.add({
             "sender": "assistant",
-            "text": "Oops, failed to get response from server."
+            "text": "عذرًا، فشل في الحصول على رد من الخادم." // Translated
           });
         });
       }
@@ -308,7 +299,7 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
       setState(() {
         _messages.add({
           "sender": "assistant",
-          "text": "Error sending message: $e"
+          "text": "خطأ في إرسال الرسالة: $e" // Translated
         });
       });
     }
@@ -326,30 +317,30 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
     );
 
     final activityUrl = CurrentIP + ":8083/KiddoAI/Activity/saveProblem";
-    final activityPageUrl = CurrentReactIP +":8080/";
-    
- bool isActivityReady = false;
+    final activityPageUrl = CurrentReactIP + ":8080/";
+
+    bool isActivityReady = false;
 
     try {
-         final prefs = await SharedPreferences.getInstance();
-        final response = await http.post(
-      Uri.parse(activityUrl),
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: jsonEncode({
-        "lesson": lessonName,
-        "subject": subjectName,
-        "level": level,
-      }), 
-        );
-        final react_run = await http.get(Uri.parse(ngrokUrl +"/openActivity"));
+      final prefs = await SharedPreferences.getInstance();
+      final response = await http.post(
+        Uri.parse(activityUrl),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode({
+          "lesson": lessonName,
+          "subject": subjectName,
+          "level": level,
+        }),
+      );
+      final react_run = await http.get(Uri.parse(ngrokUrl + "/openActivity"));
 
-        if (response.statusCode == 200 && react_run.statusCode == 200) {
-          isActivityReady = true;
-        } else {
-          await Future.delayed(Duration(seconds: 2));
-        }
+      if (response.statusCode == 200 && react_run.statusCode == 200) {
+        isActivityReady = true;
+      } else {
+        await Future.delayed(Duration(seconds: 2));
+      }
 
       Navigator.pop(context);
 
@@ -363,7 +354,10 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Error loading activity: $e"),
+          content: Text(
+            "خطأ في تحميل النشاط: $e", // Translated
+            textDirection: TextDirection.rtl,
+          ),
           backgroundColor: Colors.red.shade700,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -400,35 +394,16 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
         children: [
           // Header
           Container(
-            padding: const EdgeInsets.fromLTRB(20, 20, 10, 15),
+            padding: const EdgeInsets.fromLTRB(10, 20, 20, 15), // Reversed for RTL
             decoration: BoxDecoration(
               color: subjectColor.withOpacity(0.05),
               borderRadius: const BorderRadius.only(
+                topRight: Radius.circular(20), // Adjusted for RTL
                 topLeft: Radius.circular(20),
-                topRight: Radius.circular(20),
               ),
             ),
             child: Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: subjectColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(Icons.chat, color: subjectColor, size: 22),
-                ),
-                const SizedBox(width: 15),
-                Text(
-                  "Lesson Chatbot",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: subjectColor,
-                    fontFamily: 'Comic Sans MS',
-                  ),
-                ),
-                const Spacer(),
                 IconButton(
                   icon: Icon(Icons.close, color: Colors.grey.shade700),
                   onPressed: () {
@@ -438,7 +413,27 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
                     });
                   },
                 ),
-              ],
+                const Spacer(),
+                Text(
+                  "روبوت الدرس", // Translated: Lesson Chatbot
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: subjectColor,
+                    fontFamily: 'Comic Sans MS',
+                  ),
+                  textDirection: TextDirection.rtl,
+                ),
+                const SizedBox(width: 15),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: subjectColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(Icons.chat, color: subjectColor, size: 22),
+                ),
+              ].reversed.toList(), // Reversed for RTL
             ),
           ),
 
@@ -451,7 +446,7 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
                 final msg = _messages[index];
                 final isUser = (msg["sender"] == "user");
                 return Align(
-                  alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+                  alignment: isUser ? Alignment.centerLeft : Alignment.centerRight, // Reversed for RTL
                   child: Container(
                     margin: const EdgeInsets.symmetric(vertical: 4),
                     padding: const EdgeInsets.all(10),
@@ -471,6 +466,7 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
                         color: Colors.black87,
                         fontFamily: 'Comic Sans MS',
                       ),
+                      textDirection: TextDirection.rtl,
                     ),
                   ),
                 );
@@ -486,22 +482,23 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
             ),
             child: Row(
               children: [
-                Expanded(
-                  child: TextField(
-                    controller: _chatController,
-                    decoration: const InputDecoration(
-                      hintText: "Type your question...",
-                      border: InputBorder.none,
-                    ),
-                    onSubmitted: (value) => _sendMessage(value),
-                    style: const TextStyle(fontFamily: 'Comic Sans MS'),
-                  ),
-                ),
                 IconButton(
                   icon: Icon(Icons.send, color: subjectColor),
                   onPressed: () => _sendMessage(_chatController.text),
                 ),
-              ],
+                Expanded(
+                  child: TextField(
+                    controller: _chatController,
+                    decoration: const InputDecoration(
+                      hintText: "اكتب سؤالك...", // Translated: Type your question...
+                      border: InputBorder.none,
+                    ),
+                    onSubmitted: (value) => _sendMessage(value),
+                    style: const TextStyle(fontFamily: 'Comic Sans MS'),
+                    textDirection: TextDirection.rtl,
+                  ),
+                ),
+              ].reversed.toList(), // Reversed for RTL
             ),
           ),
         ],
@@ -509,50 +506,41 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
     );
   }
 
-  
   // --- Tutorial Functions ---
 
-  /// Checks SharedPreferences to see if the tutorial should be shown.
   void _checkIfTutorialShouldBeShown() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    // Default to 'false' if the key doesn't exist
     bool tutorialSeen = prefs.getBool(_tutorialPreferenceKey) ?? false;
 
-    // If tutorial hasn't been seen, initialize and schedule it to show
     if (!tutorialSeen) {
-      _initTargets(); // Prepare the tutorial steps
+      _initTargets();
 
-      // Ensure the UI frame is rendered before trying to find widgets
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        // Add a small delay to ensure dynamic list items are built
         Future.delayed(const Duration(milliseconds: 500), () {
-           // Check if the widget is still mounted before showing
-           if (mounted) {
-              _showTutorial();
-           }
+          if (mounted) {
+            _showTutorial();
+          }
         });
       });
     }
   }
 
-  /// Defines the steps (TargetFocus) for the tutorial.
   void _initTargets() {
-    targets.clear(); // Clear previous targets if any
+    targets.clear();
 
     // Target 1: Header
     targets.add(
       TargetFocus(
         identify: "header",
         keyTarget: _keyHeader,
-        alignSkip: Alignment.topRight,
+        alignSkip: Alignment.topLeft, // Adjusted for RTL
         enableOverlayTab: true,
         contents: [
           TargetContent(
             align: ContentAlign.bottom,
             child: _buildTutorialContent(
-             title: "مرحبًا أيها المستكشف!",
-          description: "هذا يعرض الموضوع الذي أنت على وشك تعلمه. مستعد للمتعة؟",
-
+              title: "مرحبًا أيها المستكشف!",
+              description: "هذا يعرض الموضوع الذي أنت على وشك تعلمه. مستعد للمتعة؟",
             ),
           ),
         ],
@@ -561,20 +549,19 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
       ),
     );
 
-    // Target 2: Start Activity Button (on the first lesson)
-    // Note: This relies on _keyFirstLessonActivityButton being assigned correctly in build()
+    // Target 2: Start Activity Button
     targets.add(
       TargetFocus(
         identify: "startActivityButton",
         keyTarget: _keyFirstLessonActivityButton,
-        alignSkip: Alignment.topRight,
+        alignSkip: Alignment.topLeft, // Adjusted for RTL
         enableOverlayTab: true,
         contents: [
           TargetContent(
-            align: ContentAlign.top, // Show description above the button
+            align: ContentAlign.top,
             child: _buildTutorialContent(
-             title: "ابدأ نشاطًا!",
-              description: "اضغط هنا للانطلاق في لعبة ممتعة أو تحدي لهذا الدرس! 🎉",               
+              title: "ابدأ نشاطًا!",
+              description: "اضغط هنا للانطلاق في لعبة ممتعة أو تحدي لهذا الدرس! 🎉",
             ),
           ),
         ],
@@ -583,19 +570,18 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
       ),
     );
 
-    // Target 3: Learn Button (on the first lesson)
-    // Note: This relies on _keyFirstLessonLearnButton being assigned correctly in build()
+    // Target 3: Learn Button
     targets.add(
       TargetFocus(
         identify: "learnButton",
         keyTarget: _keyFirstLessonLearnButton,
-        alignSkip: Alignment.topLeft,
+        alignSkip: Alignment.topRight, // Adjusted for RTL
         enableOverlayTab: true,
         contents: [
           TargetContent(
-            align: ContentAlign.top, // Show description above the button
+            align: ContentAlign.top,
             child: _buildTutorialContent(
-             title: "تعلم مع الروبوت!",
+              title: "تعلّم مع الروبوت!",
               description: "تحتاج إلى مساعدة في الفهم؟ اضغط هنا للدردشة مع روبوتنا الودود! 🤖",
             ),
           ),
@@ -605,55 +591,55 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
       ),
     );
 
-     // Target 4: Profile Icon
+    // Target 4: Profile Icon
     targets.add(
       TargetFocus(
         identify: "profileIcon",
         keyTarget: _keyProfileIcon,
-        alignSkip: Alignment.bottomLeft,
+        alignSkip: Alignment.bottomRight, // Adjusted for RTL
         enableOverlayTab: true,
         contents: [
           TargetContent(
             align: ContentAlign.bottom,
             child: _buildTutorialContent(
-             title: "ملفك الشخصي!",
-            description: "تحقق من تقدمك وإعداداتك هنا! ✨",
+              title: "ملفك الشخصي!",
+              description: "تحقق من تقدمك وإعداداتك هنا! ✨",
             ),
           ),
         ],
-        shape: ShapeLightFocus.Circle, // Circle shape for the icon
+        shape: ShapeLightFocus.Circle,
       ),
     );
   }
 
- /// Builds the content widget displayed for each tutorial step.
   Widget _buildTutorialContent({required String title, required String description}) {
     return Container(
       padding: const EdgeInsets.all(16.0),
-      margin: const EdgeInsets.only(bottom: 20.0, left: 20.0, right: 20.0), // Add margin
+      margin: const EdgeInsets.only(bottom: 20.0, right: 20.0, left: 20.0), // Adjusted for RTL
       decoration: BoxDecoration(
-        color: Colors.deepPurple, // Fun color for kids
+        color: Colors.deepPurple,
         borderRadius: BorderRadius.circular(12.0),
-        boxShadow: const [ // Add a subtle shadow
-           BoxShadow(
-             color: Colors.black26,
-             blurRadius: 8,
-             offset: Offset(0, 4),
-           )
-        ]
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 8,
+            offset: Offset(0, 4),
+          )
+        ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.end, // Adjusted for RTL
         children: <Widget>[
           Text(
             title,
             style: const TextStyle(
               fontWeight: FontWeight.bold,
-              color: Colors.yellowAccent, // Bright title color
+              color: Colors.yellowAccent,
               fontSize: 20,
-              fontFamily: 'Comic Sans MS', // Use consistent fun font
+              fontFamily: 'Comic Sans MS',
             ),
+            textDirection: TextDirection.rtl,
           ),
           const SizedBox(height: 8.0),
           Text(
@@ -661,66 +647,68 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
             style: const TextStyle(
               color: Colors.white,
               fontSize: 16,
-              fontFamily: 'Comic Sans MS', // Use consistent fun font
+              fontFamily: 'Comic Sans MS',
             ),
+            textDirection: TextDirection.rtl,
           ),
         ],
       ),
     );
   }
 
-  /// Creates and shows the tutorial coach mark sequence.
   void _showTutorial() {
-    // Ensure targets are not empty and keys are likely available
-     if (targets.isEmpty || _keyHeader.currentContext == null) {
-       print("Tutorial aborted: Targets not ready or header context missing.");
-       return;
-     }
+    if (targets.isEmpty || _keyHeader.currentContext == null) {
+      print("تم إلغاء البرنامج التعليمي: الأهداف غير جاهزة أو سياق العنوان مفقود."); // Translated
+      return;
+    }
 
     tutorialCoachMark = TutorialCoachMark(
       targets: targets,
       colorShadow: Colors.black.withOpacity(0.8),
-      textSkip: "SKIP",
-      paddingFocus: 5, // Smaller padding around highlight
+      textSkip: "تخطَ", // Translated: SKIP
+      paddingFocus: 5,
       opacityShadow: 0.8,
-      imageFilter: ImageFilter.blur(sigmaX: 5, sigmaY: 5), // Apply blur
-      skipWidget: Container( // Custom Skip Button
-         padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
-         decoration: BoxDecoration(
-            color: Colors.redAccent,
-            borderRadius: BorderRadius.circular(20),
-         ),
-         child: const Text("Skip All", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+      imageFilter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+      skipWidget: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.redAccent,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: const Text(
+          "تخطَ الكل", // Translated: Skip All
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          textDirection: TextDirection.rtl,
+        ),
       ),
       onFinish: () {
-        print("Tutorial Finished");
-        _markTutorialAsSeen(); // Mark as seen when finished
+        print("انتهى البرنامج التعليمي"); // Translated
+        _markTutorialAsSeen();
       },
       onClickTarget: (target) {
         print('onClickTarget: ${target.identify}');
       },
       onClickTargetWithTapPosition: (target, tapDetails) {
-        print("target: ${target.identify}");
-        print("clicked at position local: ${tapDetails.localPosition} - global: ${tapDetails.globalPosition}");
+        print("الهدف: ${target.identify}"); // Translated
+        print("تم النقر عند الموضع المحلي: ${tapDetails.localPosition} - العام: ${tapDetails.globalPosition}"); // Translated
       },
       onClickOverlay: (target) {
         print('onClickOverlay: ${target.identify}');
       },
       onSkip: () {
-        print("Tutorial Skipped");
-        _markTutorialAsSeen(); // Also mark as seen if skipped
-        return true; // Return true to allow skip
+        print("تم تخطي البرنامج التعليمي"); // Translated
+        _markTutorialAsSeen();
+        return true;
       },
-    )..show(context: context); // Use cascade notation for clarity
+    )..show(context: context);
   }
 
-  /// Saves a flag to SharedPreferences indicating the tutorial has been seen.
   void _markTutorialAsSeen() async {
-     SharedPreferences prefs = await SharedPreferences.getInstance();
-     await prefs.setBool(_tutorialPreferenceKey, true);
-     print("Marked '$_tutorialPreferenceKey' as seen.");
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_tutorialPreferenceKey, true);
+    print("تم وضع علامة '$_tutorialPreferenceKey' كمشاهدة."); // Translated
   }
-   // --- End Tutorial Functions ---
+  // --- End Tutorial Functions ---
 
   // =========================
   //  Main Build
@@ -732,490 +720,478 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
     final IconData subjectIcon = _getSubjectIcon();
     final String backgroundImage = _getSubjectBackground();
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF2FFF0), // Light green background
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF4CAF50),
-        elevation: 0,
-        centerTitle: true,
-        title: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.yellow.shade200,
-            borderRadius: BorderRadius.circular(30),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.yellow.shade300.withOpacity(0.5),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Image.asset('assets/spongebob.png', height: 30),
-              const SizedBox(width: 8),
-              RichText(
-                text: const TextSpan(
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Comic Sans MS',
-                  ),
-                  children: [
-                    TextSpan(text: 'K', style: TextStyle(color: Colors.green)),
-                    TextSpan(text: 'iddo', style: TextStyle(color: Colors.black)),
-                    TextSpan(text: 'A', style: TextStyle(color: Colors.blue)),
-                    TextSpan(text: 'i', style: TextStyle(color: Colors.black)),
-                  ],
+    return Directionality(
+      textDirection: TextDirection.rtl, // Added for RTL
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF2FFF0),
+        appBar: AppBar(
+          backgroundColor: const Color(0xFF4CAF50),
+          elevation: 0,
+          centerTitle: true,
+          title: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.yellow.shade200,
+              borderRadius: BorderRadius.circular(30),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.yellow.shade300.withOpacity(0.5),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
                 ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: GestureDetector(
-              //Tutorial 
-               key: _keyProfileIcon,
-              onTap: () {
-                // Example: Navigate to profile page
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => ProfilePage(threadId: '')),
-                );
-              },
-              child: Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.yellow.shade400, width: 3),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Image.asset('assets/spongebob.png', height: 30),
+                const SizedBox(width: 8),
+                RichText(
+                  text: const TextSpan(
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Comic Sans MS',
                     ),
-                  ],
+                    children: [
+                      TextSpan(text: 'K', style: TextStyle(color: Colors.green)),
+                      TextSpan(text: 'iddo', style: TextStyle(color: Colors.black)),
+                      TextSpan(text: 'A', style: TextStyle(color: Colors.blue)),
+                      TextSpan(text: 'i', style: TextStyle(color: Colors.black)),
+                    ],
+                  ),
                 ),
-                child: const CircleAvatar(
-                  backgroundImage: AssetImage('assets/spongebob.png'),
-                  radius: 22,
-                ),
-              ),
+              ].reversed.toList(), // Reversed for RTL
             ),
           ),
-        ],
-      ),
-      body: Stack(
-        children: [
-          // Repeating SpongeBob background
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                image: backgroundImage.isNotEmpty
-                    ? DecorationImage(
-                        image: NetworkImage(backgroundImage),
-                        fit: BoxFit.cover,
-                        opacity: 0.05,
-                      )
-                    : null,
-              ),
-            ),
-          ),
-
-          // For a playful repeated pattern, if desired (comment out if not needed):
-          // Positioned.fill(
-          //   child: Container(
-          //     decoration: const BoxDecoration(
-          //       image: DecorationImage(
-          //         image: AssetImage('assets/spongebob.png'),
-          //         repeat: ImageRepeat.repeat,
-          //         opacity: 0.1,
-          //       ),
-          //     ),
-          //   ),
-          // ),
-
-          // Main scrollable content
-          CustomScrollView(
-            physics: const BouncingScrollPhysics(),
-            slivers: [
-              // If we are loading a new lesson thread, show a Sliver with a loading animation
-              if (_isLoading)
-                SliverToBoxAdapter(
-                  child: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(30.0),
-                      child: Column(
-                        children: [
-                          Lottie.network(
-                            'https://assets10.lottiefiles.com/packages/lf20_2LdL1k.json',
-                            height: 150,
-                            errorBuilder: (context, error, stackTrace) {
-                              return CircularProgressIndicator(
-                                color: subjectColor,
-                                strokeWidth: 3,
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 20),
-                          const Text(
-                            "Loading your lesson...",
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            "This might take a moment",
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey.shade600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-
-              // If chatbot is active, show it in a Sliver so it can scroll
-              if (_showChatbot)
-                SliverToBoxAdapter(
-                  child: SizedBox(
-                    height: MediaQuery.of(context).size.height * 0.6,
-                    child: _buildChatbotSection(subjectColor),
-                  ),
-                ),
-
-              // "Available Lessons" title
-              SliverToBoxAdapter(
+          actions: [
+            Padding(
+              padding: const EdgeInsets.only(left: 16), // Adjusted for RTL
+              child: GestureDetector(
+                key: _keyProfileIcon,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ProfilePage(threadId: '')),
+                  );
+                },
                 child: Container(
-                   // --- Assign Key: Header Tutorial  ---
-                  key: _keyHeader, // Assign key to the header container
-                  margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                  padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        subjectColor.withOpacity(0.9),
-                        subjectColor,
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(20),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.yellow.shade400, width: 3),
                     boxShadow: [
                       BoxShadow(
-                        color: subjectColor.withOpacity(0.4),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
                       ),
                     ],
                   ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              "Let's Learn Together!",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: 'Comic Sans MS',
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              "Explore lessons in ${widget.subjectName}",
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.9),
-                                fontSize: 16,
-                                fontFamily: 'Comic Sans MS',
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        width: 70,
-                        height: 70,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Lottie.asset(
-                          'assets/book_animation.json',
-                          width: 60,
-                          height: 60,
-                        ),
-                      ),
-                    ],
+                  child: const CircleAvatar(
+                    backgroundImage: AssetImage('assets/spongebob.png'),
+                    radius: 22,
                   ),
                 ),
               ),
-
-              // Lessons list
-              ValueListenableBuilder<List<Map<String, dynamic>>>(
-                valueListenable: _viewModel.lessons,
-                builder: (context, lessons, _) {
-                  if (lessons.isEmpty) {
-                    return SliverFillRemaining(
-                      child: Center(
+            ),
+          ],
+        ),
+        body: Stack(
+          children: [
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  image: backgroundImage.isNotEmpty
+                      ? DecorationImage(
+                          image: NetworkImage(backgroundImage),
+                          fit: BoxFit.cover,
+                          opacity: 0.05,
+                        )
+                      : null,
+                ),
+              ),
+            ),
+            CustomScrollView(
+              physics: const BouncingScrollPhysics(),
+              slivers: [
+                if (_isLoading)
+                  SliverToBoxAdapter(
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(30.0),
                         child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Lottie.network(
-                              'https://assets10.lottiefiles.com/packages/lf20_wnqlfojb.json',
+                              'https://assets10.lottiefiles.com/packages/lf20_2LdL1k.json',
                               height: 150,
                               errorBuilder: (context, error, stackTrace) {
-                                return const Icon(Icons.error, size: 50, color: Colors.red);
+                                return CircularProgressIndicator(
+                                  color: subjectColor,
+                                  strokeWidth: 3,
+                                );
                               },
                             ),
                             const SizedBox(height: 20),
-                            Text(
-                              'No lessons available yet!',
+                            const Text(
+                              "جارٍ تحميل درسك...", // Translated: Loading your lesson...
                               style: TextStyle(
                                 fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey.shade700,
-                                fontFamily: 'Comic Sans MS',
+                                fontWeight: FontWeight.w500,
+                                color: Colors.black87,
                               ),
+                              textDirection: TextDirection.rtl,
                             ),
                             const SizedBox(height: 10),
-                            ElevatedButton.icon(
-                              onPressed: () {
-                                setState(() {
-                                  _viewModel.fetchLessons(widget.subjectName);
-                                });
-                              },
-                              icon: const Icon(Icons.refresh),
-                              label: Text("Refresh", style: const TextStyle(fontFamily: 'Comic Sans MS')),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: subjectColor,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
+                            Text(
+                              "قد يستغرق هذا لحظة", // Translated: This might take a moment
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey.shade600,
                               ),
+                              textDirection: TextDirection.rtl,
                             ),
                           ],
                         ),
                       ),
-                    );
-                  }
-
-                  return SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final lesson = lessons[index];
-                        final name = lesson['name'];
-                        final level = lesson['level'];
-
-                        // Staggered animation for each item
-                        final animation = Tween<double>(begin: 0.0, end: 1.0).animate(
-                          CurvedAnimation(
-                            parent: _listAnimationController,
-                            curve: Interval(
-                              (index / lessons.length) * 0.5,
-                              ((index + 1) / lessons.length) * 0.5 + 0.5,
-                              curve: Curves.easeOut,
-                            ),
+                    ),
+                  ),
+                if (_showChatbot)
+                  SliverToBoxAdapter(
+                    child: SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.6,
+                      child: _buildChatbotSection(subjectColor),
+                    ),
+                  ),
+                SliverToBoxAdapter(
+                  child: Container(
+                    key: _keyHeader,
+                    margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          subjectColor.withOpacity(0.9),
+                          subjectColor,
+                        ],
+                        begin: Alignment.topRight, // Adjusted for RTL
+                        end: Alignment.bottomLeft,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: subjectColor.withOpacity(0.4),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 70,
+                          height: 70,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            shape: BoxShape.circle,
                           ),
-                        );
-
-                        return AnimatedBuilder(
-                          animation: animation,
-                          builder: (context, child) {
-                            return Transform.translate(
-                              offset: Offset((1 - animation.value) * 100, 0),
-                              child: Opacity(
-                                opacity: animation.value,
-                                child: child,
-                              ),
-                            );
-                          },
-                          child: Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(16),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.05),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 4),
+                          child: Lottie.asset(
+                            'assets/book_animation.json',
+                            width: 60,
+                            height: 60,
+                          ),
+                        ),
+                        const SizedBox(width: 16), // Moved before Expanded for RTL
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.end, // Adjusted for RTL
+                            children: [
+                              const Text(
+                                "نتعلم معًا!", // Translated: Let's Learn Together!
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'Comic Sans MS',
                                 ),
-                              ],
-                              border: Border.all(
-                                color: Colors.grey.shade100,
-                                width: 1,
+                                textDirection: TextDirection.rtl,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                "استكشف الدروس في ${widget.subjectName}", // Translated
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.9),
+                                  fontSize: 16,
+                                  fontFamily: 'Comic Sans MS',
+                                ),
+                                textDirection: TextDirection.rtl,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ].reversed.toList(), // Reversed for RTL
+                    ),
+                  ),
+                ),
+                ValueListenableBuilder<List<Map<String, dynamic>>>(
+                  valueListenable: _viewModel.lessons,
+                  builder: (context, lessons, _) {
+                    if (lessons.isEmpty) {
+                      return SliverFillRemaining(
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Lottie.network(
+                                'https://assets10.lottiefiles.com/packages/lf20_wnqlfojb.json',
+                                height: 150,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return const Icon(Icons.error, size: 50, color: Colors.red);
+                                },
+                              ),
+                              const SizedBox(height: 20),
+                              Text(
+                                'لا توجد دروس متاحة بعد!', // Translated: No lessons available yet!
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey.shade700,
+                                  fontFamily: 'Comic Sans MS',
+                                ),
+                                textDirection: TextDirection.rtl,
+                              ),
+                              const SizedBox(height: 10),
+                              ElevatedButton.icon(
+                                onPressed: () {
+                                  setState(() {
+                                    _viewModel.fetchLessons(widget.subjectName);
+                                  });
+                                },
+                                icon: const Icon(Icons.refresh),
+                                label: Text(
+                                  "تحديث", // Translated: Refresh
+                                  style: const TextStyle(fontFamily: 'Comic Sans MS'),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: subjectColor,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
+
+                    return SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          final lesson = lessons[index];
+                          final name = lesson['name'];
+                          final level = lesson['level'];
+
+                          final animation = Tween<double>(begin: 0.0, end: 1.0).animate(
+                            CurvedAnimation(
+                              parent: _listAnimationController,
+                              curve: Interval(
+                                (index / lessons.length) * 0.5,
+                                ((index + 1) / lessons.length) * 0.5 + 0.5,
+                                curve: Curves.easeOut,
                               ),
                             ),
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
+                          );
+
+                          return AnimatedBuilder(
+                            animation: animation,
+                            builder: (context, child) {
+                              return Transform.translate(
+                                offset: Offset((1 - animation.value) * -100, 0), // Reversed for RTL
+                                child: Opacity(
+                                  opacity: animation.value,
+                                  child: child,
+                                ),
+                              );
+                            },
+                            child: Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
                                 borderRadius: BorderRadius.circular(16),
-                                onTap: () {
-                                  _checkAndOpenActivity(name, widget.subjectName, level);
-                                },
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Container(
-                                            width: 60,
-                                            height: 60,
-                                            decoration: BoxDecoration(
-                                              color: subjectColor.withOpacity(0.1),
-                                              borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.05),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                                border: Border.all(
+                                  color: Colors.grey.shade100,
+                                  width: 1,
+                                ),
+                              ),
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(16),
+                                  onTap: () {
+                                    _checkAndOpenActivity(name, widget.subjectName, level);
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.end, // Adjusted for RTL
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.end, // Adjusted for RTL
+                                                children: [
+                                                  Text(
+                                                    name,
+                                                    style: const TextStyle(
+                                                      fontSize: 16,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: Colors.black87,
+                                                      fontFamily: 'Comic Sans MS',
+                                                    ),
+                                                    textDirection: TextDirection.rtl,
+                                                  ),
+                                                  const SizedBox(height: 4),
+                                                  Row(
+                                                    children: [
+                                                      Text(
+                                                        "مبتدئ", // Translated: Beginner
+                                                        style: TextStyle(
+                                                          fontSize: 12,
+                                                          color: Colors.grey.shade600,
+                                                          fontFamily: 'Comic Sans MS',
+                                                        ),
+                                                        textDirection: TextDirection.rtl,
+                                                      ),
+                                                      const SizedBox(width: 4),
+                                                      const Icon(
+                                                        Icons.star,
+                                                        size: 14,
+                                                        color: Colors.amber,
+                                                      ),
+                                                      const SizedBox(width: 10),
+                                                      Container(
+                                                        width: 4,
+                                                        height: 4,
+                                                        decoration: BoxDecoration(
+                                                          color: Colors.grey.shade400,
+                                                          shape: BoxShape.circle,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(width: 10),
+                                                      Text(
+                                                        "10-15 دقيقة", // Translated: 10-15 min
+                                                        style: TextStyle(
+                                                          fontSize: 12,
+                                                          color: Colors.grey.shade600,
+                                                          fontFamily: 'Comic Sans MS',
+                                                        ),
+                                                        textDirection: TextDirection.rtl,
+                                                      ),
+                                                      const SizedBox(width: 4),
+                                                      Icon(
+                                                        Icons.access_time,
+                                                        size: 14,
+                                                        color: Colors.grey.shade600,
+                                                      ),
+                                                    ].reversed.toList(), // Reversed for RTL
+                                                  ),
+                                                ],
+                                              ),
                                             ),
-                                            child: Icon(
-                                              Icons.school,
-                                              color: subjectColor,
-                                              size: 30,
+                                            const SizedBox(width: 16),
+                                            Container(
+                                              width: 60,
+                                              height: 60,
+                                              decoration: BoxDecoration(
+                                                color: subjectColor.withOpacity(0.1),
+                                                borderRadius: BorderRadius.circular(12),
+                                              ),
+                                              child: Icon(
+                                                Icons.school,
+                                                color: subjectColor,
+                                                size: 30,
+                                              ),
                                             ),
-                                          ),
-                                          const SizedBox(width: 16),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  name,
-                                                  style: const TextStyle(
-                                                    fontSize: 16,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Colors.black87,
-                                                    fontFamily: 'Comic Sans MS',
+                                          ].reversed.toList(), // Reversed for RTL
+                                        ),
+                                        const SizedBox(height: 15),
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: ElevatedButton.icon(
+                                                key: index == 0 ? _keyFirstLessonLearnButton : null,
+                                                icon: const Icon(Icons.lightbulb_outline, size: 18),
+                                                label: Text(
+                                                  "تعلّم", // Translated: Learn
+                                                  style: const TextStyle(fontFamily: 'Comic Sans MS'),
+                                                ),
+                                                onPressed: () {
+                                                  _teachLesson(name, widget.subjectName);
+                                                },
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: subjectColor,
+                                                  foregroundColor: Colors.white,
+                                                  elevation: 0,
+                                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.circular(10),
                                                   ),
                                                 ),
-                                                const SizedBox(height: 4),
-                                                Row(
-                                                  children: [
-                                                    Icon(
-                                                      Icons.access_time,
-                                                      size: 14,
-                                                      color: Colors.grey.shade600,
-                                                    ),
-                                                    const SizedBox(width: 4),
-                                                    Text(
-                                                      "10-15 min",
-                                                      style: TextStyle(
-                                                        fontSize: 12,
-                                                        color: Colors.grey.shade600,
-                                                        fontFamily: 'Comic Sans MS',
-                                                      ),
-                                                    ),
-                                                    const SizedBox(width: 10),
-                                                    Container(
-                                                      width: 4,
-                                                      height: 4,
-                                                      decoration: BoxDecoration(
-                                                        color: Colors.grey.shade400,
-                                                        shape: BoxShape.circle,
-                                                      ),
-                                                    ),
-                                                    const SizedBox(width: 10),
-                                                    const Icon(
-                                                      Icons.star,
-                                                      size: 14,
-                                                      color: Colors.amber,
-                                                    ),
-                                                    const SizedBox(width: 4),
-                                                    Text(
-                                                      "Beginner",
-                                                      style: TextStyle(
-                                                        fontSize: 12,
-                                                        color: Colors.grey.shade600,
-                                                        fontFamily: 'Comic Sans MS',
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
+                                              ),
                                             ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 15),
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: OutlinedButton.icon(
-                                              // --- Assign Key: First Lesson Activity Button (Conditional) Tutorial  ---
-                                              key: index == 0 ? _keyFirstLessonActivityButton : null,
-                                              icon: const Icon(Icons.play_circle_outline, size: 18),
-                                              label: Text("Start Activity", style: const TextStyle(fontFamily: 'Comic Sans MS')),
-                                              onPressed: () {
-                                                _checkAndOpenActivity(name, widget.subjectName, level);
-                                              },
-                                              style: OutlinedButton.styleFrom(
-                                                foregroundColor: subjectColor,
-                                                side: BorderSide(color: subjectColor),
-                                                padding: const EdgeInsets.symmetric(vertical: 12),
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius: BorderRadius.circular(10),
+                                            const SizedBox(width: 10),
+                                            Expanded(
+                                              child: OutlinedButton.icon(
+                                                key: index == 0 ? _keyFirstLessonActivityButton : null,
+                                                icon: const Icon(Icons.play_circle_outline, size: 18),
+                                                label: Text(
+                                                  "ابدأ النشاط", // Translated: Start Activity
+                                                  style: const TextStyle(fontFamily: 'Comic Sans MS'),
+                                                ),
+                                                onPressed: () {
+                                                  _checkAndOpenActivity(name, widget.subjectName, level);
+                                                },
+                                                style: OutlinedButton.styleFrom(
+                                                  foregroundColor: subjectColor,
+                                                  side: BorderSide(color: subjectColor),
+                                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.circular(10),
+                                                  ),
                                                 ),
                                               ),
                                             ),
-                                          ),
-                                          const SizedBox(width: 10),
-                                          Expanded(
-                                            child: ElevatedButton.icon(
-                                              // --- Assign Key: First Lesson Learn Button (Conditional) Tutorial ---
-                                              key: index == 0 ? _keyFirstLessonLearnButton : null,
-                                              icon: const Icon(Icons.lightbulb_outline, size: 18),
-                                              label: Text("Learn", style: const TextStyle(fontFamily: 'Comic Sans MS')),
-                                              onPressed: () {
-                                                // Open the chatbot UI for this lesson
-                                                _teachLesson(name, widget.subjectName);
-                                              },
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: subjectColor,
-                                                foregroundColor: Colors.white,
-                                                elevation: 0,
-                                                padding: const EdgeInsets.symmetric(vertical: 12),
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius: BorderRadius.circular(10),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
+                                          ].reversed.toList(), // Reversed for RTL
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
-                        );
-                      },
-                      childCount: lessons.length,
-                    ),
-                  );
-                },
-              ),
-
-              // Bottom spacing
-              SliverToBoxAdapter(child: SizedBox(height: 30)),
-            ],
-          ),
-        ],
+                          );
+                        },
+                        childCount: lessons.length,
+                      ),
+                    );
+                  },
+                ),
+                SliverToBoxAdapter(child: SizedBox(height: 30)),
+              ],
+            ),
+          ],
+        ),
       ),
- 
     );
   }
 
@@ -1250,6 +1226,7 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
               color: Colors.grey.shade700,
               fontFamily: 'Comic Sans MS',
             ),
+            textDirection: TextDirection.rtl,
           ),
         ],
       ),

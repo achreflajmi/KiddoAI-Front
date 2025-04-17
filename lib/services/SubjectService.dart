@@ -9,12 +9,12 @@ class SubjectService {
 
   Future<List<String>> fetchSubjects() async {
     try {
-      // Retrieve the access token from SharedPreferences.
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('accessToken');
 
+      // Updated endpoint to use filtered subjects based on the user's grade.
       final response = await http.get(
-        Uri.parse('$baseUrl/Subject/all'),
+        Uri.parse('$baseUrl/users/subjects'),
         headers: {
           'Content-Type': 'application/json',
           if (token != null) 'Authorization': 'Bearer $token',
@@ -22,7 +22,7 @@ class SubjectService {
       );
 
       if (response.statusCode == 200) {
-        print('Response Body: ${response.body}');  // Log the raw response
+        print('Response Body: ${response.body}');
         final List<dynamic> data = json.decode(response.body);
         return data.map((subject) => subject['name'] as String).toList();
       } else {

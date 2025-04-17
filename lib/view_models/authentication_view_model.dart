@@ -22,7 +22,7 @@ class AuthenticationViewModel extends ChangeNotifier {
   Future<Map<String, dynamic>?> login(String email, String password) async {
     _setLoading(true);
     _setError(null);
-    
+
     try {
       final response = await _authService.login(email, password);
       return response;
@@ -34,14 +34,30 @@ class AuthenticationViewModel extends ChangeNotifier {
     }
   }
 
-  Future<Map<String, dynamic>?> signup(String nom, String prenom, String email, 
-      String password, String favoriteCharacter, String dateOfBirth, String parentPhoneNumber) async {
+  // Updated signup method now accepts the "classe" parameter.
+  Future<Map<String, dynamic>?> signup(
+      String nom,
+      String prenom,
+      String email,
+      String password,
+      String favoriteCharacter,
+      String dateOfBirth,
+      String parentPhoneNumber,
+      String classe) async {
     _setLoading(true);
     _setError(null);
-    
+
     try {
       final response = await _authService.signup(
-        nom, prenom, email, password, favoriteCharacter, dateOfBirth, parentPhoneNumber);
+        nom,
+        prenom,
+        email,
+        password,
+        favoriteCharacter,
+        dateOfBirth,
+        parentPhoneNumber,
+        classe,
+      );
       return response;
     } catch (e) {
       _setError(e.toString());

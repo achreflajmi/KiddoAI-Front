@@ -23,6 +23,10 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
   final TextEditingController _dateOfBirthController = TextEditingController();
   final TextEditingController _parentPhoneController = TextEditingController();
 
+  // List of classes and selected class.
+  final List<String> _classes = ["1st", "2nd", "3rd", "4th", "5th", "6th"];
+  String? _selectedClasse;
+
   // Login Controllers
   final TextEditingController _emailLoginController = TextEditingController();
   final TextEditingController _passwordLoginController = TextEditingController();
@@ -53,6 +57,19 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
 
   Future<void> _handleSignup(BuildContext context) async {
     if (!_signupFormKey.currentState!.validate()) return;
+    
+    // Ensure a class is selected
+    if (_selectedClasse == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'يرجى اختيار الصف', // Please select a grade
+            textDirection: TextDirection.rtl,
+          ),
+        ),
+      );
+      return;
+    }
 
     final viewModel = Provider.of<AuthenticationViewModel>(context, listen: false);
 
@@ -64,6 +81,7 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
       _favoriteCharacterController.text,
       _dateOfBirthController.text,
       _parentPhoneController.text,
+      _selectedClasse!, // Pass the selected class
     );
 
     if (response != null) {
@@ -78,7 +96,7 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'فشل إنشاء الحساب: ${viewModel.errorMessage}', // Translated: Signup failed
+            'فشل إنشاء الحساب: ${viewModel.errorMessage}', // Signup failed
             textDirection: TextDirection.rtl,
           ),
         ),
@@ -108,7 +126,7 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'فشل تسجيل الدخول: ${viewModel.errorMessage}', // Translated: Login failed
+            'فشل تسجيل الدخول: ${viewModel.errorMessage}', // Login failed
             textDirection: TextDirection.rtl,
           ),
         ),
@@ -121,7 +139,7 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
     return Consumer<AuthenticationViewModel>(
       builder: (context, viewModel, child) {
         return Directionality(
-          textDirection: TextDirection.rtl, // Added for RTL
+          textDirection: TextDirection.rtl,
           child: GestureDetector(
             onTap: () => FocusScope.of(context).unfocus(),
             child: Scaffold(
@@ -153,10 +171,9 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
                                     children: [
                                       _buildTabBar(context),
                                       SizedBox(height: 20),
+                                      // Height-limited container for TabBarView
                                       Container(
-                                        constraints: BoxConstraints(
-                                          maxHeight: MediaQuery.of(context).size.height * 0.7,
-                                        ),
+                                        height: MediaQuery.of(context).size.height * 0.85,
                                         child: TabBarView(
                                           controller: _tabController,
                                           children: [
@@ -174,7 +191,7 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
                         ),
                       ),
                     ),
-                  ].reversed.toList(), // Reversed for RTL
+                  ].reversed.toList(),
                 ),
               ),
             ),
@@ -233,9 +250,9 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
         indicatorColor: Colors.transparent,
         labelStyle: TextStyle(fontSize: 20),
         tabs: [
-          Tab(text: 'تسجيل الدخول'), // Translated: Sign In
-          Tab(text: 'إنشاء حساب'), // Translated: Sign Up
-        ].reversed.toList(), // Reversed for RTL
+          Tab(text: 'تسجيل الدخول'), // Sign In
+          Tab(text: 'إنشاء حساب'),   // Sign Up
+        ].reversed.toList(),
       ),
     );
   }
@@ -245,27 +262,27 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
       child: Form(
         key: _loginFormKey,
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.end, // Changed for RTL
+          crossAxisAlignment: CrossAxisAlignment.end,
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'ابدأ الآن!', // Translated: Let's get started!
+              'ابدأ الآن!', // "Let's get started!"
               style: Theme.of(context).textTheme.bodyLarge,
               textDirection: TextDirection.rtl,
             ),
             SizedBox(height: 24),
             _buildTextField(
               controller: _emailLoginController,
-              label: 'البريد الإلكتروني', // Translated: Email
+              label: 'البريد الإلكتروني', // Email
               keyboardType: TextInputType.emailAddress,
-              textDirection: TextDirection.ltr, // Email typically LTR
+              textDirection: TextDirection.ltr,
             ),
             SizedBox(height: 16),
             _buildTextField(
               controller: _passwordLoginController,
-              label: 'كلمة المرور', // Translated: Password
+              label: 'كلمة المرور', // Password
               obscureText: !_passwordVisible,
-              textDirection: TextDirection.ltr, // Password typically LTR
+              textDirection: TextDirection.ltr,
               suffixIcon: IconButton(
                 icon: Icon(
                   _passwordVisible ? Icons.visibility : Icons.visibility_off,
@@ -276,14 +293,14 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
             ),
             SizedBox(height: 24),
             _buildAuthButton(
-              text: 'تسجيل الدخول', // Translated: Sign In
+              text: 'تسجيل الدخول', // Sign In
               onPressed: () => _handleLogin(context),
               isLoading: viewModel.isLoading,
             ),
             TextButton(
               onPressed: () {},
               child: Text(
-                'هل نسيت كلمة المرور؟', // Translated: Forgot Password?
+                'هل نسيت كلمة المرور؟', // Forgot Password?
                 style: TextStyle(color: Color(0xFF049a02)),
                 textDirection: TextDirection.rtl,
               ),
@@ -299,39 +316,39 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
       child: Form(
         key: _signupFormKey,
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.end, // Changed for RTL
+          crossAxisAlignment: CrossAxisAlignment.end,
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'أنشئ حسابك', // Translated: Create your account
+              'أنشئ حسابك', // Create your account
               style: Theme.of(context).textTheme.bodyLarge,
               textDirection: TextDirection.rtl,
             ),
             SizedBox(height: 24),
             _buildTextField(
               controller: _prenomController,
-              label: 'الاسم الأول', // Translated: First Name
+              label: 'الاسم الأول', // First Name
               textDirection: TextDirection.rtl,
             ),
             SizedBox(height: 16),
             _buildTextField(
               controller: _nomController,
-              label: 'اسم العائلة', // Translated: Last Name
+              label: 'اسم العائلة', // Last Name
               textDirection: TextDirection.rtl,
             ),
             SizedBox(height: 16),
             _buildTextField(
               controller: _emailSignupController,
-              label: 'البريد الإلكتروني', // Translated: Email
+              label: 'البريد الإلكتروني', // Email
               keyboardType: TextInputType.emailAddress,
-              textDirection: TextDirection.ltr, // Email typically LTR
+              textDirection: TextDirection.ltr,
             ),
             SizedBox(height: 16),
             _buildTextField(
               controller: _passwordSignupController,
-              label: 'كلمة المرور', // Translated: Password
+              label: 'كلمة المرور', // Password
               obscureText: !_signupPasswordVisible,
-              textDirection: TextDirection.ltr, // Password typically LTR
+              textDirection: TextDirection.ltr,
               suffixIcon: IconButton(
                 icon: Icon(
                   _signupPasswordVisible ? Icons.visibility : Icons.visibility_off,
@@ -343,22 +360,24 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
             SizedBox(height: 16),
             _buildTextField(
               controller: _favoriteCharacterController,
-              label: 'الشخصية المفضلة', // Translated: Favorite Character
+              label: 'الشخصية المفضلة', // Favorite Character
               textDirection: TextDirection.rtl,
             ),
             SizedBox(height: 16),
             _buildTextField(
               controller: _dateOfBirthController,
-              label: 'تاريخ الميلاد', // Translated: Date of Birth
+              label: 'تاريخ الميلاد', // Date of Birth
               textDirection: TextDirection.rtl,
               readOnly: true,
               onTap: () async {
+                // Show date picker in Arabic (requires the MaterialApp to have localizations).
                 DateTime? pickedDate = await showDatePicker(
                   context: context,
                   initialDate: DateTime.now(),
                   firstDate: DateTime(1900),
                   lastDate: DateTime.now(),
-                  locale: const Locale('ar'), // Arabic date picker
+                  // "locale: const Locale('ar')" works now because localizations are provided:
+                  locale: const Locale('ar'),
                 );
                 if (pickedDate != null) {
                   _dateOfBirthController.text = "${pickedDate.toLocal()}".split(' ')[0];
@@ -368,13 +387,45 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
             SizedBox(height: 16),
             _buildTextField(
               controller: _parentPhoneController,
-              label: 'رقم هاتف الوالدين', // Translated: Parent Phone Number
+              label: 'رقم هاتف الوالدين', // Parent Phone Number
               keyboardType: TextInputType.phone,
-              textDirection: TextDirection.ltr, // Phone typically LTR
+              textDirection: TextDirection.ltr,
+            ),
+            SizedBox(height: 16),
+            // Dropdown for selecting the grade/class
+            DropdownButtonFormField<String>(
+              value: _selectedClasse,
+              decoration: InputDecoration(
+                labelText: 'الصف', // Grade/Class
+                filled: true,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+              items: _classes
+                  .map(
+                    (classe) => DropdownMenuItem(
+                      value: classe,
+                      child: Text(classe, textDirection: TextDirection.rtl),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedClasse = value;
+                });
+              },
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'يرجى اختيار الصف'; // Please select a grade
+                }
+                return null;
+              },
             ),
             SizedBox(height: 24),
             _buildAuthButton(
-              text: 'إنشاء حساب', // Translated: Sign Up
+              text: 'إنشاء حساب', // Sign Up
               onPressed: () => _handleSignup(context),
               isLoading: viewModel.isLoading,
             ),
@@ -391,8 +442,8 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
     bool obscureText = false,
     Widget? suffixIcon,
     VoidCallback? onTap,
-    TextDirection? textDirection, // Added for RTL control
-    bool readOnly = false, // Added for date field
+    TextDirection? textDirection,
+    bool readOnly = false,
   }) {
     return TextFormField(
       controller: controller,
@@ -411,11 +462,10 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
         contentPadding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         suffixIcon: suffixIcon,
         labelStyle: TextStyle(fontSize: 14, color: Colors.black),
- // Added for RTL
       ),
       validator: (value) {
         if (value == null || value.isEmpty) {
-          return 'يرجى إدخال $label'; // Translated: Please enter [field]
+          return 'يرجى إدخال $label';
         }
         return null;
       },

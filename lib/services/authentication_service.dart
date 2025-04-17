@@ -6,9 +6,16 @@ import '../models/user_model.dart';
 class AuthenticationService {
   final String baseUrl = 'https://7aaf-41-226-166-49.ngrok-free.app/KiddoAI';
 
-  // Signup
-  Future<Map<String, dynamic>> signup(String nom, String prenom, String email,
-      String password, String favoriteCharacter, String dateOfBirth, String parentPhoneNumber, ) async {
+  // Signup - now includes the "classe" parameter.
+  Future<Map<String, dynamic>> signup(
+      String nom,
+      String prenom,
+      String email,
+      String password,
+      String favoriteCharacter,
+      String dateOfBirth,
+      String parentPhoneNumber,
+      String classe) async {
     final response = await http.post(
       Uri.parse('$baseUrl/auth/signup'),
       headers: {'Content-Type': 'application/json'},
@@ -20,7 +27,7 @@ class AuthenticationService {
         'favoriteCharacter': favoriteCharacter,
         'dateNaissance': dateOfBirth,
         'parentPhoneNumber': parentPhoneNumber,
-        
+        'classe': classe, // New field sent to backend.
       }),
     );
 
@@ -46,14 +53,13 @@ class AuthenticationService {
 
     if (response.statusCode == 200) {
       final responseData = jsonDecode(response.body);
-      
-      // Validate response data
-      if (responseData['accessToken'] == null || 
-          responseData['refreshToken'] == null || 
+
+      if (responseData['accessToken'] == null ||
+          responseData['refreshToken'] == null ||
           responseData['threadId'] == null) {
         throw Exception('Invalid response data: missing required fields');
       }
-      
+
       await _saveUserSession(responseData);
       return responseData;
     } else {
@@ -65,15 +71,15 @@ class AuthenticationService {
   Future<void> _saveUserSession(Map<String, dynamic> data) async {
     final prefs = await SharedPreferences.getInstance();
     prefs.setBool('isLoggedIn', true);
-    
+
     if (data['threadId'] != null) {
       prefs.setString('threadId', data['threadId']);
     }
-    
+
     if (data['accessToken'] != null) {
       prefs.setString('accessToken', data['accessToken']);
     }
-    
+
     if (data['refreshToken'] != null) {
       prefs.setString('refreshToken', data['refreshToken']);
     }

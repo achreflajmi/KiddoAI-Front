@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'view_models/authentication_view_model.dart';
 import 'view_models/chatbot_viewmodel.dart';
-  import 'ui/AuthPage.dart';
-import 'ui/Iq_test_screen.dart';
 import 'services/chatbot_service.dart';
+import 'ui/AuthPage.dart';
+import 'ui/Iq_test_screen.dart';
+
 void main() {
   runApp(MyApp());
 }
@@ -22,7 +24,18 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           primarySwatch: Colors.blue,
         ),
-        home: AuthPage(), // WebViewIQTestScreen(threadId: "thread_3eowA2qOhI50eTg4lhGcSyc7",),
+        // ------------- IMPORTANT: Add these for Arabic -------------
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [
+          Locale('ar', ''), // For Arabic
+          Locale('en', ''), // For English (or any others you need)
+        ],
+        // -----------------------------------------------------------
+        home: AuthPage(), // Your AuthPage
       ),
     );
   }

@@ -23,41 +23,41 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
 
   // Map of subject names to their respective icons, colors, and animations
   final Map<String, Map<String, dynamic>> _subjectAssets = {
-    'الرياضيات': { // Translated: Math
+    'الرياضيات': {
       'icon': Icons.calculate,
       'color': Color(0xFF4CAF50),
       'animation': 'https://assets9.lottiefiles.com/packages/lf20_aNHhS0.json',
-      'description': 'الأرقام والألغاز' // Translated: Numbers & Puzzles
+      'description': 'الأرقام والألغاز'
     },
-    'العلوم': { // Translated: Science
+    'العلوم': {
       'icon': Icons.science,
       'color': Color(0xFF2196F3),
       'animation': 'https://assets9.lottiefiles.com/packages/lf20_rrqimc4b.json',
-      'description': 'اكتشف واستكشف' // Translated: Discover & Explore
+      'description': 'اكتشف واستكشف'
     },
-    'الإنجليزية': { // Translated: English
+    'الإنجليزية': {
       'icon': Icons.menu_book,
       'color': Color(0xFFF44336),
       'animation': 'https://assets9.lottiefiles.com/packages/lf20_5tl1xxnz.json',
-      'description': 'الكلمات والقصص' // Translated: Words & Stories
+      'description': 'الكلمات والقصص'
     },
-    'التاريخ': { // Translated: History
+    'التاريخ': {
       'icon': Icons.history_edu,
       'color': Color(0xFFFF9800),
       'animation': 'https://assets9.lottiefiles.com/packages/lf20_lmdo3jtk.json',
-      'description': 'الماضي والناس' // Translated: Past & People
+      'description': 'الماضي والناس'
     },
-    'الفن': { // Translated: Art
+    'الفن': {
       'icon': Icons.palette,
       'color': Color(0xFF9C27B0),
       'animation': 'https://assets9.lottiefiles.com/packages/lf20_syqnfe7c.json',
-      'description': 'ابتكر وتخيّل' // Translated: Create & Imagine
+      'description': 'ابتكر وتخيّل'
     },
-    'الموسيقى': { // Translated: Music
+    'الموسيقى': {
       'icon': Icons.music_note,
       'color': Color(0xFF3F51B5),
       'animation': 'https://assets9.lottiefiles.com/packages/lf20_Cc8Bsv.json',
-      'description': 'الأصوات والإيقاع' // Translated: Sounds & Rhythm
+      'description': 'الأصوات والإيقاع'
     },
   };
 
@@ -91,16 +91,16 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
       'icon': Icons.school,
       'color': Color(0xFF795548),
       'animation': 'https://assets9.lottiefiles.com/packages/lf20_5tl1xxnz.json',
-      'description': 'تعلّم وانمو' // Translated: Learn & Grow
+      'description': 'تعلّم وانمو'
     };
   }
 
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl, // Added for RTL
+      textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: Color(0xFFF2FFF0), // Light green background
+        backgroundColor: Color(0xFFF2FFF0),
         appBar: AppBar(
           backgroundColor: Color(0xFF4CAF50),
           elevation: 0,
@@ -153,12 +153,12 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
                     ],
                   ),
                 ),
-              ].reversed.toList(), // Reversed for RTL
+              ].reversed.toList(),
             ),
           ),
           actions: [
             Padding(
-              padding: EdgeInsets.only(left: 16), // Adjusted for RTL
+              padding: EdgeInsets.only(left: 16),
               child: GestureDetector(
                 onTap: () {
                   Navigator.push(
@@ -192,7 +192,6 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
         ),
         body: Stack(
           children: [
-            // Playful background pattern
             Positioned.fill(
               child: Container(
                 decoration: BoxDecoration(
@@ -204,10 +203,9 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
                 ),
               ),
             ),
-            // Decorative character elements
             Positioned(
               top: -40,
-              left: -30, // Adjusted for RTL
+              left: -30,
               child: Image.asset(
                 'assets/spongebob.png',
                 width: 150,
@@ -216,17 +214,15 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
             ),
             Positioned(
               bottom: -50,
-              right: -30, // Adjusted for RTL
+              right: -30,
               child: Image.asset(
                 'assets/spongebob.png',
                 width: 180,
                 opacity: AlwaysStoppedAnimation(0.15),
               ),
             ),
-            // Main content column
             Column(
               children: [
-                // Static header
                 Container(
                   margin: EdgeInsets.fromLTRB(16, 16, 16, 8),
                   padding: EdgeInsets.symmetric(vertical: 16, horizontal: 20),
@@ -236,7 +232,7 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
                         Color(0xFF66BB6A),
                         Color(0xFF43A047),
                       ],
-                      begin: Alignment.topRight, // Adjusted for RTL
+                      begin: Alignment.topRight,
                       end: Alignment.bottomLeft,
                     ),
                     borderRadius: BorderRadius.circular(20),
@@ -263,13 +259,13 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
                           height: 60,
                         ),
                       ),
-                      SizedBox(width: 12), // Added spacing
+                      SizedBox(width: 12),
                       Expanded(
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.end, // Adjusted for RTL
+                          crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Text(
-                              "نتعلم معًا!", // Translated: Let's Learn Together!
+                              "نتعلم معًا!",
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 22,
@@ -280,7 +276,7 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
                             ),
                             SizedBox(height: 4),
                             Text(
-                              "اختر مادة ممتعة لاستكشافها", // Translated: Choose a fun subject to explore
+                              "اختر مادة ممتعة لاستكشافها",
                               style: TextStyle(
                                 color: Colors.white.withOpacity(0.9),
                                 fontSize: 16,
@@ -291,10 +287,9 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
                           ],
                         ),
                       ),
-                    ].reversed.toList(), // Reversed for RTL
+                    ].reversed.toList(),
                   ),
                 ),
-                // Main content
                 Expanded(
                   child: FutureBuilder<List<String>>(
                     future: _subjects,
@@ -323,7 +318,7 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
                                   ],
                                 ),
                                 child: Text(
-                                  "السحر يتحمّل...", // Translated: Magic is loading...
+                                  "السحر يتحمّل...",
                                   style: TextStyle(
                                     fontSize: 20,
                                     fontWeight: FontWeight.bold,
@@ -355,7 +350,7 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
                                   border: Border.all(color: Colors.red.shade200),
                                 ),
                                 child: Text(
-                                  'عفوًا! مغامرة التعلم متوقفة.', // Translated: Oops! Learning adventure paused.
+                                  'عفوًا! مغامرة التعلم متوقفة.',
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     fontSize: 20,
@@ -375,7 +370,7 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
                                 },
                                 icon: Icon(Icons.refresh, color: Colors.white),
                                 label: Text(
-                                  "حاول مرة أخرى", // Translated: Try Again
+                                  "حاول مرة أخرى",
                                   style: TextStyle(
                                     fontFamily: 'Comic Sans MS',
                                     fontSize: 18,
@@ -412,7 +407,7 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
                                   border: Border.all(color: Colors.blue.shade200),
                                 ),
                                 child: Text(
-                                  'لا توجد مواد جاهزة بعد!', // Translated: No subjects ready yet!
+                                  'لا توجد مواد جاهزة بعد!',
                                   style: TextStyle(
                                     fontSize: 20,
                                     fontWeight: FontWeight.bold,
@@ -431,7 +426,7 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
                                 },
                                 icon: Icon(Icons.refresh, color: Colors.white),
                                 label: Text(
-                                  "تحديث المواد", // Translated: Refresh Subjects
+                                  "تحديث المواد",
                                   style: TextStyle(
                                     fontFamily: 'Comic Sans MS',
                                     fontSize: 18,
@@ -452,7 +447,6 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
                         );
                       }
 
-                      // Subjects grid
                       final subjects = snapshot.data!;
                       return GridView.builder(
                         padding: EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -485,7 +479,7 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
                                     cardColor.withOpacity(0.9),
                                     cardColor,
                                   ],
-                                  begin: Alignment.topRight, // Adjusted for RTL
+                                  begin: Alignment.topRight,
                                   end: Alignment.bottomLeft,
                                 ),
                                 borderRadius: BorderRadius.circular(24),
@@ -499,9 +493,8 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
                               ),
                               child: Stack(
                                 children: [
-                                  // Decorative elements
                                   Positioned(
-                                    left: -25, // Adjusted for RTL
+                                    left: -25,
                                     top: -25,
                                     child: Opacity(
                                       opacity: 0.2,
@@ -512,10 +505,9 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
                                       ),
                                     ),
                                   ),
-                                  // Playful bubbles
                                   Positioned(
                                     bottom: 10,
-                                    left: 10, // Adjusted for RTL
+                                    left: 10,
                                     child: Container(
                                       width: 50,
                                       height: 50,
@@ -524,11 +516,10 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
                                       ),
                                     ),
                                   ),
-                                  // Content
                                   Padding(
                                     padding: const EdgeInsets.all(16.0),
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.end, // Adjusted for RTL
+                                      crossAxisAlignment: CrossAxisAlignment.end,
                                       children: [
                                         Container(
                                           padding: EdgeInsets.all(12),
@@ -582,16 +573,15 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
                                       ],
                                     ),
                                   ),
-                                  // Floating "Let's Learn" indicator
                                   Positioned(
                                     bottom: 0,
-                                    left: 0, // Adjusted for RTL
+                                    left: 0,
                                     child: Container(
                                       padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                                       decoration: BoxDecoration(
                                         color: Colors.yellow.shade300,
                                         borderRadius: BorderRadius.only(
-                                          topRight: Radius.circular(12), // Adjusted for RTL
+                                          topRight: Radius.circular(12),
                                           bottomLeft: Radius.circular(24),
                                         ),
                                         boxShadow: [
@@ -606,7 +596,7 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           Text(
-                                            "نبدأ التعلم", // Translated: Let's Learn
+                                            "نبدأ التعلم",
                                             style: TextStyle(
                                               color: Colors.green.shade800,
                                               fontSize: 12,
@@ -621,14 +611,13 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
                                             color: Colors.green.shade700,
                                             size: 14,
                                           ),
-                                        ].reversed.toList(), // Reversed for RTL
+                                        ].reversed.toList(),
                                       ),
                                     ),
                                   ),
-                                  // Character decoration
                                   Positioned(
                                     bottom: 70,
-                                    left: -20, // Adjusted for RTL
+                                    left: -20,
                                     child: Transform.scale(
                                       scale: 0.5,
                                       child: Image.asset(
@@ -671,20 +660,18 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
     );
   }
 
-  // Helper method to get subject colors
   Color _getSubjectColor(String subject, int index) {
     List<Color> colors = [
-      Color(0xFF4CAF50), // Green
-      Color(0xFF42A5F5), // Blue
-      Color(0xFFFFA726), // Orange
-      Color(0xFFEC407A), // Pink
-      Color(0xFF7E57C2), // Purple
-      Color(0xFF26A69A), // Teal
+      Color(0xFF4CAF50),
+      Color(0xFF42A5F5),
+      Color(0xFFFFA726),
+      Color(0xFFEC407A),
+      Color(0xFF7E57C2),
+      Color(0xFF26A69A),
     ];
     return colors[index % colors.length];
   }
 
-  // Helper method to get subject icons
   IconData _getSubjectIcon(String subject) {
     String lowercaseSubject = subject.toLowerCase();
 
@@ -701,28 +688,27 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
     } else if (lowercaseSubject.contains('art') || lowercaseSubject.contains('فن')) {
       return Icons.color_lens;
     } else {
-      return Icons.school; // Default icon
+      return Icons.school;
     }
   }
 
-  // Helper method to get subject descriptions
   String _getSubjectDescription(String subject) {
     String lowercaseSubject = subject.toLowerCase();
 
     if (lowercaseSubject.contains('math') || lowercaseSubject.contains('رياضيات')) {
-      return "الأرقام والألغاز"; // Translated: Numbers & Puzzles
+      return "الأرقام والألغاز";
     } else if (lowercaseSubject.contains('music') || lowercaseSubject.contains('موسيقى')) {
-      return "الأصوات والإيقاع"; // Translated: Sounds & Rhythm
+      return "الأصوات والإيقاع";
     } else if (lowercaseSubject.contains('science') || lowercaseSubject.contains('علم')) {
-      return "اكتشف واستكشف"; // Translated: Discover & Explore
+      return "اكتشف واستكشف";
     } else if (lowercaseSubject.contains('tech') || lowercaseSubject.contains('تكنولوج')) {
-      return "الابتكار والمستقبل"; // Translated: Innovation & Future
+      return "الابتكار والمستقبل";
     } else if (lowercaseSubject.contains('arab') || lowercaseSubject.contains('عرب')) {
-      return "الكلمات والشعر"; // Translated: Words & Poetry
+      return "الكلمات والشعر";
     } else if (lowercaseSubject.contains('art') || lowercaseSubject.contains('فن')) {
-      return "ابتكر وتخيّل"; // Translated: Create & Imagine
+      return "ابتكر وتخيّل";
     } else {
-      return "تعلّم وانمو"; // Translated: Learn & Grow
+      return "تعلّم وانمو";
     }
   }
 }

@@ -38,7 +38,7 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
     {
       'name': 'SpongeBob',
       'imagePath': 'assets/avatars/spongebob.png',
-      'voicePath': 'assets/voices/spongebob.wav',
+      'voicePath': 'assets/voices/SpongeBob.wav',
       'color': Color(0xFFFFEB3B),
       'gradient': [Color.fromARGB(255, 206, 190, 46), Color(0xFFFFF9C4)],
     },
@@ -208,31 +208,55 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
     }
   }
 
- InputDecoration _buildInputDecoration(String label, IconData icon, Color color) {
-  return InputDecoration(
-    label: Text(
-      label,
-      textDirection: TextDirection.rtl, // ✅ moved here
-      style: TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.w400,
-        color: Colors.grey[700],
+  InputDecoration _buildInputDecoration(String label, IconData icon, Color color) {
+    return InputDecoration(
+      label: Text(
+        label,
+        textDirection: TextDirection.rtl, // ✅ moved here
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w400,
+          color: Colors.grey[700],
+        ),
       ),
-    ),
-    prefixIcon: Icon(icon, color: color),
-    filled: true,
-    fillColor: Colors.white,
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(25),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(25),
-      borderSide: BorderSide(color: color, width: 2),
-    ),
-    alignLabelWithHint: true, // RTL visual alignment
-  );
-}
+      prefixIcon: Icon(icon, color: color),
+      filled: true,
+      fillColor: Colors.white,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(25),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(25),
+        borderSide: BorderSide(color: color, width: 2),
+      ),
+      alignLabelWithHint: true, // RTL visual alignment
+    );
+  }
 
+  Widget _buildLogoutButton() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 20.0),
+      child: ElevatedButton(
+        onPressed: () async {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.clear(); // Clear all saved preferences to log out the user
+          Navigator.pushReplacementNamed(context, '/'); // Adjust the route name as needed
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Color(0xFF049a02),
+          padding: EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        child: Text(
+          'تسجيل الخروج', // Logout
+          style: TextStyle(fontSize: 16, color: Colors.white),
+          textDirection: TextDirection.rtl,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -439,80 +463,7 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                     ),
                   ),
                   SizedBox(height: 20),
-                  Card(
-                    elevation: 4,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    child: Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              ElevatedButton.icon(
-                                onPressed: _isProcessing ? null : _takePicture,
-                                icon: Icon(Icons.camera_alt),
-                                label: Text(
-                                  'الكاميرا', // Translated: Camera
-                                  textDirection: TextDirection.rtl,
-                                ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: mainColor,
-                                  foregroundColor: Colors.white,
-                                ),
-                              ),
-                              ElevatedButton.icon(
-                                onPressed: _isProcessing
-                                    ? null
-                                    : () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) => WhiteboardScreen(
-                                              onImageSaved: (imagePath) {
-                                                setState(() => _isProcessing = true);
-                                                _processImage(File(imagePath));
-                                              },
-                                              avatarImagePath: _selectedAvatar,
-                                              avatarColor: mainColor,
-                                              avatarGradient: bgGradient,
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                icon: Icon(Icons.brush),
-                                label: Text(
-                                  'السبورة', // Translated: Whiteboard
-                                  textDirection: TextDirection.rtl,
-                                ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: mainColor,
-                                  foregroundColor: Colors.white,
-                                ),
-                              ),
-                            ].reversed.toList(), // Reversed for RTL
-                          ),
-                          if (_isProcessing)
-                            Padding(
-                              padding: EdgeInsets.only(top: 16),
-                              child: CircularProgressIndicator(),
-                            ),
-                          if (_recognizedText != null && !_isProcessing)
-                            Padding(
-                              padding: EdgeInsets.only(top: 16),
-                              child: Text(
-                                'النص المعترف به: $_recognizedText', // Translated: Recognized Text
-                                style: TextStyle(fontSize: 16),
-                                textAlign: TextAlign.center,
-                                textDirection: TextDirection.rtl,
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
+                  _buildLogoutButton(), // Logout button added here
                 ],
               ),
             ),

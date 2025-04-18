@@ -73,7 +73,7 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
       duration: Duration(milliseconds: 1000),
     );
 
-    _subjects = SubjectService(CurrentIP + ":8083/KiddoAI").fetchSubjects();
+    _subjects = SubjectService(CurrentIP + ":8081/KiddoAI").fetchSubjects();
 
     _animationController.forward();
     _headerAnimationController.forward();
@@ -365,7 +365,7 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
                               ElevatedButton.icon(
                                 onPressed: () {
                                   setState(() {
-                                    _subjects = SubjectService(CurrentIP + ":8083/KiddoAI").fetchSubjects();
+                                    _subjects = SubjectService(CurrentIP + ":8081/KiddoAI").fetchSubjects();
                                   });
                                 },
                                 icon: Icon(Icons.refresh, color: Colors.white),
@@ -421,7 +421,7 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
                               ElevatedButton.icon(
                                 onPressed: () {
                                   setState(() {
-                                    _subjects = SubjectService(CurrentIP + ":8083/KiddoAI").fetchSubjects();
+                                    _subjects = SubjectService(CurrentIP + ":8081/KiddoAI").fetchSubjects();
                                   });
                                 },
                                 icon: Icon(Icons.refresh, color: Colors.white),

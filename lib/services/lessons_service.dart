@@ -16,14 +16,14 @@ class LessonsService {
 
   // Constructor to initialize the URLs
   LessonsService()
-      : _baseUrl = 'https://7aaf-41-226-166-49.ngrok-free.app',
+      : _baseUrl = 'https://e59e-41-230-204-2.ngrok-free.app',
         // Updated teach endpoint (Flask route is /teach)
         _baseTeachLessonUrl = 'https://b6dd-41-62-239-187.ngrok-free.app/teach',
-        _baseActivityUrl = CurrentIP + ':8083/KiddoAI/Activity/saveProblem',
+        _baseActivityUrl = CurrentIP + ':8081/KiddoAI/Activity/saveProblem',
         _baseVoiceGenerationUrl = 'https://268b-196-184-222-196.ngrok-free.app/generate-voice',
         _baseAudioUrl = 'http://172.20.10.9:8001/outputlive.wav',
-        _activityPageUrl = CurrentIP + ':8083/',
-        _baseLessonsUrl = CurrentIP + ':8083/KiddoAI/Lesson/bySubject'; //
+        _activityPageUrl = CurrentIP + ':8081/',
+        _baseLessonsUrl = CurrentIP + ':8081/KiddoAI/Lesson/bySubject'; //
 
   // Helper method to retrieve access token from SharedPreferences
   Future<String?> _getAccessToken() async {

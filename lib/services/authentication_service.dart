@@ -4,41 +4,42 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_model.dart';
 
 class AuthenticationService {
-  final String baseUrl = 'https://7aaf-41-226-166-49.ngrok-free.app/KiddoAI';
+  final String baseUrl = 'https://e59e-41-230-204-2.ngrok-free.app/KiddoAI';
 
   // Signup - now includes the "classe" parameter.
-  Future<Map<String, dynamic>> signup(
-      String nom,
-      String prenom,
-      String email,
-      String password,
-      String favoriteCharacter,
-      String dateOfBirth,
-      String parentPhoneNumber,
-      String classe) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/auth/signup'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'nom': nom,
-        'prenom': prenom,
-        'email': email,
-        'password': password,
-        'favoriteCharacter': favoriteCharacter,
-        'dateNaissance': dateOfBirth,
-        'parentPhoneNumber': parentPhoneNumber,
-        'classe': classe, // New field sent to backend.
-      }),
-    );
+Future<Map<String, dynamic>> signup(
+    String nom,
+    String prenom,
+    String email,
+    String password,
+    String favoriteCharacter,
+    String dateOfBirth,
+    String parentPhoneNumber,
+    String classe) async {
+  final response = await http.post(
+    Uri.parse('$baseUrl/auth/signup'),
+    headers: {'Content-Type': 'application/json'},
+    body: jsonEncode({
+      'nom': nom,
+      'prenom': prenom,
+      'email': email,
+      'password': password,
+      'favoriteCharacter': favoriteCharacter,
+      'dateNaissance': dateOfBirth,
+      'parentPhoneNumber': parentPhoneNumber,
+      'classe': classe, // New field
+    }),
+  );
 
-    if (response.statusCode == 200) {
-      final responseData = jsonDecode(response.body);
-      await _saveUserSession(responseData);
-      return responseData;
-    } else {
-      throw Exception('Signup failed: ${response.body}');
-    }
+  if (response.statusCode == 200) {
+    final responseData = jsonDecode(response.body);
+    await _saveUserSession(responseData);
+    return responseData;
+  } else {
+    throw Exception('Signup failed: ${response.body}');
   }
+}
+
 
   // Login
   Future<Map<String, dynamic>> login(String email, String password) async {
@@ -98,8 +99,9 @@ class AuthenticationService {
   }
 
   // Logout
-  Future<void> logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
-  }
+Future<void> logout() async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.clear();  // Clear the session data (like accessToken, refreshToken)
+}
+
 }

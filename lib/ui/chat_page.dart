@@ -84,7 +84,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
     {
       'name': 'سبونج بوب', // Translated: SpongeBob
       'imagePath': 'assets/avatars/spongebob.png',
-      'voicePath': 'assets/voices/spongebob.wav',
+      'voicePath': 'assets/voices/SpongeBob.wav',
       'color': Color(0xFFFFEB3B),
       'gradient': [Color.fromARGB(255, 206, 190, 46), Color(0xFFFFF9C4)],
     },
@@ -192,7 +192,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
       setState(() {
         _currentAvatarName = avatar['name'] ?? 'سبونج بوب';
         _currentAvatarImage = avatar['imagePath'] ?? 'assets/avatars/spongebob.png';
-        _currentVoicePath = avatar['voicePath'] ?? 'assets/voices/spongebob.wav';
+        _currentVoicePath = avatar['voicePath'] ?? 'assets/voices/SpongeBob.wav';
         final selectedAvatar = _avatars.firstWhere(
           (a) => a['name'] == _currentAvatarName,
           orElse: () => _avatars[0],
@@ -302,7 +302,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
       final accessToken = prefs.getString('accessToken');
 
       final response = await http.post(
-        Uri.parse('https://7aaf-41-226-166-49.ngrok-free.app/KiddoAI/chat/send'),
+        Uri.parse('https://e59e-41-230-204-2.ngrok-free.app/KiddoAI/chat/send'),
         headers: {
           "Content-Type": "application/json",
           if (accessToken != null) "Authorization": "Bearer $accessToken",
@@ -346,10 +346,10 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
 
   Future<void> _initializeVoice(String text) async {
     try {
-      final String effectiveVoicePath = _currentVoicePath.isNotEmpty ? _currentVoicePath : 'assets/voices/spongebob.wav';
+      final String effectiveVoicePath = _currentVoicePath.isNotEmpty ? _currentVoicePath : 'assets/voices/SpongeBob.wav';
       final String speakerWavFilename = effectiveVoicePath.split('/').last;
 
-      final baseUrl = 'https://8f36-160-159-94-45.ngrok-free.app';
+      final baseUrl = 'http://192.168.1.22:8000';
       final response = await http.post(
         Uri.parse('$baseUrl/initialize-voice'),
         headers: {"Content-Type": "application/json"},
@@ -379,7 +379,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
             if (statusResponse.statusCode == 200) {
               final statusData = jsonDecode(statusResponse.body);
               if (statusData['status'] == 'done') {
-                audioUrl = statusData['audio_url'] as String?;
+                audioUrl = 'http://192.168.1.22:8000${statusData['audio_url']}';
                 if (audioUrl == null || audioUrl.isEmpty) {
                   throw Exception('Audio URL is null or empty for part $currentPart');
                 }
@@ -558,7 +558,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
   }
 
   Future<String?> _sendAudioToBackend(List<int> audioBytes) async {
-    final uri = Uri.parse('https://7aaf-41-226-166-49.ngrok-free.app/KiddoAI/chat/transcribe');
+    final uri = Uri.parse('https://e59e-41-230-204-2.ngrok-free.app/KiddoAI/chat/transcribe');
 
     final request = http.MultipartRequest('POST', uri)
       ..fields['threadId'] = threadId

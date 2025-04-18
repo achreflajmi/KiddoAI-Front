@@ -59,17 +59,18 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
     if (!_signupFormKey.currentState!.validate()) return;
     
     // Ensure a class is selected
-    if (_selectedClasse == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'يرجى اختيار الصف', // Please select a grade
-            textDirection: TextDirection.rtl,
-          ),
-        ),
-      );
-      return;
-    }
+ if (_selectedClasse == null) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(
+        'يرجى اختيار الصف', // Please select a grade
+        textDirection: TextDirection.rtl,
+      ),
+    ),
+  );
+  return;
+}
+
 
     final viewModel = Provider.of<AuthenticationViewModel>(context, listen: false);
 

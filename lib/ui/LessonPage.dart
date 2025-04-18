@@ -1063,8 +1063,24 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
                                                   const SizedBox(height: 4),
                                                   Row(
                                                     children: [
+                                                      // Progress bar (added on the right for RTL)
+                                                      Row(
+                                                        children: List.generate(10, (index) {
+                                                          return Container(
+                                                            margin: const EdgeInsets.symmetric(horizontal: 1),
+                                                            width: 8,
+                                                            height: 8,
+                                                            decoration: BoxDecoration(
+                                                              color: index < level ? Colors.green : Colors.grey.shade300,
+                                                              borderRadius: BorderRadius.circular(2),
+                                                            ),
+                                                          );
+                                                        }),
+                                                      ),
+                                                      const SizedBox(width: 10),
+
                                                       Text(
-                                                        "مبتدئ", // Translated: Beginner
+                                                        "مبتدئ", // Beginner
                                                         style: TextStyle(
                                                           fontSize: 12,
                                                           color: Colors.grey.shade600,
@@ -1089,7 +1105,7 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
                                                       ),
                                                       const SizedBox(width: 10),
                                                       Text(
-                                                        "10-15 دقيقة", // Translated: 10-15 min
+                                                        "10-15 دق", // 10-15 min
                                                         style: TextStyle(
                                                           fontSize: 12,
                                                           color: Colors.grey.shade600,
@@ -1103,8 +1119,9 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
                                                         size: 14,
                                                         color: Colors.grey.shade600,
                                                       ),
-                                                    ].reversed.toList(), // Reversed for RTL
+                                                    ].reversed.toList(), // Reversed for proper RTL order
                                                   ),
+
                                                 ],
                                               ),
                                             ),

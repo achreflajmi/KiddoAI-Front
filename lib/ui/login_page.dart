@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/authentication_service.dart';
-import 'webview_screen.dart';
+import 'Iq_test_screen.dart';
 import 'signup_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -28,7 +28,7 @@ class _LoginPageState extends State<LoginPage> {
         prefs.setString('threadId', threadId);
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => WebViewIQTestScreen(threadId: threadId)),
+          MaterialPageRoute(builder: (context) => IQTestScreen(threadId: threadId)),
         );
       }
     } catch (e) {

@@ -24,18 +24,7 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           primarySwatch: Colors.blue,
         ),
-        // ------------- IMPORTANT: Add these for Arabic -------------
-        localizationsDelegates: const [
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        supportedLocales: const [
-          Locale('ar', ''), // For Arabic
-          Locale('en', ''), // For English (or any others you need)
-        ],
-        // -----------------------------------------------------------
-        home: AuthPage(), // Your AuthPage
+        home: AuthPage(), // WebViewIQTestScreen(threadId: "thread_3eowA2qOhI50eTg4lhGcSyc7",),
       ),
     );
   }

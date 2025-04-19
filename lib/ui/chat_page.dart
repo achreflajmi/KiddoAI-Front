@@ -1470,7 +1470,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
                 ),
                 child: Padding(
                   // Line 981: padding: EdgeInsets.fromLTRB(12, 8, 12, 12), // Adjusted padding
-                  padding: EdgeInsets.fromLTRB(12, 8, 12, 12 + MediaQuery.of(context).viewInsets.bottom),
+                  padding: EdgeInsets.fromLTRB(12, 8, 12, 16),
                   // Line 982: child: Material( // Use Material for elevation and shape
                   child: Material(
                     // Line 983: elevation: 6, // Increased elevation

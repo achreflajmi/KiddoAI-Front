@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/constants.dart';
+import 'package:flutter/foundation.dart';   // ← add this line
+
 
 class LessonsService {
   // Updated base URL for teach endpoint to use the new API
@@ -18,12 +20,13 @@ class LessonsService {
   LessonsService()
       : _baseUrl = 'https://e59e-41-230-204-2.ngrok-free.app',
         // Updated teach endpoint (Flask route is /teach)
-        _baseTeachLessonUrl = 'https://b6dd-41-62-239-187.ngrok-free.app/teach',
+        _baseTeachLessonUrl = 'https://454d-197-2-189-134.ngrok-free.app/teach',
         _baseActivityUrl = CurrentIP + ':8081/KiddoAI/Activity/saveProblem',
         _baseVoiceGenerationUrl = 'https://268b-196-184-222-196.ngrok-free.app/generate-voice',
         _baseAudioUrl = 'http://172.20.10.9:8001/outputlive.wav',
         _activityPageUrl = CurrentIP + ':8081/',
-        _baseLessonsUrl = CurrentIP + ':8081/KiddoAI/Lesson/bySubject'; //
+        _baseLessonsUrl = CurrentIP + '/KiddoAI/Lesson/bySubject'; //
+        final String _configureVectorStoreUrl = CurrentIP +'/KiddoAI/adminDashboard/configureVectorStore'; // ⇦ NEW
 
   // Helper method to retrieve access token from SharedPreferences
   Future<String?> _getAccessToken() async {
@@ -70,7 +73,7 @@ Future<List<Map<String, dynamic>>> fetchLessons(String subjectName) async {
   Future<String> createThread() async {
     // Replace with your actual create_thread endpoint URL.
     final String baseCreateThreadUrl =
-        'https://b6dd-41-62-239-187.ngrok-free.app/create_thread';
+        'https://454d-197-2-189-134.ngrok-free.app/create_thread';
     final response = await http.post(
       Uri.parse(baseCreateThreadUrl),
       headers: {'Content-Type': 'application/json'},
@@ -122,6 +125,9 @@ Future<List<Map<String, dynamic>>> fetchLessons(String subjectName) async {
       throw Exception('Failed to load lesson: $e');
     }
   }
+
+
+
 
   Future<String> generateVoice(String text) async {
     try {

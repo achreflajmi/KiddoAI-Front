@@ -5,6 +5,7 @@ import '../ui/HomePage.dart';
 import '../ui/profile_page.dart';
 import '../ui/iq_test_screen.dart';
 import '../models/avatar_settings.dart';
+import '../ui/Home.dart';
 
 class BottomNavBar extends StatelessWidget {
   final String threadId;
@@ -53,7 +54,7 @@ class BottomNavBar extends StatelessWidget {
     Widget page;
     switch (index) {
       case 0:
-        page = IQTestScreen(threadId: threadId);
+        page = HomePage(threadId: threadId);
         break;
       case 1:
         page = SubjectsPage(threadId: threadId);

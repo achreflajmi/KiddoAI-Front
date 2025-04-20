@@ -3,6 +3,8 @@ import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import '../view_models/authentication_view_model.dart';
 import 'iq_test_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'HomePage.dart';  
 
 class AuthPage extends StatefulWidget {
   @override
@@ -55,24 +57,16 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  Future<void> _handleSignup(BuildContext context) async {
+ Future<void> _handleSignup(BuildContext context) async {
     if (!_signupFormKey.currentState!.validate()) return;
-    
-    // Ensure a class is selected
- if (_selectedClasse == null) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(
-        'يرجى اختيار الصف', // Please select a grade
-        textDirection: TextDirection.rtl,
-      ),
-    ),
-  );
-  return;
-}
+    if (_selectedClasse == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('يرجى اختيار الصف', textDirection: TextDirection.rtl)),
+      );
+      return;
+    }
 
-
-    final viewModel = Provider.of<AuthenticationViewModel>(context, listen: false);
+    final viewModel = context.read<AuthenticationViewModel>();
 
     final response = await viewModel.signup(
       _nomController.text,
@@ -82,24 +76,23 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
       _favoriteCharacterController.text,
       _dateOfBirthController.text,
       _parentPhoneController.text,
-      _selectedClasse!, // Pass the selected class
+      _selectedClasse!,
     );
 
-    if (response != null) {
+    if (response != null && mounted) {
+      // Reset “IQ done” flag for this brand‑new account
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('iqTestCompleted', false);
+
       final threadId = response['threadId'];
-      if (threadId != null) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => IQTestScreen(threadId: threadId)),
-        );
-      }
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => IQTestScreen(threadId: threadId)),
+      );
     } else if (viewModel.errorMessage != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            'فشل إنشاء الحساب: ${viewModel.errorMessage}', // Signup failed
-            textDirection: TextDirection.rtl,
-          ),
+          content: Text('فشل إنشاء الحساب: ${viewModel.errorMessage}', textDirection: TextDirection.rtl),
         ),
       );
     }
@@ -108,32 +101,32 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
   Future<void> _handleLogin(BuildContext context) async {
     if (!_loginFormKey.currentState!.validate()) return;
 
-    final viewModel = Provider.of<AuthenticationViewModel>(context, listen: false);
+    final viewModel = context.read<AuthenticationViewModel>();
+    final response  = await viewModel.login(_emailLoginController.text, _passwordLoginController.text);
 
-    final response = await viewModel.login(
-      _emailLoginController.text,
-      _passwordLoginController.text,
-    );
+    if (response != null && mounted) {
+      final prefs     = await SharedPreferences.getInstance();
+      final finished  = prefs.getBool('iqTestCompleted') ?? false;
+      final threadId  = response['threadId'];
 
-    if (response != null) {
-      final threadId = response['threadId'];
-      if (threadId != null) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => IQTestScreen(threadId: threadId)),
-        );
-      }
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => finished
+              ? SubjectsPage(threadId: threadId)     // ⬅️  go straight to the app
+              : IQTestScreen(threadId: threadId), // ⬅️  must finish the test
+        ),
+      );
     } else if (viewModel.errorMessage != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            'فشل تسجيل الدخول: ${viewModel.errorMessage}', // Login failed
-            textDirection: TextDirection.rtl,
-          ),
+          content: Text('فشل تسجيل الدخول: ${viewModel.errorMessage}', textDirection: TextDirection.rtl),
         ),
       );
     }
   }
+
+
 
   @override
   Widget build(BuildContext context) {

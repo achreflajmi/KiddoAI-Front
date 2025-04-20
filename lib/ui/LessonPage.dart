@@ -201,6 +201,39 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
     }
   }
 
+
+
+  Future<void> _configureVectorStore() async {
+  final prefs       = await SharedPreferences.getInstance();
+  final vectorId    = prefs.getString('vectorStoreId');
+  final accessToken = prefs.getString('accessToken');   // set at login
+
+  if (vectorId == null || vectorId.isEmpty) {
+    debugPrint('configureVectorStore ➜ skipped (no vectorStoreId)');
+    return;
+  }
+
+  final url = Uri.parse('$CurrentIP/KiddoAI/adminDashboard/configureVectorStore');
+  debugPrint('configureVectorStore ➜ POST $url  id=$vectorId');
+
+  final resp = await http.post(
+    url,
+    headers: {
+      'Content-Type': 'application/json',
+      if (accessToken != null) 'Authorization': 'Bearer $accessToken',
+    },
+    body: jsonEncode({'vector_store_id': vectorId}),
+  );
+
+  debugPrint('configureVectorStore ⇠ ${resp.statusCode}  ${resp.body}');
+  if (resp.statusCode != 200) {
+    throw Exception('Vector‑store config failed: '
+        '${resp.statusCode} – ${resp.body}');
+  }
+}
+
+
+
   // =========================
   //  Chatbot Logic
   // =========================
@@ -216,6 +249,9 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
       final newThreadId = await LessonsService().createThread();
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('threadId', newThreadId);
+
+      /* 2️⃣ configure the vector store BEFORE chatting */
+      await _configureVectorStore(); 
 
       setState(() {
         _showChatbot = true;
@@ -260,7 +296,7 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
       return;
     }
 
-    final url = Uri.parse('https://b6dd-41-62-239-187.ngrok-free.app/teach');
+    final url = Uri.parse('https://454d-197-2-189-134.ngrok-free.app/teach');
     try {
       final response = await http.post(
         url,
@@ -315,6 +351,9 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
       barrierDismissible: false,
       builder: (context) => const LoadingAnimationWidget(),
     );
+
+      await _configureVectorStore(); 
+
 
     final activityUrl = CurrentIP + ":8081/KiddoAI/Activity/saveProblem";
     final activityPageUrl = CurrentReactIP + ":8080/";

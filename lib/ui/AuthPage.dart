@@ -5,7 +5,7 @@ import '../view_models/authentication_view_model.dart';
 import 'iq_test_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'HomePage.dart';  
-
+import 'Home.dart';
 class AuthPage extends StatefulWidget {
   @override
   _AuthPageState createState() => _AuthPageState();
@@ -83,6 +83,7 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
       // Reset “IQ done” flag for this brand‑new account
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('iqTestCompleted', false);
+  await prefs.setString('prenom', _prenomController.text);
 
       final threadId = response['threadId'];
       Navigator.pushReplacement(
@@ -98,33 +99,40 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
     }
   }
 
-  Future<void> _handleLogin(BuildContext context) async {
-    if (!_loginFormKey.currentState!.validate()) return;
+Future<void> _handleLogin(BuildContext context) async {
+  if (!_loginFormKey.currentState!.validate()) return;
 
-    final viewModel = context.read<AuthenticationViewModel>();
-    final response  = await viewModel.login(_emailLoginController.text, _passwordLoginController.text);
+  final viewModel = context.read<AuthenticationViewModel>();
+  final response = await viewModel.login(_emailLoginController.text, _passwordLoginController.text);
 
-    if (response != null && mounted) {
-      final prefs     = await SharedPreferences.getInstance();
-      final finished  = prefs.getBool('iqTestCompleted') ?? false;
-      final threadId  = response['threadId'];
+  if (response != null && mounted) {
+    final prefs = await SharedPreferences.getInstance();
+    final finished = prefs.getBool('iqTestCompleted') ?? false;
+    final threadId = response['threadId'];
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => finished
-              ? SubjectsPage(threadId: threadId)     // ⬅️  go straight to the app
-              : IQTestScreen(threadId: threadId), // ⬅️  must finish the test
-        ),
-      );
-    } else if (viewModel.errorMessage != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('فشل تسجيل الدخول: ${viewModel.errorMessage}', textDirection: TextDirection.rtl),
-        ),
-      );
+    // 🔥 Fetch current user info and store kid’s name
+    final currentUser = await viewModel.fetchCurrentUser();
+    if (currentUser != null && currentUser['prenom'] != null) {
+      await prefs.setString('prenom', currentUser['prenom']);
     }
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => finished
+            ? HomePage(threadId: threadId)
+            : IQTestScreen(threadId: threadId),
+      ),
+    );
+  } else if (viewModel.errorMessage != null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('فشل تسجيل الدخول: ${viewModel.errorMessage}', textDirection: TextDirection.rtl),
+      ),
+    );
   }
+}
+
 
 
 

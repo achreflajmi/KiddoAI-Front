@@ -79,6 +79,24 @@ class AuthenticationService {
     if (data['accessToken'] != null)  prefs.setString('accessToken', data['accessToken']);
     if (data['refreshToken'] != null) prefs.setString('refreshToken', data['refreshToken']);
   }
+Future<Map<String, dynamic>> getCurrentUser() async {
+  final prefs = await SharedPreferences.getInstance();
+  final token = prefs.getString('accessToken');
+
+  final response = await http.get(
+    Uri.parse('$baseUrl/users/me'),
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
+    },
+  );
+
+  if (response.statusCode == 200) {
+    return json.decode(response.body);
+  } else {
+    throw Exception('Failed to fetch user data: ${response.statusCode}');
+  }
+}
 
   Future<bool> isLoggedIn() async =>
       (await SharedPreferences.getInstance()).getBool('isLoggedIn') ?? false;

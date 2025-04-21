@@ -15,12 +15,15 @@ import 'package:lottie/lottie.dart';
 import '../models/avatar_settings.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
+import 'WhiteboardScreen.dart';
 
 class Message {
   final String sender;
   final String content;
   final bool showAvatar;
   final bool isAudio;
+  final bool isImage;
   final DateTime timestamp;
 
   Message({
@@ -28,6 +31,7 @@ class Message {
     required this.content,
     this.showAvatar = false,
     this.isAudio = false,
+    this.isImage = false,
     required this.timestamp,
   });
 
@@ -37,6 +41,7 @@ class Message {
       'content': content,
       'showAvatar': showAvatar,
       'isAudio': isAudio,
+      'isImage': isImage,
       'timestamp': timestamp.toIso8601String(),
     };
   }
@@ -47,6 +52,7 @@ class Message {
       content: json['content'],
       showAvatar: json['showAvatar'] ?? false,
       isAudio: json['isAudio'] ?? false,
+      isImage: json['isImage'] ?? false,
       timestamp: json['timestamp'] != null
           ? DateTime.parse(json['timestamp'])
           : DateTime.now(),
@@ -68,6 +74,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
   final List<Message> messages = [];
   final ScrollController _scrollController = ScrollController();
   final AudioPlayer _audioPlayer = AudioPlayer();
+  final ImagePicker _picker = ImagePicker();
   Timer? _timer;
   late AnimationController _animationController;
   late Animation<double> _microphoneScaleAnimation;
@@ -82,8 +89,8 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
   // Avatar settings (using English names for lookup, Arabic for display)
   final List<Map<String, dynamic>> _avatars = [
     {
-      'name': 'SpongeBob', // English name for lookup
-      'displayName': 'سبونج بوب', // Arabic name for display
+      'name': 'SpongeBob',
+      'displayName': 'سبونج بوب',
       'imagePath': 'assets/avatars/spongebob.png',
       'voicePath': 'assets/voices/SpongeBob.wav',
       'color': const Color(0xFFFFEB3B),
@@ -132,6 +139,8 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
   final GlobalKey _keyMicButton = GlobalKey();
   final GlobalKey _keySendButton = GlobalKey();
   final GlobalKey _keyProfileIcon = GlobalKey();
+  final GlobalKey _keyWhiteboardButton = GlobalKey();
+  final GlobalKey _keyCameraButton = GlobalKey();
 
   final String _tutorialPreferenceKey = 'chatPageTutorialShown';
 
@@ -194,10 +203,10 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
   Future<void> _loadAvatarSettings() async {
     try {
       final avatar = await AvatarSettings.getCurrentAvatar();
-      final avatarName = avatar['name'] ?? 'SpongeBob'; // Default to SpongeBob in English
+      final avatarName = avatar['name'] ?? 'SpongeBob';
       final selectedAvatar = _avatars.firstWhere(
         (a) => a['name'] == avatarName,
-        orElse: () => _avatars[0], // Fallback to SpongeBob if not found
+        orElse: () => _avatars[0],
       );
       if (mounted) {
         setState(() {
@@ -303,13 +312,13 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
     }
   }
 
-  Future<void> _sendMessage(String message) async {
+  Future<void> _sendMessage(String message, {bool isImage = false, String source = 'text'}) async {
     if (message.isEmpty) return;
 
     final DateTime timestamp = DateTime.now();
 
     setState(() {
-      messages.add(Message(sender: 'user', content: message, timestamp: timestamp));
+      messages.add(Message(sender: 'user', content: message, isImage: isImage, timestamp: timestamp));
       _isSending = true;
       messages.add(Message(sender: 'bot', content: 'typing_indicator', timestamp: DateTime.now()));
     });
@@ -319,42 +328,60 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
     Future.delayed(const Duration(milliseconds: 100), () => _scrollToBottom());
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final accessToken = prefs.getString('accessToken');
-
-      final response = await http.post(
-        Uri.parse('https://e59e-41-230-204-2.ngrok-free.app/KiddoAI/chat/send'),
-        headers: {
-          "Content-Type": "application/json",
-          if (accessToken != null) "Authorization": "Bearer $accessToken",
-        },
-        body: jsonEncode({'threadId': threadId, 'userInput': message}),
-      );
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
-        String botResponse = jsonResponse['response'];
-
-        if (botResponse.startsWith('"') && botResponse.endsWith('"')) {
-          botResponse = botResponse.substring(1, botResponse.length - 1);
+      if (isImage) {
+        // Send image to backend for OCR and feedback
+        final response = await _sendImageToBackend(message, source);
+        if (response != null) {
+          setState(() {
+            messages.removeWhere((m) => m.content == 'typing_indicator');
+            messages.add(Message(
+              sender: 'bot',
+              content: response['message'],
+              timestamp: DateTime.now(),
+            ));
+            _isSending = false;
+          });
+        } else {
+          throw Exception('Failed to process image');
         }
-        botResponse = botResponse.trim();
-
-        setState(() {
-          messages.removeWhere((m) => m.content == 'typing_indicator');
-          messages.add(Message(sender: 'bot', content: botResponse, timestamp: DateTime.now()));
-          _isSending = false;
-        });
-
-        _saveMessages();
-        _scrollToBottom();
-        _initializeVoice(botResponse);
       } else {
-        setState(() {
-          _isSending = false;
-          messages.removeWhere((m) => m.content == 'typing_indicator');
-          messages.add(Message(sender: 'bot', content: "عفوًا! حاول مرة أخرى!", timestamp: DateTime.now()));
-        });
+        final prefs = await SharedPreferences.getInstance();
+        final accessToken = prefs.getString('accessToken');
+
+        final response = await http.post(
+          Uri.parse('https://e59e-41-230-204-2.ngrok-free.app/KiddoAI/chat/send'),
+          headers: {
+            "Content-Type": "application/json",
+            if (accessToken != null) "Authorization": "Bearer $accessToken",
+          },
+          body: jsonEncode({'threadId': threadId, 'userInput': message}),
+        );
+
+        if (response.statusCode == 200) {
+          final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
+          String botResponse = jsonResponse['response'];
+
+          if (botResponse.startsWith('"') && botResponse.endsWith('"')) {
+            botResponse = botResponse.substring(1, botResponse.length - 1);
+          }
+          botResponse = botResponse.trim();
+
+          setState(() {
+            messages.removeWhere((m) => m.content == 'typing_indicator');
+            messages.add(Message(sender: 'bot', content: botResponse, timestamp: DateTime.now()));
+            _isSending = false;
+          });
+
+          _saveMessages();
+          _scrollToBottom();
+          _initializeVoice(botResponse);
+        } else {
+          setState(() {
+            _isSending = false;
+            messages.removeWhere((m) => m.content == 'typing_indicator');
+            messages.add(Message(sender: 'bot', content: "عفوًا! حاول مرة أخرى!", timestamp: DateTime.now()));
+          });
+        }
       }
     } catch (e) {
       setState(() {
@@ -362,6 +389,24 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
         messages.removeWhere((m) => m.content == 'typing_indicator');
         messages.add(Message(sender: 'bot', content: "خطأ في الاتصال!", timestamp: DateTime.now()));
       });
+    }
+  }
+
+  Future<Map<String, dynamic>?> _sendImageToBackend(String imagePath, String source) async {
+    try {
+      final file = File(imagePath);
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse('http://192.168.100.88:5000/ocr'), // Replace with your backend URL
+      );
+      request.fields['source'] = source;
+      request.files.add(await http.MultipartFile.fromPath('image', file.path));
+      final response = await request.send();
+      final responseData = await response.stream.bytesToString();
+      return jsonDecode(responseData);
+    } catch (e) {
+      print('Error sending image to backend: $e');
+      return null;
     }
   }
 
@@ -648,16 +693,22 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
                       ),
                     ],
                   ),
-                  child: Text(
-                    message.content,
-                    style: TextStyle(
-                      color: isUser ? Colors.white : Colors.black87,
-                      fontSize: 15.5,
-                      height: 1.3,
-                      fontFamily: 'Comic Sans MS',
-                    ),
-                    textDirection: TextDirection.rtl,
-                  ),
+                  child: message.isImage
+                      ? Image.file(
+                          File(message.content),
+                          height: 100,
+                          fit: BoxFit.cover,
+                        )
+                      : Text(
+                          message.content,
+                          style: TextStyle(
+                            color: isUser ? Colors.white : Colors.black87,
+                            fontSize: 15.5,
+                            height: 1.3,
+                            fontFamily: 'Comic Sans MS',
+                          ),
+                          textDirection: TextDirection.rtl,
+                        ),
                 ),
               ),
             ),
@@ -786,6 +837,52 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
       );
     } else {
       print("Tutorial key context missing: _keyMicButton");
+    }
+
+    if (_keyWhiteboardButton.currentContext != null) {
+      _targets.add(
+        TargetFocus(
+          identify: "whiteboardButton",
+          keyTarget: _keyWhiteboardButton,
+          alignSkip: Alignment.topLeft,
+          enableOverlayTab: true,
+          contents: [
+            TargetContent(
+              align: ContentAlign.top,
+              child: _buildTutorialContent(
+                title: "ارسم على السبورة!",
+                description: "اضغط هنا لفتح السبورة البيضاء وارسم ما تريد!",
+              ),
+            ),
+          ],
+          shape: ShapeLightFocus.Circle,
+        ),
+      );
+    } else {
+      print("Tutorial key context missing: _keyWhiteboardButton");
+    }
+
+    if (_keyCameraButton.currentContext != null) {
+      _targets.add(
+        TargetFocus(
+          identify: "cameraButton",
+          keyTarget: _keyCameraButton,
+          alignSkip: Alignment.topLeft,
+          enableOverlayTab: true,
+          contents: [
+            TargetContent(
+              align: ContentAlign.top,
+              child: _buildTutorialContent(
+                title: "التقط صورة!",
+                description: "اضغط هنا لالتقاط صورة باستخدام الكاميرا!",
+              ),
+            ),
+          ],
+          shape: ShapeLightFocus.Circle,
+        ),
+      );
+    } else {
+      print("Tutorial key context missing: _keyCameraButton");
     }
 
     if (_keySendButton.currentContext != null) {
@@ -1040,7 +1137,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
                   onTap: () => Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => ProfilePage(threadId: widget.threadId)),
-                  ).then((_) => _loadAvatarSettings()), // Refresh settings after returning
+                  ).then((_) => _loadAvatarSettings()),
                   child: Container(
                     decoration: BoxDecoration(
                       color: Colors.white,
@@ -1217,6 +1314,64 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
                                     iconSize: 24,
                                     tooltip: "أرسل الرسالة",
                                     onPressed: _isTyping ? () => _sendMessage(_controller.text) : null,
+                                  ),
+                                ),
+                                Container(
+                                  width: 48,
+                                  height: 48,
+                                  margin: const EdgeInsets.only(right: 8),
+                                  decoration: BoxDecoration(
+                                    color: _currentAvatarColor.withOpacity(0.1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: IconButton(
+                                    key: _keyCameraButton,
+                                    icon: Icon(
+                                      Icons.camera_alt,
+                                      color: _currentAvatarColor,
+                                      size: 26,
+                                    ),
+                                    onPressed: () async {
+                                      final XFile? photo = await _picker.pickImage(
+                                        source: ImageSource.camera,
+                                        imageQuality: 100,
+                                      );
+                                      if (photo != null) {
+                                        _sendMessage(photo.path, isImage: true, source: 'camera');
+                                      }
+                                    },
+                                  ),
+                                ),
+                                Container(
+                                  width: 48,
+                                  height: 48,
+                                  margin: const EdgeInsets.only(right: 8),
+                                  decoration: BoxDecoration(
+                                    color: _currentAvatarColor.withOpacity(0.1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: IconButton(
+                                    key: _keyWhiteboardButton,
+                                    icon: Icon(
+                                      Icons.brush,
+                                      color: _currentAvatarColor,
+                                      size: 26,
+                                    ),
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => WhiteboardScreen(
+                                            onImageSaved: (imagePath) {
+                                              _sendMessage(imagePath, isImage: true, source: 'whiteboard');
+                                            },
+                                            avatarImagePath: _currentAvatarImage,
+                                            avatarColor: _currentAvatarColor,
+                                            avatarGradient: _currentAvatarGradient,
+                                          ),
+                                        ),
+                                      );
+                                    },
                                   ),
                                 ),
                                 Expanded(

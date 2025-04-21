@@ -30,10 +30,6 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
   String _selectedAvatarName = AvatarSettings.defaultAvatarName;
   String _selectedVoicePath = AvatarSettings.defaultVoicePath;
 
-  final ImagePicker _picker = ImagePicker();
-  String? _recognizedText;
-  bool _isProcessing = false;
-
   final List<Map<String, dynamic>> _avatars = [
     {
       'name': 'SpongeBob',
@@ -122,59 +118,6 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
         ),
       );
     }
-  }
-
-  Future<void> _takePicture() async {
-    try {
-      final XFile? photo = await _picker.pickImage(
-        source: ImageSource.camera,
-        imageQuality: 100,
-        preferredCameraDevice: CameraDevice.rear,
-      );
-      if (photo != null) {
-        setState(() => _isProcessing = true);
-        await _processImage(File(photo.path));
-      }
-    } catch (e) {
-      _showError('خطأ في التقاط الصورة: $e'); // Translated
-    }
-  }
-
-  Future<void> _processImage(File imageFile) async {
-    try {
-      var request = http.MultipartRequest(
-        'POST',
-        Uri.parse('https://6955-41-230-204-2.ngrok-free.app/ocr'),
-      );
-      request.files.add(await http.MultipartFile.fromPath('image', imageFile.path));
-
-      final response = await request.send();
-      final respStr = await response.stream.bytesToString();
-
-      if (response.statusCode == 200) {
-        final jsonResponse = jsonDecode(respStr);
-        setState(() {
-          _recognizedText = jsonResponse['recognized_text'];
-          _isProcessing = false;
-        });
-      } else {
-        throw Exception('خطأ في الخادم: ${response.statusCode}'); // Translated
-      }
-    } catch (e) {
-      _showError('خطأ في معالجة الصورة: $e'); // Translated
-      setState(() => _isProcessing = false);
-    }
-  }
-
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          textDirection: TextDirection.rtl,
-        ),
-      ),
-    );
   }
 
   Color _getAvatarColor() {
@@ -442,81 +385,6 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                           ),
                         ),
                       ],
-                    ),
-                  ),
-                  SizedBox(height: 20),
-                  Card(
-                    elevation: 4,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    child: Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              ElevatedButton.icon(
-                                onPressed: _isProcessing ? null : _takePicture,
-                                icon: Icon(Icons.camera_alt),
-                                label: Text(
-                                  'الكاميرا', // Translated: Camera
-                                  textDirection: TextDirection.rtl,
-                                ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: mainColor,
-                                  foregroundColor: Colors.white,
-                                ),
-                              ),
-                              ElevatedButton.icon(
-                                onPressed: _isProcessing
-                                    ? null
-                                    : () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) => WhiteboardScreen(
-                                              onImageSaved: (imagePath) {
-                                                setState(() => _isProcessing = true);
-                                                _processImage(File(imagePath));
-                                              },
-                                              avatarImagePath: _selectedAvatar,
-                                              avatarColor: mainColor,
-                                              avatarGradient: bgGradient,
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                icon: Icon(Icons.brush),
-                                label: Text(
-                                  'السبورة', // Translated: Whiteboard
-                                  textDirection: TextDirection.rtl,
-                                ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: mainColor,
-                                  foregroundColor: Colors.white,
-                                ),
-                              ),
-                            ].reversed.toList(), // Reversed for RTL
-                          ),
-                          if (_isProcessing)
-                            Padding(
-                              padding: EdgeInsets.only(top: 16),
-                              child: CircularProgressIndicator(),
-                            ),
-                          if (_recognizedText != null && !_isProcessing)
-                            Padding(
-                              padding: EdgeInsets.only(top: 16),
-                              child: Text(
-                                'النص المعترف به: $_recognizedText', // Translated: Recognized Text
-                                style: TextStyle(fontSize: 16),
-                                textAlign: TextAlign.center,
-                                textDirection: TextDirection.rtl,
-                              ),
-                            ),
-                        ],
-                      ),
                     ),
                   ),
                   SizedBox(height: 20),

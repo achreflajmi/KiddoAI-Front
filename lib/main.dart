@@ -5,6 +5,8 @@ import 'view_models/authentication_view_model.dart';
 import 'view_models/chatbot_viewmodel.dart';
 import 'services/chatbot_service.dart';
 import 'ui/AuthPage.dart';
+import 'ui/chat_page.dart';
+
 import 'ui/Iq_test_screen.dart';
 
 void main() {
@@ -36,7 +38,7 @@ class MyApp extends StatelessWidget {
           Locale('en', ''), // For English (or any others you need)
         ],
         // -----------------------------------------------------------
-        home: AuthPage(), // Your AuthPage
+       home: ChatPage(threadId: "default-thread-id"),
 
       ),
     );

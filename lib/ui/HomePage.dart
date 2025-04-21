@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
-import 'package:front_kiddoai/ui/LessonPage.dart';
+import 'LessonPage.dart';
 import '../view_models/Lessons_ViewModel.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../services/SubjectService.dart';
 import 'package:front_kiddoai/ui/profile_page.dart';
 import '../utils/constants.dart';
-import '../models/avatar_settings.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class SubjectsPage extends StatefulWidget {
   final String threadId;
@@ -22,43 +20,6 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
   late Future<List<String>> _subjects;
   late AnimationController _animationController;
   late AnimationController _headerAnimationController;
-
-  // Avatar settings
-  final List<Map<String, dynamic>> _avatars = [
-    {
-      'name': 'سبونج بوب',
-      'imagePath': 'assets/avatars/spongebob.png',
-      'voicePath': 'assets/voices/SpongeBob.wav',
-      'color': Color(0xFFFFEB3B),
-      'gradient': [Color.fromARGB(255, 206, 190, 46), Color(0xFFFFF9C4)],
-    },
-    {
-      'name': 'غمبول',
-      'imagePath': 'assets/avatars/gumball.png',
-      'voicePath': 'assets/voices/gumball.wav',
-      'color': Color(0xFF2196F3),
-      'gradient': [Color.fromARGB(255, 48, 131, 198), Color(0xFFE3F2FD)],
-    },
-    {
-      'name': 'سبايدرمان',
-      'imagePath': 'assets/avatars/spiderman.png',
-      'voicePath': 'assets/voices/spiderman.wav',
-      'color': Color.fromARGB(255, 227, 11, 18),
-      'gradient': [Color.fromARGB(255, 203, 21, 39), Color(0xFFFFEBEE)],
-    },
-    {
-      'name': 'هيلو كيتي',
-      'imagePath': 'assets/avatars/hellokitty.png',
-      'voicePath': 'assets/voices/hellokitty.wav',
-      'color': Color(0xFFFF80AB),
-      'gradient': [Color.fromARGB(255, 255, 131, 174), Color(0xFFFCE4EC)],
-    },
-  ];
-
-  String _currentAvatarName = 'سبونج بوب';
-  String _currentAvatarImage = 'assets/avatars/spongebob.png';
-  Color _currentAvatarColor = Color(0xFFFFEB3B);
-  List<Color> _currentAvatarGradient = [Color.fromARGB(255, 206, 190, 46), Color(0xFFFFF9C4)];
 
   // Map of subject names to their respective icons, colors, and animations
   final Map<String, Map<String, dynamic>> _subjectAssets = {
@@ -113,7 +74,6 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
     );
 
     _subjects = SubjectService(CurrentIP + "/KiddoAI").fetchSubjects();
-    _loadAvatarSettings();
 
     _animationController.forward();
     _headerAnimationController.forward();
@@ -124,36 +84,6 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
     _animationController.dispose();
     _headerAnimationController.dispose();
     super.dispose();
-  }
-
-  Future<void> _loadAvatarSettings() async {
-    try {
-      final avatar = await AvatarSettings.getCurrentAvatar();
-      final avatarName = avatar['name'] ?? 'سبونج بوب';
-      print("SubjectsPage - Loaded avatar name: $avatarName"); // Debug log
-      final selectedAvatar = _avatars.firstWhere(
-        (a) => a['name'] == avatarName,
-        orElse: () => _avatars[0],
-      );
-      if (mounted) {
-        setState(() {
-          _currentAvatarName = avatarName;
-          _currentAvatarImage = avatar['imagePath'] ?? 'assets/avatars/spongebob.png';
-          _currentAvatarColor = selectedAvatar['color'] as Color;
-          _currentAvatarGradient = selectedAvatar['gradient'] as List<Color>;
-        });
-      }
-    } catch (e) {
-      print("SubjectsPage - Error loading avatar settings: $e");
-      if (mounted) {
-        setState(() {
-          _currentAvatarName = 'سبونج بوب';
-          _currentAvatarImage = 'assets/avatars/spongebob.png';
-          _currentAvatarColor = Color(0xFFFFEB3B);
-          _currentAvatarGradient = [Color.fromARGB(255, 206, 190, 46), Color(0xFFFFF9C4)];
-        });
-      }
-    }
   }
 
   Map<String, dynamic> _getSubjectAssets(String subject) {
@@ -170,19 +100,19 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: _currentAvatarGradient.last,
+        backgroundColor: Color(0xFFF2FFF0),
         appBar: AppBar(
-          backgroundColor: _currentAvatarColor,
+          backgroundColor: Color(0xFF4CAF50),
           elevation: 0,
           centerTitle: true,
           title: Container(
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: _currentAvatarColor.withOpacity(0.2),
+              color: Colors.yellow.shade200,
               borderRadius: BorderRadius.circular(30),
               boxShadow: [
                 BoxShadow(
-                  color: _currentAvatarColor.withOpacity(0.3),
+                  color: Colors.yellow.shade300.withOpacity(0.5),
                   blurRadius: 10,
                   offset: Offset(0, 4),
                 ),
@@ -192,7 +122,7 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
               mainAxisSize: MainAxisSize.min,
               children: [
                 Image.asset(
-                  _currentAvatarImage,
+                  'assets/spongebob.png',
                   height: 30,
                 ),
                 SizedBox(width: 8),
@@ -206,7 +136,7 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
                     children: [
                       TextSpan(
                         text: 'K',
-                        style: TextStyle(color: Colors.white),
+                        style: TextStyle(color: Colors.green.shade700),
                       ),
                       TextSpan(
                         text: 'iddo',
@@ -214,7 +144,7 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
                       ),
                       TextSpan(
                         text: 'A',
-                        style: TextStyle(color: Colors.white),
+                        style: TextStyle(color: Colors.blue.shade700),
                       ),
                       TextSpan(
                         text: 'i',
@@ -234,13 +164,13 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => ProfilePage(threadId: widget.threadId)),
-                  ).then((_) => _loadAvatarSettings());
+                  );
                 },
                 child: Container(
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: _currentAvatarColor,
+                      color: Colors.yellow.shade400,
                       width: 3,
                     ),
                     boxShadow: [
@@ -252,7 +182,7 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
                     ],
                   ),
                   child: CircleAvatar(
-                    backgroundImage: AssetImage(_currentAvatarImage),
+                    backgroundImage: AssetImage('assets/spongebob.png'),
                     radius: 22,
                   ),
                 ),
@@ -266,7 +196,7 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
               child: Container(
                 decoration: BoxDecoration(
                   image: DecorationImage(
-                    image: AssetImage(_currentAvatarImage),
+                    image: AssetImage('assets/spongebob.png'),
                     repeat: ImageRepeat.repeat,
                     opacity: 0.15,
                   ),
@@ -277,7 +207,7 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
               top: -40,
               left: -30,
               child: Image.asset(
-                _currentAvatarImage,
+                'assets/spongebob.png',
                 width: 150,
                 opacity: AlwaysStoppedAnimation(0.2),
               ),
@@ -286,7 +216,7 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
               bottom: -50,
               right: -30,
               child: Image.asset(
-                _currentAvatarImage,
+                'assets/spongebob.png',
                 width: 180,
                 opacity: AlwaysStoppedAnimation(0.15),
               ),
@@ -298,14 +228,17 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
                   padding: EdgeInsets.symmetric(vertical: 16, horizontal: 20),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: _currentAvatarGradient,
+                      colors: [
+                        Color(0xFF66BB6A),
+                        Color(0xFF43A047),
+                      ],
                       begin: Alignment.topRight,
                       end: Alignment.bottomLeft,
                     ),
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: _currentAvatarColor.withOpacity(0.4),
+                        color: Colors.green.withOpacity(0.4),
                         blurRadius: 10,
                         offset: Offset(0, 4),
                       ),
@@ -374,11 +307,11 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
                               Container(
                                 padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                                 decoration: BoxDecoration(
-                                  color: _currentAvatarColor.withOpacity(0.2),
+                                  color: Colors.yellow.shade100,
                                   borderRadius: BorderRadius.circular(30),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: _currentAvatarColor.withOpacity(0.3),
+                                      color: Colors.yellow.shade200.withOpacity(0.5),
                                       blurRadius: 8,
                                       offset: Offset(0, 3),
                                     ),
@@ -389,7 +322,7 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
                                   style: TextStyle(
                                     fontSize: 20,
                                     fontWeight: FontWeight.bold,
-                                    color: _currentAvatarColor,
+                                    color: Colors.green.shade700,
                                     fontFamily: 'Comic Sans MS',
                                   ),
                                   textDirection: TextDirection.rtl,
@@ -445,7 +378,7 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
                                   ),
                                 ),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: _currentAvatarColor,
+                                  backgroundColor: Colors.green.shade600,
                                   padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(30),
@@ -469,16 +402,16 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
                               Container(
                                 padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                                 decoration: BoxDecoration(
-                                  color: _currentAvatarColor.withOpacity(0.2),
+                                  color: Colors.blue.shade50,
                                   borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(color: _currentAvatarColor.withOpacity(0.5)),
+                                  border: Border.all(color: Colors.blue.shade200),
                                 ),
                                 child: Text(
                                   'لا توجد مواد جاهزة بعد!',
                                   style: TextStyle(
                                     fontSize: 20,
                                     fontWeight: FontWeight.bold,
-                                    color: _currentAvatarColor,
+                                    color: Colors.blue.shade700,
                                     fontFamily: 'Comic Sans MS',
                                   ),
                                   textDirection: TextDirection.rtl,
@@ -501,7 +434,7 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
                                   ),
                                 ),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: _currentAvatarColor,
+                                  backgroundColor: Colors.blue.shade600,
                                   padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(30),
@@ -526,9 +459,9 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
                         itemCount: subjects.length,
                         itemBuilder: (context, index) {
                           final subject = subjects[index];
-                          final Color cardColor = _getSubjectAssets(subject)['color'] as Color;
-                          final IconData subjectIcon = _getSubjectAssets(subject)['icon'] as IconData;
-                          final String description = _getSubjectAssets(subject)['description'] as String;
+                          final Color cardColor = _getSubjectColor(subject, index);
+                          final IconData subjectIcon = _getSubjectIcon(subject);
+                          final String description = _getSubjectDescription(subject);
 
                           return GestureDetector(
                             onTap: () {
@@ -552,7 +485,7 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
                                 borderRadius: BorderRadius.circular(24),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: _currentAvatarColor.withOpacity(0.5),
+                                    color: cardColor.withOpacity(0.5),
                                     blurRadius: 10,
                                     offset: Offset(0, 5),
                                   ),
@@ -646,7 +579,7 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
                                     child: Container(
                                       padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                                       decoration: BoxDecoration(
-                                        color: _currentAvatarColor.withOpacity(0.3),
+                                        color: Colors.yellow.shade300,
                                         borderRadius: BorderRadius.only(
                                           topRight: Radius.circular(12),
                                           bottomLeft: Radius.circular(24),
@@ -665,7 +598,7 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
                                           Text(
                                             "نبدأ التعلم",
                                             style: TextStyle(
-                                              color: _currentAvatarColor,
+                                              color: Colors.green.shade800,
                                               fontSize: 12,
                                               fontWeight: FontWeight.bold,
                                               fontFamily: 'Comic Sans MS',
@@ -675,7 +608,7 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
                                           SizedBox(width: 4),
                                           Icon(
                                             Icons.play_circle_fill,
-                                            color: _currentAvatarColor,
+                                            color: Colors.green.shade700,
                                             size: 14,
                                           ),
                                         ].reversed.toList(),
@@ -688,7 +621,7 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
                                     child: Transform.scale(
                                       scale: 0.5,
                                       child: Image.asset(
-                                        _currentAvatarImage,
+                                        'assets/spongebob.png',
                                         width: 80,
                                         opacity: AlwaysStoppedAnimation(0.4),
                                       ),
@@ -728,17 +661,54 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
   }
 
   Color _getSubjectColor(String subject, int index) {
-    final subjectAssets = _getSubjectAssets(subject);
-    return subjectAssets['color'] as Color;
+    List<Color> colors = [
+      Color(0xFF4CAF50),
+      Color(0xFF42A5F5),
+      Color(0xFFFFA726),
+      Color(0xFFEC407A),
+      Color(0xFF7E57C2),
+      Color(0xFF26A69A),
+    ];
+    return colors[index % colors.length];
   }
 
   IconData _getSubjectIcon(String subject) {
-    final subjectAssets = _getSubjectAssets(subject);
-    return subjectAssets['icon'] as IconData;
+    String lowercaseSubject = subject.toLowerCase();
+
+    if (lowercaseSubject.contains('math') || lowercaseSubject.contains('رياضيات')) {
+      return Icons.calculate;
+    } else if (lowercaseSubject.contains('music') || lowercaseSubject.contains('موسيقى')) {
+      return Icons.music_note;
+    } else if (lowercaseSubject.contains('science') || lowercaseSubject.contains('علم')) {
+      return Icons.science;
+    } else if (lowercaseSubject.contains('tech') || lowercaseSubject.contains('تكنولوج')) {
+      return Icons.computer;
+    } else if (lowercaseSubject.contains('arab') || lowercaseSubject.contains('عرب')) {
+      return Icons.menu_book;
+    } else if (lowercaseSubject.contains('art') || lowercaseSubject.contains('فن')) {
+      return Icons.color_lens;
+    } else {
+      return Icons.school;
+    }
   }
 
   String _getSubjectDescription(String subject) {
-    final subjectAssets = _getSubjectAssets(subject);
-    return subjectAssets['description'] as String;
+    String lowercaseSubject = subject.toLowerCase();
+
+    if (lowercaseSubject.contains('math') || lowercaseSubject.contains('رياضيات')) {
+      return "الأرقام والألغاز";
+    } else if (lowercaseSubject.contains('music') || lowercaseSubject.contains('موسيقى')) {
+      return "الأصوات والإيقاع";
+    } else if (lowercaseSubject.contains('science') || lowercaseSubject.contains('علم')) {
+      return "اكتشف واستكشف";
+    } else if (lowercaseSubject.contains('tech') || lowercaseSubject.contains('تكنولوج')) {
+      return "الابتكار والمستقبل";
+    } else if (lowercaseSubject.contains('arab') || lowercaseSubject.contains('عرب')) {
+      return "الكلمات والشعر";
+    } else if (lowercaseSubject.contains('art') || lowercaseSubject.contains('فن')) {
+      return "ابتكر وتخيّل";
+    } else {
+      return "تعلّم وانمو";
+    }
   }
 }

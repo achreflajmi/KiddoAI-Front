@@ -22,7 +22,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   String _currentAvatarName = 'SpongeBob';
   String _currentAvatarDisplayName = 'سبونج بوب';
   String _avatarImage = 'assets/avatars/spongebob.png';
-  Color _currentAvatarColor = const Color(0xFFFFD600); // Default to SpongeBob's bright yellow
+  Color _currentAvatarColor = const Color(0xFFFFEB3B); // Default to SpongeBob's bright yellow
+  String _currentVoicePath = 'assets/voices/SpongeBob.wav';
+  List<Color> _currentAvatarGradient = [
+    const Color.fromARGB(255, 206, 190, 46),
+    const Color(0xFFFFF9C4)
+  ];
 
   // Animation controllers
   late final AnimationController _welcomeController;
@@ -30,35 +35,39 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   late final List<AnimationController> _cardControllers;
   late final AnimationController _bounceController;
 
-  // Avatar settings - updated colors to be more vibrant and child-friendly
+  // Avatar settings (using English names for lookup, Arabic for display)
   final List<Map<String, dynamic>> _avatars = [
     {
-      'name': 'SpongeBob', // English name for lookup
-      'displayName': 'سبونج بوب', // Arabic name for display
+      'name': 'SpongeBob',
+      'displayName': 'سبونج بوب',
       'imagePath': 'assets/avatars/spongebob.png',
       'voicePath': 'assets/voices/SpongeBob.wav',
-      'color': const Color(0xFFFFD600), // Bright yellow
+      'color': const Color(0xFFFFEB3B),
+      'gradient': [const Color.fromARGB(255, 206, 190, 46), const Color(0xFFFFF9C4)],
     },
     {
       'name': 'Gumball',
       'displayName': 'غمبول',
       'imagePath': 'assets/avatars/gumball.png',
       'voicePath': 'assets/voices/gumball.wav',
-      'color': const Color(0xFF2979FF), // Bright blue
+      'color': const Color(0xFF2196F3),
+      'gradient': [const Color.fromARGB(255, 48, 131, 198), const Color(0xFFE3F2FD)],
     },
     {
       'name': 'SpiderMan',
       'displayName': 'سبايدرمان',
       'imagePath': 'assets/avatars/spiderman.png',
       'voicePath': 'assets/voices/spiderman.wav',
-      'color': const Color(0xFFD50000), // Bright red
+      'color': const Color.fromARGB(255, 227, 11, 18),
+      'gradient': [const Color.fromARGB(255, 203, 21, 39), const Color(0xFFFFEBEE)],
     },
     {
       'name': 'HelloKitty',
       'displayName': 'هيلو كيتي',
       'imagePath': 'assets/avatars/hellokitty.png',
       'voicePath': 'assets/voices/hellokitty.wav',
-      'color': const Color(0xFFFF4081), // Bright pink
+      'color': const Color(0xFFFF80AB),
+      'gradient': [const Color.fromARGB(255, 255, 131, 174), const Color(0xFFFCE4EC)],
     },
   ];
 
@@ -139,19 +148,37 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Future<void> _loadAvatarSettings() async {
     try {
       final avatar = await AvatarSettings.getCurrentAvatar();
-      final avatarName = avatar['name'] ?? 'SpongeBob';
-      final avatarColorValue = avatar['color'] as int? ?? 0xFFFFD600; // Cast to int
-      print("HomePage - Loaded avatar name: $avatarName, color: $avatarColorValue"); // Debug log
+      final avatarName = avatar['name']?.toString() ?? 'SpongeBob';
       final selectedAvatar = _avatars.firstWhere(
         (a) => a['name'] == avatarName,
         orElse: () => _avatars[0],
       );
+
+      // Robust color handling
+      int avatarColorValue;
+      if (avatar['color'] is int) {
+        avatarColorValue = avatar['color'] as int;
+      } else if (avatar['color'] is String) {
+        String colorString = avatar['color'] as String;
+        // Remove "0x" prefix if present and parse hex
+        if (colorString.startsWith('0x')) {
+          colorString = colorString.replaceFirst('0x', '');
+        }
+        avatarColorValue = int.tryParse(colorString, radix: 16) ?? (selectedAvatar['color'] as Color).value;
+      } else {
+        avatarColorValue = (selectedAvatar['color'] as Color).value; // Fallback to avatar’s default color
+      }
+
+      print("HomePage - Loaded avatar name: $avatarName, color: $avatarColorValue (hex: 0x${avatarColorValue.toRadixString(16)})");
+
       if (mounted) {
         setState(() {
           _currentAvatarName = avatarName;
           _currentAvatarDisplayName = selectedAvatar['displayName'] as String;
-          _avatarImage = avatar['imagePath'] ?? 'assets/avatars/spongebob.png';
+          _avatarImage = avatar['imagePath']?.toString() ?? selectedAvatar['imagePath'] as String;
           _currentAvatarColor = Color(avatarColorValue);
+          _currentAvatarGradient = selectedAvatar['gradient'] as List<Color>;
+          _currentVoicePath = selectedAvatar['voicePath'] as String;
         });
       }
     } catch (e) {
@@ -161,7 +188,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           _currentAvatarName = 'SpongeBob';
           _currentAvatarDisplayName = 'سبونج بوب';
           _avatarImage = 'assets/avatars/spongebob.png';
-          _currentAvatarColor = const Color(0xFFFFD600); // Default to bright yellow
+          _currentAvatarColor = const Color(0xFFFFEB3B);
+          _currentAvatarGradient = [const Color.fromARGB(255, 206, 190, 46), const Color(0xFFFFF9C4)];
+          _currentVoicePath = 'assets/voices/SpongeBob.wav';
         });
       }
     }
@@ -434,7 +463,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [Colors.white, Color(0xFFF5F5F5)], // Subtle background
+                colors: _currentAvatarGradient, // Use the avatar’s gradient
               ),
             ),
             child: Column(
@@ -491,7 +520,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                 Text(
                                   'أنا $_currentAvatarDisplayName، صديقك الجديد!',
                                   style: TextStyle(
-                                    fontSize: 16,
+                                    fontSize:  16,
                                     fontFamily: 'Comic Sans MS',
                                     color: Colors.white.withOpacity(0.9),
                                   ),

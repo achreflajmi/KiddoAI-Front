@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart'; // Import GoogleFonts
 import 'package:lottie/lottie.dart';
 import 'LessonPage.dart';
 import '../view_models/Lessons_ViewModel.dart';
@@ -21,6 +22,38 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
   late Future<List<String>> _subjects;
   late AnimationController _animationController;
   late AnimationController _headerAnimationController;
+
+   final TextStyle _titleTextStyle = GoogleFonts.tajawal(
+    fontSize: 22,
+    fontWeight: FontWeight.bold,
+    color: Colors.white,
+  );
+  final TextStyle _subtitleTextStyle = GoogleFonts.tajawal(
+    fontSize: 16,
+    color: Colors.white.withOpacity(0.9),
+  );
+   final TextStyle _cardTitleTextStyle = GoogleFonts.tajawal(
+    color: Colors.white,
+    fontSize: 20, // Increased size
+    fontWeight: FontWeight.bold,
+  );
+   final TextStyle _cardDescTextStyle = GoogleFonts.tajawal(
+    color: Colors.white.withOpacity(0.9),
+    fontSize: 15, // Increased size
+  );
+  final TextStyle _buttonTextStyle = GoogleFonts.tajawal(
+    fontSize: 18,
+    fontWeight: FontWeight.bold,
+    color: Colors.white,
+  );
+   final TextStyle _statusTextStyle = GoogleFonts.tajawal(
+    fontSize: 20,
+    fontWeight: FontWeight.bold,
+  );
+  final TextStyle _logoTextStyle = GoogleFonts.fredoka( // Playful font for logo
+      fontSize: 24, // Adjusted size
+      fontWeight: FontWeight.bold,
+    );
 
   // Avatar settings variables
   String _avatarName = 'SpongeBob';
@@ -110,6 +143,12 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
   @override
   void initState() {
     super.initState();
+      _headerAnimationController = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 1000),
+    );
+        _headerAnimationController.forward();
+
     _animationController = AnimationController(
       vsync: this,
       duration: Duration(milliseconds: 800),
@@ -130,6 +169,7 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
   void dispose() {
     _animationController.dispose();
     _headerAnimationController.dispose();
+
     super.dispose();
   }
 
@@ -179,14 +219,33 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
     }
   }
 
-  Map<String, dynamic> _getSubjectAssets(String subject) {
-    return _subjectAssets[subject] ?? {
-      'icon': Icons.school,
-      'color': Color(0xFF795548),
-      'animation': 'https://assets9.lottiefiles.com/packages/lf20_5tl1xxnz.json',
-      'description': 'تعلّم وانمو'
-    };
-  }
+ // Your color palette
+final List<Color> _subjectColors = [
+  Color(0xFF4CAF50), // Green
+  Color(0xFF2196F3), // Blue
+  Color(0xFFF44336), // Red
+  Color(0xFFFF9800), // Orange
+  Color(0xFF9C27B0), // Purple
+  Color(0xFF009688), // Teal
+];
+
+// A counter to loop through the colors in order
+int _colorIndex = 0;
+
+Map<String, dynamic> _getSubjectAssets(String subject) {
+  // Get the color and update the index for next call
+  Color color = _subjectColors[_colorIndex];
+  _colorIndex = (_colorIndex + 1) % _subjectColors.length;
+
+  return _subjectAssets[subject] ?? {
+    'icon': Icons.school,
+    'color': color,
+    'animation': 'https://assets9.lottiefiles.com/packages/lf20_5tl1xxnz.json',
+    'description': ''
+  };
+}
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -195,71 +254,102 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
       child: Scaffold(
         backgroundColor: _avatarGradient.last,
         appBar: AppBar(
-          backgroundColor: _avatarColor,
-          elevation: 0,
-          centerTitle: true,
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(
-              bottom: Radius.circular(25),
-            ),
-          ),
-          title: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Image.asset(
-                _avatarImage,
-                height: 40,
-                width: 40,
-              ),
-              const SizedBox(width: 10),
-              RichText(
-                text: const TextSpan(
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Comic Sans MS',
-                  ),
-                  children: [
-                    TextSpan(text: 'K', style: TextStyle(color: Colors.yellow)),
-                    TextSpan(text: 'iddo', style: TextStyle(color: Colors.white)),
-                    TextSpan(text: 'A', style: TextStyle(color: Colors.yellow)),
-                    TextSpan(text: 'i', style: TextStyle(color: Colors.white)),
-                  ],
-                ),
-              ),
-            ].reversed.toList(),
-          ),
-          actions: [
-            Padding(
-              padding: const EdgeInsets.only(left: 16),
-              child: GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => ProfilePage(threadId: widget.threadId)),
-                  ).then((_) => _loadAvatarSettings());
-                },
-                child: Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 3),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 4,
-                        offset: Offset(0, 2),
+  backgroundColor: _avatarColor,
+  elevation: 0,
+  shape: const RoundedRectangleBorder(
+    borderRadius: BorderRadius.vertical(
+      bottom: Radius.circular(30),
+    ),
+  ),
+  centerTitle: true,
+  title: Row(
+    mainAxisSize: MainAxisSize.min,
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      Image.asset(
+        'assets/logo.png',
+        height: 50,
+      ),
+      AnimatedBuilder(
+        animation: _headerAnimationController,
+        builder: (context, child) {
+          return ClipRect(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              widthFactor: _headerAnimationController.value,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 10),
+                child: RichText(
+                  text: TextSpan(
+                    style: const TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Comic Sans MS',
+                    ),
+                    children: [
+                      const TextSpan(
+                        text: 'K',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      TextSpan(
+                        text: 'iddo ',
+                        style: TextStyle(color: Colors.white.withOpacity(0.85)),
+                      ),
+                      const TextSpan(
+                        text: 'A',
+                        style: TextStyle(color: Colors.yellow),
+                      ),
+                      TextSpan(
+                        text: 'I',
+                        style: TextStyle(color: Colors.yellow.withOpacity(0.85)),
                       ),
                     ],
                   ),
-                  child: CircleAvatar(
-                    backgroundImage: AssetImage(_avatarImage),
-                    radius: 22,
-                  ),
                 ),
               ),
             ),
-          ],
+          );
+        },
+      ),
+    ],
+  ),
+  actions: [
+    Padding(
+      padding: const EdgeInsets.only(left: 16),
+      child: GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => ProfilePage(threadId: widget.threadId)),
+          ).then((_) => _loadAvatarSettings());
+        },
+        child: Hero(
+          tag: 'profile_avatar',
+          child: Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: Colors.white,
+                width: 3,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 6,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: CircleAvatar(
+              backgroundImage: AssetImage(_avatarImage),
+              radius: 22,
+            ),
+          ),
         ),
+      ),
+    ),
+  ],
+),
         body: SafeArea(
           child: Container(
             decoration: BoxDecoration(
@@ -316,22 +406,13 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
                               children: [
                                 Text(
                                   "نتعلم معًا!",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                    fontFamily: 'Comic Sans MS',
-                                  ),
+                                  style: _titleTextStyle,
                                   textDirection: TextDirection.rtl,
                                 ),
                                 SizedBox(height: 4),
                                 Text(
                                   "اختر مادة ممتعة لاستكشافها",
-                                  style: TextStyle(
-                                    color: Colors.white.withOpacity(0.9),
-                                    fontSize: 16,
-                                    fontFamily: 'Comic Sans MS',
-                                  ),
+                                  style: _subtitleTextStyle,
                                   textDirection: TextDirection.rtl,
                                 ),
                               ],
@@ -368,13 +449,8 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
                                       ],
                                     ),
                                     child: Text(
-                                      "السحر يتحمّل...",
-                                      style: TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.green.shade700,
-                                        fontFamily: 'Comic Sans MS',
-                                      ),
+                                      " تحمّيل...",
+                                      style: _statusTextStyle.copyWith(color: _avatarColor),
                                       textDirection: TextDirection.rtl,
                                     ),
                                   ),
@@ -402,12 +478,7 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
                                     child: Text(
                                       'عفوًا! مغامرة التعلم متوقفة.',
                                       textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.red.shade700,
-                                        fontFamily: 'Comic Sans MS',
-                                      ),
+                                      style:_statusTextStyle.copyWith(color: Colors.red.shade700),
                                       textDirection: TextDirection.rtl,
                                     ),
                                   ),
@@ -421,11 +492,7 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
                                     icon: Icon(Icons.refresh, color: Colors.white),
                                     label: Text(
                                       "حاول مرة أخرى",
-                                      style: TextStyle(
-                                        fontFamily: 'Comic Sans MS',
-                                        fontSize: 18,
-                                        color: Colors.white,
-                                      ),
+                                      style: _buttonTextStyle,
                                     ),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.green.shade600,
@@ -458,12 +525,7 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
                                     ),
                                     child: Text(
                                       'لا توجد مواد جاهزة بعد!',
-                                      style: TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.blue.shade700,
-                                        fontFamily: 'Comic Sans MS',
-                                      ),
+                                      style: _statusTextStyle.copyWith(color: _avatarColor),
                                       textDirection: TextDirection.rtl,
                                     ),
                                   ),
@@ -477,11 +539,7 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
                                     icon: Icon(Icons.refresh, color: Colors.white),
                                     label: Text(
                                       "تحديث المواد",
-                                      style: TextStyle(
-                                        fontFamily: 'Comic Sans MS',
-                                        fontSize: 18,
-                                        color: Colors.white,
-                                      ),
+                                      style:_buttonTextStyle,
                                     ),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.blue.shade600,
@@ -595,27 +653,11 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
                                               ),
                                               child: Text(
                                                 subject,
-                                                style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 18,
-                                                  fontWeight: FontWeight.bold,
-                                                  fontFamily: 'Comic Sans MS',
-                                                ),
+                                                style: _cardTitleTextStyle,
                                                 textDirection: TextDirection.rtl,
                                               ),
                                             ),
-                                            SizedBox(height: 8),
-                                            Text(
-                                              assets['description'],
-                                              style: TextStyle(
-                                                color: Colors.white.withOpacity(0.9),
-                                                fontSize: 14,
-                                                fontFamily: 'Comic Sans MS',
-                                              ),
-                                              maxLines: 2,
-                                              overflow: TextOverflow.ellipsis,
-                                              textDirection: TextDirection.rtl,
-                                            ),
+                                            
                                           ],
                                         ),
                                       ),

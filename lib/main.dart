@@ -38,7 +38,7 @@ class MyApp extends StatelessWidget {
           Locale('en', ''), // For English (or any others you need)
         ],
         // -----------------------------------------------------------
-       home: ChatPage(threadId: "default-thread-id"),
+       home: AuthPage(),//ChatPage(threadId: "default-thread-id"),
 
       ),
     );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:front_kiddoai/ui/profile_page.dart';
+import 'package:front_kiddoai/utils/constants.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -17,6 +18,8 @@ import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'WhiteboardScreen.dart';
+import 'package:google_fonts/google_fonts.dart';
+
 
 class Message {
   final String sender;
@@ -69,6 +72,7 @@ class ChatPage extends StatefulWidget {
 }
 
 class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, WidgetsBindingObserver {
+  late final AnimationController _welcomeController;
   late String threadId;
   final TextEditingController _controller = TextEditingController();
   final List<Message> messages = [];
@@ -129,6 +133,61 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
   Color _currentAvatarColor = Colors.green;
   List<Color> _currentAvatarGradient = [Colors.white, Colors.white];
 
+   final TextStyle _arabicTextStyle = GoogleFonts.tajawal(
+    // Line 116: fontSize: 18, // Increased minimum size
+    fontSize: 18,
+    // Line 117: height: 1.4,
+    height: 1.4,
+    // Line 118: color: Colors.black87,
+    color: Colors.black87,
+  );
+  // Line 121: final TextStyle _arabicTextStyleUser = GoogleFonts.tajawal( // Use Tajawal
+  final TextStyle _arabicTextStyleUser = GoogleFonts.tajawal(
+    // Line 122: fontSize: 18, // Increased minimum size
+    fontSize: 18,
+    // Line 123: height: 1.4,
+    height: 1.4,
+    // Line 124: color: Colors.white, // User message text color
+    color: Colors.white,
+  );
+  // Line 127: final TextStyle _hintTextStyle = GoogleFonts.tajawal( // Use Tajawal for hint
+  final TextStyle _hintTextStyle = GoogleFonts.tajawal(
+    // Line 128: fontSize: 16, // Readable size
+    fontSize: 16,
+    // Line 129: color: Colors.grey[500],
+    color: Colors.grey[500],
+  );
+  // Line 132: final TextStyle _inputTextStyle = GoogleFonts.tajawal( // Use Tajawal for input
+  final TextStyle _inputTextStyle = GoogleFonts.tajawal(
+    // Line 133: fontSize: 16, // Readable size
+    fontSize: 16,
+    color: Colors.black87, // Added color for input text
+  );
+  // Line 136: final TextStyle _statusTextStyle = GoogleFonts.tajawal( // Use Tajawal for status
+  final TextStyle _statusTextStyle = GoogleFonts.tajawal(
+    // Line 137: fontWeight: FontWeight.bold,
+    fontWeight: FontWeight.bold,
+    // Line 138: fontSize: 16, // Readable size
+    fontSize: 16,
+  );
+  // Line 140: final TextStyle _tutorialTitleStyle = GoogleFonts.tajawal( // Use Tajawal for tutorial title
+  final TextStyle _tutorialTitleStyle = GoogleFonts.tajawal(
+    // Line 141: fontWeight: FontWeight.bold,
+    fontWeight: FontWeight.bold,
+    // Line 142: color: Colors.yellowAccent,
+    color: Colors.yellowAccent,
+    // Line 143: fontSize: 20,
+    fontSize: 20,
+  );
+  // Line 146: final TextStyle _tutorialDescStyle = GoogleFonts.tajawal( // Use Tajawal for tutorial description
+  final TextStyle _tutorialDescStyle = GoogleFonts.tajawal(
+    // Line 147: color: Colors.white,
+    color: Colors.white,
+    // Line 148: fontSize: 16,
+    fontSize: 16,
+    height: 1.4, // Added height for better readability
+  );
+
   // Tutorial Setup Variables
   TutorialCoachMark? _tutorialCoachMark;
   List<TargetFocus> _targets = [];
@@ -154,6 +213,11 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
     _loadMessages();
     _loadAvatarSettings();
     _initializeRecorder();
+
+     _welcomeController = AnimationController(
+  vsync: this,
+  duration: const Duration(milliseconds: 900),
+)..forward();
 
     _animationController = AnimationController(
       vsync: this,
@@ -185,6 +249,8 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
     _controller.dispose();
     _scrollController.dispose();
     _audioPlayer.dispose();
+    _welcomeController.dispose();
+
 
     if (_tutorialCoachMark?.isShowing ?? false) {
       _tutorialCoachMark!.finish();
@@ -349,7 +415,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
         final accessToken = prefs.getString('accessToken');
 
         final response = await http.post(
-          Uri.parse('https://e59e-41-230-204-2.ngrok-free.app/KiddoAI/chat/send'),
+          Uri.parse(CurrentIP+'/KiddoAI/chat/send'),
           headers: {
             "Content-Type": "application/json",
             if (accessToken != null) "Authorization": "Bearer $accessToken",
@@ -397,7 +463,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
       final file = File(imagePath);
       final request = http.MultipartRequest(
         'POST',
-        Uri.parse('http://192.168.100.88:5000/ocr'), // Replace with your backend URL
+        Uri.parse('https://ebbc-102-157-32-231.ngrok-free.app/ocr'), // Replace with your backend URL
       );
       request.fields['source'] = source;
       request.files.add(await http.MultipartFile.fromPath('image', file.path));
@@ -415,7 +481,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
       final String effectiveVoicePath = _currentVoicePath.isNotEmpty ? _currentVoicePath : 'assets/voices/SpongeBob.wav';
       final String speakerWavFilename = effectiveVoicePath.split('/').last;
 
-      const baseUrl = 'http://192.168.100.88:8000';
+      const baseUrl = 'https://30d7-102-30-245-171.ngrok-free.app';
       final response = await http.post(
         Uri.parse('$baseUrl/initialize-voice'),
         headers: {"Content-Type": "application/json"},
@@ -445,7 +511,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
             if (statusResponse.statusCode == 200) {
               final statusData = jsonDecode(statusResponse.body);
               if (statusData['status'] == 'done') {
-                audioUrl = 'http://192.168.100.88:8000${statusData['audio_url']}';
+                audioUrl = 'http://172.20.10.11:8001${statusData['audio_url']}';
                 if (audioUrl == null || audioUrl.isEmpty) {
                   throw Exception('Audio URL is null or empty for part $currentPart');
                 }
@@ -623,7 +689,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
   }
 
   Future<String?> _sendAudioToBackend(List<int> audioBytes) async {
-    final uri = Uri.parse('https://e59e-41-230-204-2.ngrok-free.app/KiddoAI/chat/transcribe');
+    final uri = Uri.parse(CurrentIP+'/KiddoAI/chat/transcribe');
 
     final request = http.MultipartRequest('POST', uri)
       ..fields['threadId'] = threadId
@@ -693,22 +759,30 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
                       ),
                     ],
                   ),
-                  child: message.isImage
-                      ? Image.file(
-                          File(message.content),
-                          height: 100,
-                          fit: BoxFit.cover,
-                        )
-                      : Text(
-                          message.content,
-                          style: TextStyle(
-                            color: isUser ? Colors.white : Colors.black87,
-                            fontSize: 15.5,
-                            height: 1.3,
-                            fontFamily: 'Comic Sans MS',
+                  child: message.content == 'typing_indicator'
+                    ? Lottie.network(
+                        'https://assets4.lottiefiles.com/packages/lf20_usmfx6bp.json', // Three dots typing animation
+                        width: 50,
+                        height: 30,
+                        repeat: true,
+                      )
+                    : message.isImage
+                        ? Image.file(
+                            File(message.content),
+                            height: 100,
+                            fit: BoxFit.cover,
+                          )
+                        : Text(
+                            message.content,
+                            style: TextStyle(
+                              color: isUser ? Colors.white : Colors.black87,
+                              fontSize: 15.5,
+                              height: 1.3,
+                              fontFamily: 'Comic Sans MS',
+                            ),
+                            textDirection: TextDirection.rtl,
                           ),
-                          textDirection: TextDirection.rtl,
-                        ),
+
                 ),
               ),
             ),
@@ -959,19 +1033,12 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
           children: <Widget>[
             Text(
               title,
-              style: GoogleFonts.tajawal(
-                fontWeight: FontWeight.bold,
-                color: titleColor,
-                fontSize: 20,
-              ),
+              style: _tutorialTitleStyle,
             ),
             const SizedBox(height: 8.0),
             Text(
               description,
-              style: GoogleFonts.tajawal(
-                color: descriptionColor,
-                fontSize: 16,
-              ),
+              style: _tutorialDescStyle,
             ),
           ],
         ),
@@ -1091,76 +1158,92 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: _currentAvatarGradient.last,
-        appBar: PreferredSize(
-          preferredSize: const Size.fromHeight(70),
-          child: AppBar(
-            backgroundColor: _currentAvatarColor,
-            elevation: 0,
-            centerTitle: true,
-            shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(25),
-                bottomRight: Radius.circular(25),
-              ),
-            ),
-            title: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Image.asset(
-                  _currentAvatarImage,
-                  height: 40,
-                  width: 40,
-                ),
-                const SizedBox(width: 10),
-                RichText(
-                  text: const TextSpan(
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Comic Sans MS',
-                    ),
-                    children: [
-                      TextSpan(text: 'K', style: TextStyle(color: Colors.yellow)),
-                      TextSpan(text: 'iddo', style: TextStyle(color: Colors.white)),
-                      TextSpan(text: 'A', style: TextStyle(color: Colors.yellow)),
-                      TextSpan(text: 'i', style: TextStyle(color: Colors.white)),
-                    ],
-                  ),
-                ),
-              ].reversed.toList(),
-            ),
-            actions: [
-              Padding(
-                padding: const EdgeInsets.only(left: 16),
-                child: GestureDetector(
-                  key: _keyProfileIcon,
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => ProfilePage(threadId: widget.threadId)),
-                  ).then((_) => _loadAvatarSettings()),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: _currentAvatarColor, width: 2),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
+        
+                  appBar: PreferredSize(
+                    preferredSize: const Size.fromHeight(70),
+                    child: AppBar(
+                      backgroundColor: _currentAvatarColor,
+                      elevation: 0,
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.vertical(
+                          bottom: Radius.circular(30),
+                        ),
+                      ),
+                      centerTitle: true,
+                      title: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Image.asset(
+                            'assets/logo.png',
+                            height: 50,
+                          ),
+                          AnimatedBuilder(
+                            animation: _welcomeController,
+                            builder: (context, child) {
+                              return ClipRect(
+                                child: Align(
+                                  alignment: Alignment.centerLeft,
+                                  widthFactor: _welcomeController.value,
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(left: 10),
+                                    child: RichText(
+                                      text: TextSpan(
+                                        style: const TextStyle(
+                                          fontSize: 26,
+                                          fontWeight: FontWeight.bold,
+                                          fontFamily: 'Comic Sans MS',
+                                        ),
+                                        children: [
+                                          const TextSpan(text: 'K', style: TextStyle(color: Colors.white)),
+                                          TextSpan(text: 'iddo ', style: TextStyle(color: Colors.white.withOpacity(0.85))),
+                                          const TextSpan(text: 'A', style: TextStyle(color: Colors.yellow)),
+                                          TextSpan(text: 'I', style: TextStyle(color: Colors.yellow.withOpacity(0.85))),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+
+                        ],
+                      ),
+                      actions: [
+                        Padding(
+                          padding: const EdgeInsets.only(left: 16),
+                          child: GestureDetector(
+                            key: _keyProfileIcon,
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => ProfilePage(threadId: widget.threadId)),
+                            ).then((_) => _loadAvatarSettings()),
+                            child: Hero(
+                              tag: 'profile_avatar',
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.white, width: 3),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.2),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 3),
+                                    ),
+                                  ],
+                                ),
+                                child: CircleAvatar(
+                                  backgroundImage: AssetImage(_currentAvatarImage),
+                                  radius: 22,
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
                       ],
                     ),
-                    child: CircleAvatar(
-                      backgroundImage: AssetImage(_currentAvatarImage),
-                      radius: 20,
-                    ),
                   ),
-                ),
-              ),
-            ],
-          ),
-        ),
         body: SafeArea(
           child: Container(
             decoration: BoxDecoration(
@@ -1275,7 +1358,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
                         ),
                       ),
                       child: Padding(
-                        padding: EdgeInsets.fromLTRB(16, 8, 16, 12 + MediaQuery.of(context).viewInsets.bottom),
+                        padding: EdgeInsets.fromLTRB(16, 8, 16, 16),
                         child: Material(
                           elevation: 5,
                           borderRadius: BorderRadius.circular(30),
@@ -1380,14 +1463,10 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
                                     decoration: InputDecoration(
                                       hintText: _isRecording ? 'أستمع...' : 'اكتب أو سجل!',
                                       border: InputBorder.none,
-                                      hintStyle: TextStyle(
-                                        color: Colors.grey[500],
-                                        fontFamily: 'Comic Sans MS',
-                                        fontSize: 15,
-                                      ),
+                                       hintStyle: _hintTextStyle,
                                       contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 5),
                                     ),
-                                    style: const TextStyle(fontSize: 15, fontFamily: 'Comic Sans MS'),
+                                    style: _inputTextStyle,
                                     maxLines: null,
                                     textInputAction: TextInputAction.send,
                                     onSubmitted: (text) {
@@ -1470,12 +1549,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
       lottieUrl = 'https://assets3.lottiefiles.com/packages/lf20_tzjnbj0d.json';
       statusContent = Text(
         "أنا أستمع... $_recordingDuration",
-        style: TextStyle(
-          color: statusColor,
-          fontWeight: FontWeight.bold,
-          fontSize: 16,
-          fontFamily: 'Comic Sans MS',
-        ),
+        style: _statusTextStyle.copyWith(color: statusColor),
         textDirection: TextDirection.rtl,
       );
     } else if (_isSending) {
@@ -1483,24 +1557,14 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
       lottieUrl = 'https://assets9.lottiefiles.com/packages/lf20_nw19osms.json';
       statusContent = Text(
         "همم، دعني أفكر...",
-        style: TextStyle(
-          color: statusColor,
-          fontWeight: FontWeight.bold,
-          fontSize: 16,
-          fontFamily: 'Comic Sans MS',
-        ),
+        style: _statusTextStyle.copyWith(color: statusColor),
         textDirection: TextDirection.rtl,
       );
     } else {
       statusColor = _currentAvatarColor;
       statusContent = Text(
         "اسألني أي شيء!",
-        style: TextStyle(
-          color: statusColor,
-          fontWeight: FontWeight.bold,
-          fontSize: 16,
-          fontFamily: 'Comic Sans MS',
-        ),
+        style:_statusTextStyle.copyWith(color: statusColor),
         textDirection: TextDirection.rtl,
       );
     }

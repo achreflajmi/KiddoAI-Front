@@ -1,11 +1,12 @@
 // lib/services/authentication_service.dart
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:front_kiddoai/utils/constants.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthenticationService {
-  final String baseUrl = 'https://e59e-41-230-204-2.ngrok-free.app/KiddoAI';
+  final String baseUrl = CurrentIP+'/KiddoAI';
 
   /* ---------- LOGIN ---------- */
   Future<Map<String, dynamic>> login(String email, String password) async {

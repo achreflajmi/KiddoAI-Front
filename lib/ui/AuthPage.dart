@@ -26,7 +26,7 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
   final TextEditingController _parentPhoneController = TextEditingController();
 
   // List of classes and selected class.
-  final List<String> _classes = ["1st", "2nd", "3rd", "4th", "5th", "6th"];
+  final List<String> _classes = ["1st Grade", "2nd Grade", "3rd Grade", "4th Grade", "5th Grade", "6th Grade"];
   String? _selectedClasse;
 
   // Login Controllers

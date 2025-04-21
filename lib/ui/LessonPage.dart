@@ -13,6 +13,7 @@ import '../utils/constants.dart';
 // --- Tutorial Imports ---
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import 'dart:ui' show ImageFilter; // Needed for blur effect
+import 'package:front_kiddoai/models/avatar_settings.dart';
 
 class LessonsPage extends StatefulWidget {
   final String subjectName;
@@ -66,8 +67,54 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
   final String _tutorialPreferenceKey = 'lessonsPageTutorialSeen';
   // --- End Tutorial Setup Variables ---
 
+   // Avatar settings variables
+  String _avatarName = 'SpongeBob';
+  String _avatarImage = 'assets/avatars/spongebob.png';
+  Color _avatarColor = const Color(0xFFFFEB3B);
+  List<Color> _avatarGradient = [
+    const Color.fromARGB(255, 206, 190, 46),
+    const Color(0xFFFFF9C4),
+  ];
+
+  // List of available avatars
+  final List<Map<String, dynamic>> _avatars = [
+    {
+      'name': 'SpongeBob',
+      'displayName': 'سبونج بوب',
+      'imagePath': 'assets/avatars/spongebob.png',
+      'voicePath': 'assets/voices/SpongeBob.wav',
+      'color': const Color(0xFFFFEB3B),
+      'gradient': [const Color.fromARGB(255, 206, 190, 46), const Color(0xFFFFF9C4)],
+    },
+    {
+      'name': 'Gumball',
+      'displayName': 'غمبول',
+      'imagePath': 'assets/avatars/gumball.png',
+      'voicePath': 'assets/voices/gumball.wav',
+      'color': const Color(0xFF2196F3),
+      'gradient': [const Color.fromARGB(255, 48, 131, 198), const Color(0xFFE3F2FD)],
+    },
+    {
+      'name': 'SpiderMan',
+      'displayName': 'سبايدرمان',
+      'imagePath': 'assets/avatars/spiderman.png',
+      'voicePath': 'assets/voices/spiderman.wav',
+      'color': const Color.fromARGB(255, 227, 11, 18),
+      'gradient': [const Color.fromARGB(255, 203, 21, 39), const Color(0xFFFFEBEE)],
+    },
+    {
+      'name': 'HelloKitty',
+      'displayName': 'هيلو كيتي',
+      'imagePath': 'assets/avatars/hellokitty.png',
+      'voicePath': 'assets/voices/hellokitty.wav',
+      'color': const Color(0xFFFF80AB),
+      'gradient': [const Color.fromARGB(255, 255, 131, 174), const Color(0xFFFCE4EC)],
+    },
+  ];
+
+
   /// Subject color is *always* green in the new UI, or you can map by subject if you prefer.
-  Color _getSubjectColor() => const Color(0xFF4CAF50);
+  Color _getSubjectColor() => _avatarColor;
 
   /// For demonstration, you can still map icons by subject if desired.
   IconData _getSubjectIcon() {
@@ -108,6 +155,52 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
     return _subjectBackgrounds[widget.subjectName] ?? '';
   }
 
+   Future<void> _loadAvatarSettings() async {
+    try {
+      final avatar = await AvatarSettings.getCurrentAvatar();
+      final avatarName = avatar['name']?.toString() ?? 'SpongeBob';
+      final selectedAvatar = _avatars.firstWhere(
+        (a) => a['name'] == avatarName,
+        orElse: () => _avatars[0],
+      );
+
+      int avatarColorValue;
+      if (avatar['color'] is int) {
+        avatarColorValue = avatar['color'] as int;
+      } else if (avatar['color'] is String) {
+        String colorString = avatar['color'] as String;
+        if (colorString.startsWith('0x')) {
+          colorString = colorString.replaceFirst('0x', '');
+        }
+        avatarColorValue = int.tryParse(colorString, radix: 16) ?? (selectedAvatar['color'] as Color).value;
+      } else {
+        avatarColorValue = (selectedAvatar['color'] as Color).value;
+      }
+
+      if (mounted) {
+        setState(() {
+          _avatarName = avatarName;
+          _avatarImage = avatar['imagePath']?.toString() ?? selectedAvatar['imagePath'] as String;
+          _avatarColor = Color(avatarColorValue);
+          _avatarGradient = selectedAvatar['gradient'] as List<Color>;
+        });
+      }
+    } catch (e) {
+      print("SubjectsPage - Error loading avatar settings: $e");
+      if (mounted) {
+        setState(() {
+          _avatarName = 'SpongeBob';
+          _avatarImage = 'assets/avatars/spongebob.png';
+          _avatarColor = const Color(0xFFFFEB3B);
+          _avatarGradient = [
+            const Color.fromARGB(255, 206, 190, 46),
+            const Color(0xFFFFF9C4),
+          ];
+        });
+      }
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -133,6 +226,7 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
     // --- Tutorial Initialization ---
     _checkIfTutorialShouldBeShown();
     // --- End Tutorial Initialization ---
+    _loadAvatarSettings();
   }
 
   @override
@@ -296,7 +390,7 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
       return;
     }
 
-    final url = Uri.parse('https://454d-197-2-189-134.ngrok-free.app/teach');
+    final url = Uri.parse(AzizIP+'/teach');
     try {
       final response = await http.post(
         url,
@@ -352,11 +446,10 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
       builder: (context) => const LoadingAnimationWidget(),
     );
 
-      await _configureVectorStore(); 
 
 
-    final activityUrl = CurrentIP + ":8081/KiddoAI/Activity/saveProblem";
-    final activityPageUrl = CurrentReactIP + ":8080/";
+    final activityUrl = CurrentIP + "/KiddoAI/Activity/saveProblem";
+    final activityPageUrl = CurrentReactIP + "/";
 
     bool isActivityReady = false;
 
@@ -762,9 +855,9 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
     return Directionality(
       textDirection: TextDirection.rtl, // Added for RTL
       child: Scaffold(
-        backgroundColor: const Color(0xFFF2FFF0),
+        backgroundColor: _avatarGradient.last,
         appBar: AppBar(
-          backgroundColor: const Color(0xFF4CAF50),
+          backgroundColor: _avatarColor,
           elevation: 0,
           centerTitle: true,
           title: Container(

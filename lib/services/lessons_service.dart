@@ -18,13 +18,13 @@ class LessonsService {
 
   // Constructor to initialize the URLs
   LessonsService()
-      : _baseUrl = 'https://e59e-41-230-204-2.ngrok-free.app',
+      : _baseUrl = CurrentIP,
         // Updated teach endpoint (Flask route is /teach)
-        _baseTeachLessonUrl = 'https://454d-197-2-189-134.ngrok-free.app/teach',
-        _baseActivityUrl = CurrentIP + ':8081/KiddoAI/Activity/saveProblem',
+        _baseTeachLessonUrl = AzizIP+'/teach',
+        _baseActivityUrl = CurrentIP + '/KiddoAI/Activity/saveProblem',
         _baseVoiceGenerationUrl = 'https://268b-196-184-222-196.ngrok-free.app/generate-voice',
         _baseAudioUrl = 'http://172.20.10.9:8001/outputlive.wav',
-        _activityPageUrl = CurrentIP + ':8081/',
+        _activityPageUrl = CurrentIP + '/',
         _baseLessonsUrl = CurrentIP + '/KiddoAI/Lesson/bySubject'; //
         final String _configureVectorStoreUrl = CurrentIP +'/KiddoAI/adminDashboard/configureVectorStore'; // ⇦ NEW
 
@@ -73,7 +73,7 @@ Future<List<Map<String, dynamic>>> fetchLessons(String subjectName) async {
   Future<String> createThread() async {
     // Replace with your actual create_thread endpoint URL.
     final String baseCreateThreadUrl =
-        'https://454d-197-2-189-134.ngrok-free.app/create_thread';
+        AzizIP+'/create_thread';
     final response = await http.post(
       Uri.parse(baseCreateThreadUrl),
       headers: {'Content-Type': 'application/json'},

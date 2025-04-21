@@ -22,6 +22,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ChatViewModel(ChatbotService())),
       ],
       child: MaterialApp(
+        debugShowCheckedModeBanner: false,
         title: 'Chatbot App',
         theme: ThemeData(
           primarySwatch: Colors.blue,

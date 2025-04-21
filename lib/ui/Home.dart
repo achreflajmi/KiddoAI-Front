@@ -1,3 +1,5 @@
+import 'dart:math' as math; // Needed for max() in progress calculation
+
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart'; // Keep if needed for future effects
 import 'package:shared_preferences/shared_preferences.dart';
@@ -5,8 +7,7 @@ import '../widgets/bottom_nav_bar.dart';
 import 'chat_page.dart'; // Needed for BottomNavBar potentially
 import '../models/avatar_settings.dart';
 import 'profile_page.dart';
-import 'HomePage.dart'; // Likely meant 'subjects_page.dart' - correcting import
-import 'HomePage.dart'; // Corrected import assuming this is where subjects are
+import 'HomePage.dart'; // Assuming this is the correct path for Subjects/other pages referenced by BottomNavBar
 
 // --- Data Structure for Achievements (Static for now) ---
 class Achievement {
@@ -36,7 +37,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
-  // Kid-related state (still needed for AppBar/potential personalization)
+  // Kid-related state
   String _kidName = '';
   String _currentAvatarName = 'SpongeBob';
   String _avatarImage = 'assets/avatars/spongebob.png';
@@ -47,7 +48,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   ];
 
   // --- Static Achievement Data ---
-  // TODO: Replace with actual achievement data logic later
+  // (Keep your existing achievement data)
   final List<Achievement> _achievements = [
     Achievement(
       title: 'المستكشف الأول',
@@ -107,10 +108,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     ),
   ];
 
-
-  // --- Avatar settings (Simplified for this context, keep loading logic) ---
+  // --- Avatar settings ---
+  // (Keep your existing avatar data)
   final List<Map<String, dynamic>> _avatars = [
-    {
+     {
       'name': 'SpongeBob',
       'displayName': 'سبونج بوب',
       'imagePath': 'assets/avatars/spongebob.png',
@@ -130,14 +131,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    // No complex animations needed for the static dashboard itself for now
     _loadAvatarSettings();
     _loadKidName();
   }
 
   @override
   void dispose() {
-    // Dispose any controllers if added later
     super.dispose();
   }
 
@@ -146,7 +145,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       final prefs = await SharedPreferences.getInstance();
       if (mounted) {
         setState(() {
-          _kidName = prefs.getString('prenom') ?? 'صديقي';
+          // Use a friendly fallback if name is empty or null
+          _kidName = prefs.getString('prenom')?.isNotEmpty ?? false
+              ? prefs.getString('prenom')!
+              : 'صديقي';
         });
       }
     } catch (e) {
@@ -159,8 +161,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
+
   Future<void> _loadAvatarSettings() async {
-    // Simplified loading - mainly for AppBar and gradient
      try {
       final avatar = await AvatarSettings.getCurrentAvatar();
       final avatarName = avatar['name']?.toString() ?? 'SpongeBob';
@@ -204,9 +206,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
-  // --- Widget Builder for Achievement Card ---
+  // --- Widget Builder for Achievement Card (Keep existing) ---
   Widget _buildAchievementCard(Achievement achievement) {
-    return Container(
+     return Container(
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(achievement.unlocked ? 0.85 : 0.5), // Dim if locked
         borderRadius: BorderRadius.circular(25),
@@ -285,11 +287,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               if (achievement.unlocked)
                 Positioned(
                   top: 8,
-                  left: 8,
+                  left: 8, // Adjusted for potential RTL context
                   child: Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                       // Use the avatar color for the star background
                       color: _currentAvatarColor.withOpacity(0.8),
                       shape: BoxShape.circle,
                     ),
@@ -306,19 +307,124 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
+  // --- NEW: Widget Builder for Achievement Progress Bar ---
+  Widget _buildAchievementProgressBar(BuildContext context) {
+    final int unlockedCount = _achievements.where((a) => a.unlocked).length;
+    final int totalAchievements = _achievements.isNotEmpty ? _achievements.length : 1; // Avoid division by zero
+    final double progress = unlockedCount / totalAchievements;
+    const double barHeight = 28.0;
+    final Color progressColor = Colors.amber.shade600; // Example color
+    final Color trackColor = Colors.white.withOpacity(0.3);
+    final BorderRadius borderRadius = BorderRadius.circular(barHeight / 2);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 30.0, vertical: 15.0),
+      child: Column(
+        children: [
+           Text(
+            '🌟 مستوى تقدمك 🌟', // Added label for clarity
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              fontFamily: 'Comic Sans MS',
+              color: Colors.white.withOpacity(0.95),
+               shadows: const [
+                 Shadow(
+                   blurRadius: 3.0,
+                   color: Colors.black38,
+                   offset: Offset(1.0, 1.0),
+                 ),
+               ]
+            ),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: barHeight,
+            child: Stack(
+              children: [
+                // Track
+                Container(
+                  decoration: BoxDecoration(
+                    color: trackColor,
+                    borderRadius: borderRadius,
+                     boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.15),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                        spreadRadius: 1,
+                      )
+                    ]
+                  ),
+                ),
+                // Progress Fill
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    return FractionallySizedBox(
+                      alignment: Alignment.centerRight, // For RTL
+                      widthFactor: progress,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          // Optional: Add a subtle gradient to the progress
+                          gradient: LinearGradient(
+                            colors: [progressColor, Color.lerp(progressColor, Colors.yellow.shade600, 0.5)!],
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                          ),
+                          // color: progressColor, // Use gradient instead if desired
+                          borderRadius: borderRadius,
+                           boxShadow: [
+                            BoxShadow(
+                              color: progressColor.withOpacity(0.3),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            )
+                          ]
+                        ),
+                      ),
+                    );
+                  }
+                ),
+                // Percentage Text Overlay
+                Center(
+                  child: Text(
+                    '${(progress * 100).toStringAsFixed(0)}%',
+                    style: const TextStyle(
+                      color: Colors.black87, // Ensure contrast
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      fontFamily: 'Comic Sans MS',
+                       shadows: [ // Subtle shadow for readability
+                         Shadow(
+                           blurRadius: 2.0,
+                           color: Colors.white54,
+                           offset: Offset(0.5, 0.5),
+                         ),
+                       ]
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
 
   @override
   Widget build(BuildContext context) {
-    // Calculate total unlocked achievements
-    final int unlockedCount = _achievements.where((a) => a.unlocked).length;
+    // Calculate total unlocked achievements (used in progress bar now)
+    // final int unlockedCount = _achievements.where((a) => a.unlocked).length; // Moved calculation inside the builder
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
         extendBodyBehindAppBar: true,
         backgroundColor: Colors.white, // Base background
+        // --- AppBar (Keep Existing) ---
         appBar: AppBar(
-          // Keep the existing AppBar style
           backgroundColor: _currentAvatarColor,
           elevation: 0,
           shape: const RoundedRectangleBorder(
@@ -366,7 +472,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             ],
           ),
           actions: [
-             // Keep the profile button
             Padding(
               padding: const EdgeInsets.only(left: 16), // Adjusted for RTL
               child: GestureDetector(
@@ -375,7 +480,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     context,
                     MaterialPageRoute(builder: (context) => ProfilePage(threadId: widget.threadId)),
                   ).then((_) {
-                    // Reload settings if they might change on profile page
                     _loadAvatarSettings();
                     _loadKidName();
                   });
@@ -407,11 +511,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             ),
           ],
         ),
+        // --- Body ---
         body: SafeArea(
           top: false, // Since we extend body behind app bar
           child: Container(
-            width: double.infinity, // Ensure container fills width
-            height: double.infinity, // Ensure container fills height
+            width: double.infinity,
+            height: double.infinity,
             padding: const EdgeInsets.only(top: 100), // Adjust top padding below AppBar
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -423,67 +528,44 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             // --- Main Dashboard Content ---
             child: Column(
               children: [
-                // Dashboard Title
+                // --- NEW: Welcome Message ---
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                       Icon(Icons.emoji_events_rounded, color: Colors.amber.shade700, size: 35),
-                       const SizedBox(width: 10),
-                       Text(
-                        'إنجازات $_kidName الرائعة!',
-                        style: const TextStyle(
-                          fontSize: 26,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: 'Comic Sans MS',
-                          color: Colors.white,
-                          shadows: [
-                             Shadow(
-                               blurRadius: 5.0,
-                               color: Colors.black26,
-                               offset: Offset(2.0, 2.0),
-                            ),
-                          ]
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10), // Reduced vertical padding
+                  child: Text(
+                    'أهلاً بك يا $_kidName!', // Simple Welcome Message
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 30, // Make it prominent
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Comic Sans MS', // Kid-friendly font
+                      color: Colors.white,
+                      shadows: [
+                         Shadow(
+                           blurRadius: 6.0,
+                           color: Colors.black38, // Slightly stronger shadow
+                           offset: Offset(2.0, 2.0),
                         ),
-                      ),
-                      const SizedBox(width: 10),
-                      Icon(Icons.emoji_events_rounded, color: Colors.amber.shade700, size: 35),
-                    ],
+                      ]
+                    ),
                   ),
                 ),
 
-                // Achievement Summary (Optional)
-                Padding(
-                    padding: const EdgeInsets.only(bottom: 20.0),
-                    child: Text(
-                      '🏆 لقد فتحت $unlockedCount / ${_achievements.length} من الإنجازات! 🏆',
-                      style: TextStyle(
-                          fontSize: 18,
-                          fontFamily: 'Comic Sans MS',
-                          color: Colors.white.withOpacity(0.9),
-                          fontWeight: FontWeight.w600
-                      ),
-                    ),
-                ),
+                // --- NEW: Horizontal Achievement Progress Bar ---
+                _buildAchievementProgressBar(context), // Add the progress bar widget
 
-                // Achievements Grid
+                // --- Achievements Grid (Keep Existing) ---
                 Expanded(
                   child: GridView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                    physics: const BouncingScrollPhysics(), // Playful scroll
+                    padding: const EdgeInsets.only(left: 20, right: 20, top: 5, bottom: 10), // Adjust padding slightly
+                    physics: const BouncingScrollPhysics(),
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2, // 2 columns
-                      crossAxisSpacing: 18, // Spacing between columns
-                      mainAxisSpacing: 18, // Spacing between rows
-                      childAspectRatio: 0.9, // Adjust aspect ratio (width/height)
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 18,
+                      mainAxisSpacing: 18,
+                      childAspectRatio: 0.9,
                     ),
                     itemCount: _achievements.length,
                     itemBuilder: (context, index) {
-                      // --- Add Animation (Optional but nice) ---
-                      // You could wrap _buildAchievementCard in an AnimatedSwitcher
-                      // or use a staggered animation effect here later.
-                      // For now, just build the card.
                       return _buildAchievementCard(_achievements[index]);
                     },
                   ),
@@ -492,8 +574,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             ),
           ),
         ),
-         // --- Bottom Navigation Bar ---
-        bottomNavigationBar: Container( // Keep the styled bottom nav bar
+         // --- Bottom Navigation Bar (Keep Existing) ---
+        bottomNavigationBar: Container(
           decoration: BoxDecoration(
             color: Colors.white,
             boxShadow: [
@@ -513,7 +595,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               topLeft: Radius.circular(30),
               topRight: Radius.circular(30),
             ),
-            // Ensure BottomNavBar still receives necessary props
             child: BottomNavBar(threadId: widget.threadId, currentIndex: 0),
           ),
         ),

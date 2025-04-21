@@ -1158,7 +1158,8 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: _currentAvatarGradient.last,
-        
+          extendBodyBehindAppBar: true,
+
                   appBar: PreferredSize(
                     preferredSize: const Size.fromHeight(70),
                     child: AppBar(
@@ -1245,7 +1246,9 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
                     ),
                   ),
         body: SafeArea(
+           top: false,
           child: Container(
+                padding: const EdgeInsets.only(top: 90), // height of your AppBar
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: _currentAvatarGradient,
@@ -1379,26 +1382,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
                             ),
                             child: Row(
                               children: [
-                                AnimatedContainer(
-                                  duration: const Duration(milliseconds: 200),
-                                  key: _keySendButton,
-                                  width: 48,
-                                  height: 48,
-                                  margin: const EdgeInsets.only(right: 8),
-                                  decoration: BoxDecoration(
-                                    color: _isTyping ? _currentAvatarColor : Colors.grey.shade300,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: IconButton(
-                                    icon: Icon(
-                                      Icons.send_rounded,
-                                      color: _isTyping ? Colors.white : Colors.grey.shade500,
-                                    ),
-                                    iconSize: 24,
-                                    tooltip: "أرسل الرسالة",
-                                    onPressed: _isTyping ? () => _sendMessage(_controller.text) : null,
-                                  ),
-                                ),
+                               
                                 Container(
                                   width: 48,
                                   height: 48,
@@ -1457,28 +1441,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
                                     },
                                   ),
                                 ),
-                                Expanded(
-                                  child: TextField(
-                                    controller: _controller,
-                                    decoration: InputDecoration(
-                                      hintText: _isRecording ? 'أستمع...' : 'اكتب أو سجل!',
-                                      border: InputBorder.none,
-                                       hintStyle: _hintTextStyle,
-                                      contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 5),
-                                    ),
-                                    style: _inputTextStyle,
-                                    maxLines: null,
-                                    textInputAction: TextInputAction.send,
-                                    onSubmitted: (text) {
-                                      if (text.isNotEmpty) {
-                                        _sendMessage(text);
-                                      }
-                                    },
-                                    enabled: !_isRecording,
-                                    textDirection: TextDirection.rtl,
-                                  ),
-                                ),
-                                GestureDetector(
+                                 GestureDetector(
                                   key: _keyMicButton,
                                   onLongPressStart: (_) => _startRecording(),
                                   onLongPressEnd: (_) => _stopRecording(),
@@ -1505,6 +1468,48 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
                                         );
                                       },
                                     ),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: TextField(
+                                    controller: _controller,
+                                    decoration: InputDecoration(
+                                      hintText: _isRecording ? 'أستمع...' : 'اكتب أو سجل!',
+                                      border: InputBorder.none,
+                                       hintStyle: _hintTextStyle,
+                                      contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 5),
+                                    ),
+                                    style: _inputTextStyle,
+                                    maxLines: null,
+                                    textInputAction: TextInputAction.send,
+                                    onSubmitted: (text) {
+                                      if (text.isNotEmpty) {
+                                        _sendMessage(text);
+                                      }
+                                    },
+                                    enabled: !_isRecording,
+                                    textDirection: TextDirection.rtl,
+                                  ),
+                                ),
+                               
+                                 AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  key: _keySendButton,
+                                  width: 48,
+                                  height: 48,
+                                  margin: const EdgeInsets.only(right: 8),
+                                  decoration: BoxDecoration(
+                                    color: _isTyping ? _currentAvatarColor : Colors.grey.shade300,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: IconButton(
+                                    icon: Icon(
+                                      Icons.send_rounded,
+                                      color: _isTyping ? Colors.white : Colors.grey.shade500,
+                                    ),
+                                    iconSize: 24,
+                                    tooltip: "أرسل الرسالة",
+                                    onPressed: _isTyping ? () => _sendMessage(_controller.text) : null,
                                   ),
                                 ),
                               ].reversed.toList(),
@@ -1574,12 +1579,9 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          lottieUrl.isNotEmpty
-              ? Lottie.network(lottieUrl, width: 30, height: 30)
-              : Image.asset(_currentAvatarImage, width: 24, height: 24),
-          const SizedBox(width: 8),
-          statusContent,
-        ].reversed.toList(),
+  statusContent,
+],
+
       ),
     );
   }

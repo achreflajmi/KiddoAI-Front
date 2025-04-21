@@ -14,11 +14,15 @@ import '../utils/constants.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import 'dart:ui' show ImageFilter; // Needed for blur effect
 import 'package:front_kiddoai/models/avatar_settings.dart';
+import '../widgets/bottom_nav_bar.dart';
+
 
 class LessonsPage extends StatefulWidget {
   final String subjectName;
+    final String threadId;
 
-  const LessonsPage({Key? key, required this.subjectName}) : super(key: key);
+
+  const LessonsPage({Key? key, required this.subjectName, required this.threadId}) : super(key: key);
 
   @override
   State<LessonsPage> createState() => _LessonsPageState();
@@ -1339,6 +1343,22 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
               ],
             ),
           ],
+        ),
+         bottomNavigationBar: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: Offset(0, -2),
+              ),
+            ],
+          ),
+          child: BottomNavBar(
+            threadId: widget.subjectName,
+            currentIndex: 1,
+          ),
         ),
       ),
     );

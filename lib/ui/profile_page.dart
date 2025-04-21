@@ -252,6 +252,8 @@ _welcomeController = AnimationController(
     return Directionality(
       textDirection: TextDirection.rtl, // Added for RTL
       child: Scaffold(
+          extendBodyBehindAppBar: true,
+
         appBar: AppBar(
   backgroundColor: mainColor,
   elevation: 0,
@@ -317,7 +319,10 @@ _welcomeController = AnimationController(
         backgroundColor: bgGradient.last,
         resizeToAvoidBottomInset: true,
         body: SafeArea(
+          top: false,
           child: Container(
+          padding: const EdgeInsets.only(top: 90), // height of your AppBar
+
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: bgGradient,

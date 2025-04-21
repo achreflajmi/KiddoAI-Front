@@ -252,11 +252,12 @@ Map<String, dynamic> _getSubjectAssets(String subject) {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
+        extendBodyBehindAppBar: true,
         backgroundColor: _avatarGradient.last,
         appBar: AppBar(
-  backgroundColor: _avatarColor,
-  elevation: 0,
-  shape: const RoundedRectangleBorder(
+   backgroundColor: _avatarColor,
+   elevation: 0,
+   shape: const RoundedRectangleBorder(
     borderRadius: BorderRadius.vertical(
       bottom: Radius.circular(30),
     ),
@@ -351,7 +352,9 @@ Map<String, dynamic> _getSubjectAssets(String subject) {
   ],
 ),
         body: SafeArea(
+            top: false,
           child: Container(
+                padding: const EdgeInsets.only(top: 90), // height of your AppBar
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: _avatarGradient,
@@ -574,7 +577,7 @@ Map<String, dynamic> _getSubjectAssets(String subject) {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => LessonsPage(subjectName: subject),
+                                      builder: (context) => LessonsPage(subjectName: subject,threadId: widget.threadId),
                                     ),
                                   );
                                 },

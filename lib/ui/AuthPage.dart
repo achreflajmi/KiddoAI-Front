@@ -252,8 +252,8 @@ Future<void> _handleLogin(BuildContext context) async {
         indicatorColor: Colors.transparent,
         labelStyle: TextStyle(fontSize: 20),
         tabs: [
-          Tab(text: 'تسجيل الدخول'), // Sign In
-          Tab(text: 'إنشاء حساب'),   // Sign Up
+          Tab(text:'إنشاء حساب' ), // Sign In
+          Tab(text:'تسجيل الدخول' ),   // Sign Up
         ].reversed.toList(),
       ),
     );

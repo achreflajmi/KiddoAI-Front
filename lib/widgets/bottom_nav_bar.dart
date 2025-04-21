@@ -105,7 +105,7 @@ class BottomNavBar extends StatelessWidget {
                 children: [
                   _buildNavItem(Icons.home_rounded, 0, context, activeColor),
                   _buildNavItem(
-                      Icons.show_chart_rounded, 1, context, activeColor),
+                      Icons.sports_esports, 1, context, activeColor),
                   _buildNavItem(
                       Icons.chat_bubble_rounded, 2, context, activeColor),
                   _buildNavItem(Icons.person, 3, context, activeColor),

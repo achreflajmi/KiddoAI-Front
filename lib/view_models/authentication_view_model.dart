@@ -24,6 +24,14 @@ class AuthenticationViewModel extends ChangeNotifier {
       _setLoading(false);
     }
   }
+Future<Map<String, dynamic>?> fetchCurrentUser() async {
+  try {
+    return await _authService.getCurrentUser();
+  } catch (e) {
+    print('❌ Failed to fetch current user: $e');
+    return null;
+  }
+}
 
   Future<Map<String, dynamic>?> signup(
     String nom,

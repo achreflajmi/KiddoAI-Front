@@ -133,6 +133,7 @@ flutter:
     - assets/sounds/instruction_drag.mp3
     - assets/sounds/yay_got_it.mp3
     - assets/sounds/try_again.mp3
+    - assets/logo.png
 
 
   # The following line ensures that the Material Icons font is

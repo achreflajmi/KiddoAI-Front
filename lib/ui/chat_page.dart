@@ -56,7 +56,7 @@ class Message {
 
 class ChatPage extends StatefulWidget {
   final String threadId;
-  ChatPage({required this.threadId});
+  const ChatPage({required this.threadId, super.key});
 
   @override
   _ChatPageState createState() => _ChatPageState();
@@ -85,37 +85,37 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
       'name': 'سبونج بوب',
       'imagePath': 'assets/avatars/spongebob.png',
       'voicePath': 'assets/voices/SpongeBob.wav',
-      'color': Color(0xFFFFEB3B),
-      'gradient': [Color.fromARGB(255, 206, 190, 46), Color(0xFFFFF9C4)],
+      'color': const Color(0xFFFFEB3B),
+      'gradient': [const Color.fromARGB(255, 206, 190, 46), const Color(0xFFFFF9C4)],
     },
     {
       'name': 'غمبول',
       'imagePath': 'assets/avatars/gumball.png',
       'voicePath': 'assets/voices/gumball.wav',
-      'color': Color(0xFF2196F3),
-      'gradient': [Color.fromARGB(255, 48, 131, 198), Color(0xFFE3F2FD)],
+      'color': const Color(0xFF2196F3),
+      'gradient': [const Color.fromARGB(255, 48, 131, 198), const Color(0xFFE3F2FD)],
     },
     {
       'name': 'سبايدرمان',
       'imagePath': 'assets/avatars/spiderman.png',
       'voicePath': 'assets/voices/spiderman.wav',
-      'color': Color.fromARGB(255, 227, 11, 18),
-      'gradient': [Color.fromARGB(255, 203, 21, 39), Color(0xFFFFEBEE)],
+      'color': const Color.fromARGB(255, 227, 11, 18),
+      'gradient': [const Color.fromARGB(255, 203, 21, 39), const Color(0xFFFFEBEE)],
     },
     {
       'name': 'هيلو كيتي',
       'imagePath': 'assets/avatars/hellokitty.png',
       'voicePath': 'assets/voices/hellokitty.wav',
-      'color': Color(0xFFFF80AB),
-      'gradient': [Color.fromARGB(255, 255, 131, 174), Color(0xFFFCE4EC)],
+      'color': const Color(0xFFFF80AB),
+      'gradient': [const Color.fromARGB(255, 255, 131, 174), const Color(0xFFFCE4EC)],
     },
   ];
 
   String _currentAvatarName = 'سبونج بوب';
   String _currentAvatarImage = 'assets/avatars/spongebob.png';
   String _currentVoicePath = 'assets/voices/SpongeBob.wav';
-  Color _currentAvatarColor = Color(0xFFFFEB3B);
-  List<Color> _currentAvatarGradient = [Color.fromARGB(255, 206, 190, 46), Color(0xFFFFF9C4)];
+  Color _currentAvatarColor = const Color(0xFFFFEB3B);
+  List<Color> _currentAvatarGradient = [const Color.fromARGB(255, 206, 190, 46), const Color(0xFFFFF9C4)];
 
   // Tutorial Setup Variables
   TutorialCoachMark? _tutorialCoachMark;
@@ -211,8 +211,8 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
           _currentAvatarName = 'سبونج بوب';
           _currentAvatarImage = 'assets/avatars/spongebob.png';
           _currentVoicePath = 'assets/voices/SpongeBob.wav';
-          _currentAvatarColor = Color(0xFFFFEB3B);
-          _currentAvatarGradient = [Color.fromARGB(255, 206, 190, 46), Color(0xFFFFF9C4)];
+          _currentAvatarColor = const Color(0xFFFFEB3B);
+          _currentAvatarGradient = [const Color.fromARGB(255, 206, 190, 46), const Color(0xFFFFF9C4)];
         });
       }
     }
@@ -291,7 +291,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
     if (_scrollController.hasClients && mounted) {
       _scrollController.animateTo(
         _scrollController.position.maxScrollExtent,
-        duration: Duration(milliseconds: 300),
+        duration: const Duration(milliseconds: 300),
         curve: Curves.easeOut,
       );
     }
@@ -310,7 +310,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
 
     _controller.clear();
     _saveMessages();
-    Future.delayed(Duration(milliseconds: 100), () => _scrollToBottom());
+    Future.delayed(const Duration(milliseconds: 100), () => _scrollToBottom());
 
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -364,7 +364,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
       final String effectiveVoicePath = _currentVoicePath.isNotEmpty ? _currentVoicePath : 'assets/voices/SpongeBob.wav';
       final String speakerWavFilename = effectiveVoicePath.split('/').last;
 
-      final baseUrl = 'http://192.168.100.88:8000';
+      const baseUrl = 'http://192.168.100.88:8000';
       final response = await http.post(
         Uri.parse('$baseUrl/initialize-voice'),
         headers: {"Content-Type": "application/json"},
@@ -399,7 +399,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
                   throw Exception('Audio URL is null or empty for part $currentPart');
                 }
               } else {
-                await Future.delayed(Duration(seconds: 2));
+                await Future.delayed(const Duration(seconds: 2));
               }
             } else {
               throw Exception('Error checking status for part $currentPart: ${statusResponse.statusCode}');
@@ -475,7 +475,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
       _animationController.repeat(reverse: true);
 
       _recordingTimer?.cancel();
-      _recordingTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+      _recordingTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
         if (mounted) {
           setState(() {
             _recordingSeconds++;
@@ -600,7 +600,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         child: Row(
           mainAxisAlignment: isUser ? MainAxisAlignment.start : MainAxisAlignment.end,
           crossAxisAlignment: CrossAxisAlignment.end,
@@ -613,10 +613,10 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
                   radius: 18,
                 ),
               ),
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
             ],
             if (isBot && !showBotAvatar)
-              SizedBox(width: 18 * 2 + 8),
+              const SizedBox(width: 18 * 2 + 8),
             Flexible(
               child: GestureDetector(
                 onTap: isBot ? () => _initializeVoice(message.content) : null,
@@ -624,21 +624,21 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
                   constraints: BoxConstraints(
                     maxWidth: MediaQuery.of(context).size.width * 0.7,
                   ),
-                  padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
                     color: isUser ? _currentAvatarColor : Colors.white,
                     border: isBot ? Border.all(color: _currentAvatarColor.withOpacity(0.5), width: 1.5) : null,
                     borderRadius: BorderRadius.only(
-                      topRight: Radius.circular(18),
-                      topLeft: Radius.circular(18),
-                      bottomRight: isUser ? Radius.circular(18) : Radius.circular(4),
-                      bottomLeft: isUser ? Radius.circular(4) : Radius.circular(18),
+                      topRight: const Radius.circular(18),
+                      topLeft: const Radius.circular(18),
+                      bottomRight: isUser ? const Radius.circular(18) : const Radius.circular(4),
+                      bottomLeft: isUser ? const Radius.circular(4) : const Radius.circular(18),
                     ),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.08),
                         blurRadius: 8,
-                        offset: Offset(0, 3),
+                        offset: const Offset(0, 3),
                       ),
                     ],
                   ),
@@ -648,6 +648,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
                       color: isUser ? Colors.white : Colors.black87,
                       fontSize: 15.5,
                       height: 1.3,
+                      fontFamily: 'Comic Sans MS',
                     ),
                     textDirection: TextDirection.rtl,
                   ),
@@ -830,8 +831,8 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
 
   Widget _buildTutorialContent({required String title, required String description}) {
     final Color tutorialBackgroundColor = _currentAvatarColor.withOpacity(0.9);
-    final Color titleColor = Colors.yellowAccent;
-    final Color descriptionColor = Colors.white;
+    const Color titleColor = Colors.yellowAccent;
+    const Color descriptionColor = Colors.white;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -891,12 +892,12 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
       skipWidget: Container(
         padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
         decoration: BoxDecoration(
-          color: Colors.redAccent,
+          color: _currentAvatarColor,
           borderRadius: BorderRadius.circular(20),
         ),
         child: const Text(
           "تخطى الكل",
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontFamily: 'Comic Sans MS'),
           textDirection: TextDirection.rtl,
         ),
       ),
@@ -950,17 +951,17 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
                     'https://assets9.lottiefiles.com/packages/lf20_kkhbsucc.json',
                     height: 180,
                   ),
-                  SizedBox(height: 24),
+                  const SizedBox(height: 24),
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(30),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: _currentAvatarColor.withOpacity(0.3),
                           blurRadius: 10,
-                          offset: Offset(0, 4),
+                          offset: const Offset(0, 4),
                         ),
                       ],
                     ),
@@ -970,6 +971,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                         color: _currentAvatarColor,
+                        fontFamily: 'Comic Sans MS',
                       ),
                       textDirection: TextDirection.rtl,
                     ),
@@ -987,12 +989,12 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
       child: Scaffold(
         backgroundColor: _currentAvatarGradient.last,
         appBar: PreferredSize(
-          preferredSize: Size.fromHeight(70),
+          preferredSize: const Size.fromHeight(70),
           child: AppBar(
             backgroundColor: _currentAvatarColor,
             elevation: 0,
             centerTitle: true,
-            shape: RoundedRectangleBorder(
+            shape: const RoundedRectangleBorder(
               borderRadius: BorderRadius.only(
                 bottomLeft: Radius.circular(25),
                 bottomRight: Radius.circular(25),
@@ -1006,9 +1008,9 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
                   height: 40,
                   width: 40,
                 ),
-                SizedBox(width: 10),
+                const SizedBox(width: 10),
                 RichText(
-                  text: TextSpan(
+                  text: const TextSpan(
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -1026,7 +1028,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
             ),
             actions: [
               Padding(
-                padding: EdgeInsets.only(left: 16),
+                padding: const EdgeInsets.only(left: 16),
                 child: GestureDetector(
                   key: _keyProfileIcon,
                   onTap: () => Navigator.push(
@@ -1037,12 +1039,12 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
                     decoration: BoxDecoration(
                       color: Colors.white,
                       shape: BoxShape.circle,
-                      border: Border.all(color: _currentAvatarColor, width: 2),
+                      border: Border.all(color: Colors.yellow, width: 2),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: _currentAvatarColor.withOpacity(0.3),
                           blurRadius: 4,
-                          offset: Offset(0, 2),
+                          offset: const Offset(0, 2),
                         ),
                       ],
                     ),
@@ -1067,6 +1069,17 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
             ),
             child: Stack(
               children: [
+                Positioned.fill(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      image: DecorationImage(
+                        image: AssetImage(_currentAvatarImage),
+                        repeat: ImageRepeat.repeat,
+                        opacity: 0.15,
+                      ),
+                    ),
+                  ),
+                ),
                 Column(
                   children: [
                     Padding(
@@ -1080,16 +1093,29 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
                             decoration: BoxDecoration(
                               color: Colors.white,
                               shape: BoxShape.circle,
-                              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: Offset(0, 4))],
+                              boxShadow: [
+                                BoxShadow(
+                                  color: _currentAvatarColor.withOpacity(0.3),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
                               border: Border.all(
-                                color: _isRecording ? Colors.red : _isSending ? Colors.blue : _currentAvatarColor,
+                                color: _isRecording ? Colors.redAccent : _isSending ? Colors.blueAccent : _currentAvatarColor,
                                 width: 3,
                               ),
                             ),
                             child: Stack(
                               alignment: Alignment.center,
                               children: [
-                                ClipOval(child: Image.asset(_currentAvatarImage, fit: BoxFit.cover, width: 130, height: 130)),
+                                ClipOval(
+                                  child: Image.asset(
+                                    _currentAvatarImage,
+                                    fit: BoxFit.cover,
+                                    width: 130,
+                                    height: 130,
+                                  ),
+                                ),
                                 if (_isRecording || _isSending)
                                   Positioned.fill(
                                     child: ClipOval(
@@ -1103,14 +1129,21 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
                             ),
                           ),
                           Container(
-                            margin: EdgeInsets.only(top: 10),
-                            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                            margin: const EdgeInsets.only(top: 10),
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.9),
                               borderRadius: BorderRadius.circular(25),
-                              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 5, offset: Offset(0, 2))],
+                              boxShadow: [
+                                BoxShadow(
+                                  color: _currentAvatarColor.withOpacity(0.2),
+                                  blurRadius: 5,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
                               border: Border.all(
-                                color: (_isRecording ? Colors.red : _isSending ? Colors.blue : _currentAvatarColor).withOpacity(0.5),
+                                color: (_isRecording ? Colors.redAccent : _isSending ? Colors.blueAccent : _currentAvatarColor)
+                                    .withOpacity(0.5),
                                 width: 2,
                               ),
                             ),
@@ -1119,37 +1152,47 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
                         ],
                       ),
                     ),
-                    SizedBox(height: 15),
+                    const SizedBox(height: 15),
                     Expanded(
                       child: Container(
                         key: _keyChatArea,
-                        margin: EdgeInsets.symmetric(horizontal: 10),
+                        margin: const EdgeInsets.symmetric(horizontal: 10),
                         decoration: BoxDecoration(
                           color: Colors.white.withOpacity(0.85),
                           borderRadius: BorderRadius.circular(25),
                           border: Border.all(color: _currentAvatarColor.withOpacity(0.3), width: 2),
-                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: Offset(0, 4))],
+                          boxShadow: [
+                            BoxShadow(
+                              color: _currentAvatarColor.withOpacity(0.1),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                         ),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(23),
                           child: ListView.builder(
                             controller: _scrollController,
-                            padding: EdgeInsets.symmetric(vertical: 15),
+                            padding: const EdgeInsets.symmetric(vertical: 15),
                             itemCount: messages.length,
                             itemBuilder: (context, index) => _buildMessage(messages[index], index),
                           ),
                         ),
                       ),
                     ),
-                    SizedBox(height: 5),
+                    const SizedBox(height: 5),
                     Container(
                       key: _keyInputFieldContainer,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
-                          colors: [Colors.white.withOpacity(0.0), Colors.white.withOpacity(0.9), Colors.white],
-                          stops: [0.0, 0.3, 1.0],
+                          colors: [
+                            Colors.white.withOpacity(0.0),
+                            Colors.white.withOpacity(0.9),
+                            Colors.white,
+                          ],
+                          stops: const [0.0, 0.3, 1.0],
                         ),
                       ),
                       child: Padding(
@@ -1157,37 +1200,41 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
                         child: Material(
                           elevation: 5,
                           borderRadius: BorderRadius.circular(30),
-                          shadowColor: Colors.black.withOpacity(0.2),
+                          shadowColor: _currentAvatarColor.withOpacity(0.2),
                           child: Container(
-                            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(30),
                               border: Border.all(
-                                color: _isRecording ? Colors.redAccent : _isTyping ? _currentAvatarColor : Colors.grey.shade300,
+                                color: _isRecording
+                                    ? Colors.redAccent
+                                    : _isTyping
+                                        ? _currentAvatarColor
+                                        : _currentAvatarColor.withOpacity(0.3),
                                 width: 1.5,
                               ),
                             ),
                             child: Row(
                               children: [
                                 AnimatedContainer(
-                                  duration: Duration(milliseconds: 200),
+                                  duration: const Duration(milliseconds: 200),
                                   key: _keySendButton,
                                   width: 48,
                                   height: 48,
-                                  margin: EdgeInsets.only(right: 8),
+                                  margin: const EdgeInsets.only(right: 8),
                                   decoration: BoxDecoration(
-                                    color: _isTyping ? _currentAvatarColor : Colors.grey.shade300,
+                                    color: _isTyping ? _currentAvatarColor : _currentAvatarColor.withOpacity(0.3),
                                     shape: BoxShape.circle,
                                   ),
                                   child: IconButton(
                                     icon: Icon(
                                       Icons.send_rounded,
-                                      color: _isTyping ? Colors.white : Colors.grey.shade500,
+                                      color: _isTyping ? Colors.white : Colors.white.withOpacity(0.5),
                                     ),
                                     iconSize: 24,
                                     tooltip: "أرسل الرسالة",
-                                    onPressed: _isTyping ? () { _sendMessage(_controller.text); } : null,
+                                    onPressed: _isTyping ? () => _sendMessage(_controller.text) : null,
                                   ),
                                 ),
                                 Expanded(
@@ -1196,14 +1243,20 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
                                     decoration: InputDecoration(
                                       hintText: _isRecording ? 'أستمع...' : 'اكتب أو سجل!',
                                       border: InputBorder.none,
-                                      hintStyle: TextStyle(color: Colors.grey[500], fontFamily: 'Comic Sans MS', fontSize: 15),
-                                      contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 5),
+                                      hintStyle: TextStyle(
+                                        color: _currentAvatarColor.withOpacity(0.5),
+                                        fontFamily: 'Comic Sans MS',
+                                        fontSize: 15,
+                                      ),
+                                      contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 5),
                                     ),
-                                    style: TextStyle(fontSize: 15, fontFamily: 'Comic Sans MS'),
+                                    style: const TextStyle(fontSize: 15, fontFamily: 'Comic Sans MS'),
                                     maxLines: null,
                                     textInputAction: TextInputAction.send,
                                     onSubmitted: (text) {
-                                      if (text.isNotEmpty) { _sendMessage(text); }
+                                      if (text.isNotEmpty) {
+                                        _sendMessage(text);
+                                      }
                                     },
                                     enabled: !_isRecording,
                                     textDirection: TextDirection.rtl,
@@ -1216,9 +1269,11 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
                                   child: Container(
                                     width: 48,
                                     height: 48,
-                                    margin: EdgeInsets.only(left: 8),
+                                    margin: const EdgeInsets.only(left: 8),
                                     decoration: BoxDecoration(
-                                      color: _isRecording ? Colors.red.withOpacity(0.1) : _currentAvatarColor.withOpacity(0.1),
+                                      color: _isRecording
+                                          ? Colors.redAccent.withOpacity(0.1)
+                                          : _currentAvatarColor.withOpacity(0.1),
                                       shape: BoxShape.circle,
                                     ),
                                     child: AnimatedBuilder(
@@ -1251,11 +1306,23 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
         bottomNavigationBar: Container(
           decoration: BoxDecoration(
             color: Colors.white,
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8, offset: Offset(0, -2))],
-            borderRadius: BorderRadius.only(topLeft: Radius.circular(25), topRight: Radius.circular(25)),
+            boxShadow: [
+              BoxShadow(
+                color: _currentAvatarColor.withOpacity(0.1),
+                blurRadius: 8,
+                offset: const Offset(0, -2),
+              ),
+            ],
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(25),
+              topRight: Radius.circular(25),
+            ),
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.only(topLeft: Radius.circular(25), topRight: Radius.circular(25)),
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(25),
+              topRight: Radius.circular(25),
+            ),
             child: BottomNavBar(
               threadId: threadId,
               currentIndex: 2,
@@ -1276,7 +1343,12 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
       lottieUrl = 'https://assets3.lottiefiles.com/packages/lf20_tzjnbj0d.json';
       statusContent = Text(
         "أنا أستمع... $_recordingDuration",
-        style: TextStyle(color: statusColor, fontWeight: FontWeight.bold, fontSize: 16, fontFamily: 'Comic Sans MS'),
+        style: TextStyle(
+          color: statusColor,
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
+          fontFamily: 'Comic Sans MS',
+        ),
         textDirection: TextDirection.rtl,
       );
     } else if (_isSending) {
@@ -1284,14 +1356,24 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
       lottieUrl = 'https://assets9.lottiefiles.com/packages/lf20_nw19osms.json';
       statusContent = Text(
         "همم، دعني أفكر...",
-        style: TextStyle(color: statusColor, fontWeight: FontWeight.bold, fontSize: 16, fontFamily: 'Comic Sans MS'),
+        style: TextStyle(
+          color: statusColor,
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
+          fontFamily: 'Comic Sans MS',
+        ),
         textDirection: TextDirection.rtl,
       );
     } else {
       statusColor = _currentAvatarColor;
       statusContent = Text(
         "اسألني أي شيء!",
-        style: TextStyle(color: statusColor, fontWeight: FontWeight.bold, fontSize: 16, fontFamily: 'Comic Sans MS'),
+        style: TextStyle(
+          color: statusColor,
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
+          fontFamily: 'Comic Sans MS',
+        ),
         textDirection: TextDirection.rtl,
       );
     }
@@ -1304,7 +1386,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
           lottieUrl.isNotEmpty
               ? Lottie.network(lottieUrl, width: 30, height: 30)
               : Image.asset(_currentAvatarImage, width: 24, height: 24),
-          SizedBox(width: 8),
+          const SizedBox(width: 8),
           statusContent,
         ].reversed.toList(),
       ),

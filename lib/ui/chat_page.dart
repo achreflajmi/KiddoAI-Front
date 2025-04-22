@@ -378,85 +378,99 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin, Widg
     }
   }
 
-  Future<void> _sendMessage(String message, {bool isImage = false, String source = 'text'}) async {
-    if (message.isEmpty) return;
+Future<void> _sendMessage(String content, {bool isImage = false, String source = 'text'}) async {
+  final DateTime timestamp = DateTime.now();
 
-    final DateTime timestamp = DateTime.now();
-
+  // Always show the image if it's from user
+  if (isImage) {
     setState(() {
-      messages.add(Message(sender: 'user', content: message, isImage: isImage, timestamp: timestamp));
+      messages.add(Message(sender: 'user', content: content, isImage: true, timestamp: timestamp));
+      _isSending = true;
+      messages.add(Message(sender: 'bot', content: 'typing_indicator', timestamp: DateTime.now()));
+    });
+
+    _saveMessages();
+    _scrollToBottom();
+
+    try {
+      final response = await _sendImageToBackend(content, source);
+
+      if (response != null && response['message'] != null) {
+        final extractedMessage = response['message'].toString().trim();
+
+        if (extractedMessage.isNotEmpty) {
+          // 🔁 Trigger actual chat message (bot reply) using OCR message
+          await _sendChatInput(extractedMessage);
+        } else {
+          _showBotError("لم أتمكن من فهم الكتابة. حاول مجددًا!");
+        }
+      } else {
+        _showBotError("حدث خطأ أثناء تحليل الصورة.");
+      }
+    } catch (e) {
+      _showBotError("فشل في إرسال الصورة: $e");
+    }
+  } else {
+    setState(() {
+      messages.add(Message(sender: 'user', content: content, timestamp: timestamp));
       _isSending = true;
       messages.add(Message(sender: 'bot', content: 'typing_indicator', timestamp: DateTime.now()));
     });
 
     _controller.clear();
     _saveMessages();
-    Future.delayed(const Duration(milliseconds: 100), () => _scrollToBottom());
+    _scrollToBottom();
 
-    try {
-      if (isImage) {
-        // Send image to backend for OCR and feedback
-        final response = await _sendImageToBackend(message, source);
-        if (response != null) {
-          setState(() {
-            messages.removeWhere((m) => m.content == 'typing_indicator');
-            messages.add(Message(
-              sender: 'bot',
-              content: response['message'],
-              timestamp: DateTime.now(),
-            ));
-            _isSending = false;
-          });
-        } else {
-          throw Exception('Failed to process image');
-        }
-      } else {
-        final prefs = await SharedPreferences.getInstance();
-        final accessToken = prefs.getString('accessToken');
-
-        final response = await http.post(
-          Uri.parse(CurrentIP+'/KiddoAI/chat/send'),
-          headers: {
-            "Content-Type": "application/json",
-            if (accessToken != null) "Authorization": "Bearer $accessToken",
-          },
-          body: jsonEncode({'threadId': threadId, 'userInput': message}),
-        );
-
-        if (response.statusCode == 200) {
-          final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
-          String botResponse = jsonResponse['response'];
-
-          if (botResponse.startsWith('"') && botResponse.endsWith('"')) {
-            botResponse = botResponse.substring(1, botResponse.length - 1);
-          }
-          botResponse = botResponse.trim();
-
-          setState(() {
-            messages.removeWhere((m) => m.content == 'typing_indicator');
-            messages.add(Message(sender: 'bot', content: botResponse, timestamp: DateTime.now()));
-            _isSending = false;
-          });
-
-          _saveMessages();
-          _scrollToBottom();
-          _initializeVoice(botResponse);
-        } else {
-          setState(() {
-            _isSending = false;
-            messages.removeWhere((m) => m.content == 'typing_indicator');
-            messages.add(Message(sender: 'bot', content: "عفوًا! حاول مرة أخرى!", timestamp: DateTime.now()));
-          });
-        }
-      }
-    } catch (e) {
-      setState(() {
-        _isSending = false;
-        messages.removeWhere((m) => m.content == 'typing_indicator');
-        messages.add(Message(sender: 'bot', content: "خطأ في الاتصال!", timestamp: DateTime.now()));
-      });
-    }
+    await _sendChatInput(content);
   }
+}
+
+Future<void> _sendChatInput(String userInput) async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    final accessToken = prefs.getString('accessToken');
+
+    final response = await http.post(
+      Uri.parse(CurrentIP + '/KiddoAI/chat/send'),
+      headers: {
+        "Content-Type": "application/json",
+        if (accessToken != null) "Authorization": "Bearer $accessToken",
+      },
+      body: jsonEncode({'threadId': threadId, 'userInput': userInput}),
+    );
+
+    if (response.statusCode == 200) {
+      final jsonResponse = jsonDecode(response.body);
+      String botReply = jsonResponse['response'].toString().trim();
+
+      setState(() {
+        messages.removeWhere((m) => m.content == 'typing_indicator');
+        messages.add(Message(sender: 'bot', content: botReply, timestamp: DateTime.now()));
+        _isSending = false;
+      });
+
+      _saveMessages();
+      _scrollToBottom();
+      _initializeVoice(botReply);
+    } else {
+      _showBotError("لم أتمكن من الرد. حاول مرة أخرى!");
+    }
+  } catch (e) {
+    _showBotError("خطأ في الاتصال: $e");
+  }
+}
+
+void _showBotError(String errorMessage) {
+  setState(() {
+    _isSending = false;
+    messages.removeWhere((m) => m.content == 'typing_indicator');
+    messages.add(Message(sender: 'bot', content: errorMessage, timestamp: DateTime.now()));
+  });
+  _scrollToBottom();
+  _saveMessages();
+}
+
+
 
   Future<Map<String, dynamic>?> _sendImageToBackend(String imagePath, String source) async {
     try {

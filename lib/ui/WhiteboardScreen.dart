@@ -44,18 +44,19 @@ class _WhiteboardScreenState extends State<WhiteboardScreen> with SingleTickerPr
     );
   }
 
-  Future<void> _saveDrawing() async {
-    final image = await _controller.toImage();
-    if (image == null) return;
+ Future<void> _saveDrawing() async {
+  final image = await _controller.toImage();
+  if (image == null) return;
 
-    final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
-    final tempDir = await getTemporaryDirectory();
-    final file = File('${tempDir.path}/drawing.png');
-    await file.writeAsBytes(bytes!.buffer.asUint8List());
+  final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+  final tempDir = await getTemporaryDirectory();
+  final file = File('${tempDir.path}/drawing_${DateTime.now().millisecondsSinceEpoch}.png');
+  await file.writeAsBytes(bytes!.buffer.asUint8List());
 
-    widget.onImageSaved(file.path);
-    Navigator.pop(context);
-  }
+  widget.onImageSaved(file.path);
+  Navigator.pop(context);
+}
+
 
   @override
   Widget build(BuildContext context) {

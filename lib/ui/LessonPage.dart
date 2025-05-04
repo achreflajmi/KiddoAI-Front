@@ -349,7 +349,7 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
       await prefs.setString('threadId', newThreadId);
 
       /* 2️⃣ configure the vector store BEFORE chatting */
-      await _configureVectorStore(); 
+     // await _configureVectorStore(); 
 
       setState(() {
         _showChatbot = true;
@@ -450,17 +450,17 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
       builder: (context) => const LoadingAnimationWidget(),
     );
 
-
-
-    final activityUrl = CurrentIP + "/KiddoAI/Activity/saveProblem";
-    final activityPageUrl = CurrentReactIP + "/";
+    final ProblemsCreate = ngrokUrl + "/problems";
+    final activitysave = CurrentIP + "/KiddoAI/Activity/saveProblem";
 
     bool isActivityReady = false;
 
     try {
       final prefs = await SharedPreferences.getInstance();
-      final response = await http.post(
-        Uri.parse(activityUrl),
+      
+
+      final problems = await http.post(
+        Uri.parse(ProblemsCreate),
         headers: {
           "Content-Type": "application/json",
         },
@@ -470,9 +470,31 @@ class _LessonsPageState extends State<LessonsPage> with TickerProviderStateMixin
           "level": level,
         }),
       );
-      final react_run = await http.get(Uri.parse(ngrokUrl + "/openActivity"));
 
-      if (response.statusCode == 200 && react_run.statusCode == 200) {
+      final data = jsonDecode(problems.body);
+      final problemsList = data['jsondata'];      // this is likely a List
+      final template_index = data['template_index']; 
+
+
+      final response = await http.post(
+        Uri.parse(activitysave),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode({
+          "lesson": lessonName,
+          "problemsList": problemsList,
+          "id": prefs.getString("userId"),
+        }),
+      );
+     
+     final port = 5008 + template_index; 
+ 
+      final activityPageUrl = CurrentReactIP + ":"+port.toString()+"/"+prefs.getString("userId").toString();
+
+      //final react_run = await http.get(Uri.parse(ngrokUrl + "/openActivity"));
+
+      if (response.statusCode == 200) {
         isActivityReady = true;
       } else {
         await Future.delayed(Duration(seconds: 2));

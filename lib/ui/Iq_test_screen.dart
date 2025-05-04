@@ -46,6 +46,14 @@ class _IQTestScreenState extends State<IQTestScreen> with WidgetsBindingObserver
   final String _tutorialPreferenceKey = 'iqTestTutorialShown';
   // --- End Tutorial Setup Variables ---
 
+   String _currentAvatarName = 'Gumball';
+  String _avatarImage = 'assets/avatars/Gumball.png';
+  Color _currentAvatarColor = const Color(0xFF2196F3);
+  List<Color> _currentAvatarGradient = [
+    const Color.fromARGB(255, 48, 131, 198),
+    const Color(0xFFE3F2FD),
+  ];
+
   // --- Theme Definition (_characterThemes Map) ---
   // Lines 40-78: Refined color palettes, added gradients, and NEW textColor and buttonTextColor keys.
   final Map<String, Map<String, dynamic>> _characterThemes = {
@@ -101,6 +109,7 @@ class _IQTestScreenState extends State<IQTestScreen> with WidgetsBindingObserver
     _checkIfTutorialShouldBeShown();
   }
 
+
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
@@ -125,7 +134,7 @@ class _IQTestScreenState extends State<IQTestScreen> with WidgetsBindingObserver
       setState(() {
         _selectedAvatarName = avatar['name']!;
         // Use Default if avatar name not in themes
-        _currentTheme = _characterThemes[_selectedAvatarName] ?? _characterThemes['Default']!;
+        _currentTheme = _characterThemes["Gumball"] ?? _characterThemes['Default']!;
       });
     }
   }

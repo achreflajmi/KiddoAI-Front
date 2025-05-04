@@ -477,7 +477,7 @@ void _showBotError(String errorMessage) {
       final file = File(imagePath);
       final request = http.MultipartRequest(
         'POST',
-        Uri.parse('https://fbd2-102-30-245-171.ngrok-free.app/ocr'), // Replace with your backend URL
+        Uri.parse('https://75b5-196-203-207-178.ngrok-free.app/ocr'), // Replace with your backend URL
       );
       request.fields['source'] = source;
       request.files.add(await http.MultipartFile.fromPath('image', file.path));

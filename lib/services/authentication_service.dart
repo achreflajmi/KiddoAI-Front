@@ -21,6 +21,8 @@ class AuthenticationService {
     }
 
     final Map<String, dynamic> responseData = jsonDecode(response.body);
+    final String userId = responseData['id'];
+    
 
     // Debug
     debugPrint('⬅️  Login response: $responseData');
@@ -31,6 +33,8 @@ class AuthenticationService {
       debugPrint('✅ Received vectorStoreId: $vectorId');
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('vectorStoreId', vectorId);
+      await prefs.setString('userId', userId);
+
     }
 
     await _saveUserSession(responseData);

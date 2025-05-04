@@ -43,10 +43,10 @@ class _WebViewActivityWidgetState extends State<WebViewActivityWidget> {
         //   headers: {"Content-Type": "application/json"},
         //   body: jsonEncode({"accuracy": accuracy}), 
         // );
-        final react_run = await http.get(Uri.parse(ngrokUrl +"/closeActivity"));
+       // final react_run = await http.get(Uri.parse(ngrokUrl +"/closeActivity"));
 
 
-            if (mounted &&  react_run.statusCode == 200) {//response.statusCode == 200 &&
+            if (mounted) {// &&  react_run.statusCode == 200) {//response.statusCode == 200 &&
              
                // Show fullscreen loading animation dialog
                 showGeneralDialog(

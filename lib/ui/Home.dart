@@ -39,93 +39,107 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   // Kid-related state
   String _kidName = '';
-  String _currentAvatarName = 'SpongeBob';
-  String _avatarImage = 'assets/avatars/spongebob.png';
-  Color _currentAvatarColor = const Color(0xFFFFEB3B);
+  String _currentAvatarName = 'Gumball';
+  String _avatarImage = 'assets/avatars/Gumball.png';
+  Color _currentAvatarColor = const Color(0xFF2196F3);
   List<Color> _currentAvatarGradient = [
-    const Color.fromARGB(255, 206, 190, 46),
-    const Color(0xFFFFF9C4)
+    const Color.fromARGB(255, 48, 131, 198),
+    const Color(0xFFE3F2FD),
   ];
 
   // --- Static Achievement Data ---
   // (Keep your existing achievement data)
   final List<Achievement> _achievements = [
     Achievement(
-      title: 'المستكشف الأول',
-      description: 'أكملت أول درس لك بنجاح!',
-      icon: Icons.explore_rounded,
-      color: Colors.greenAccent.shade400,
-      unlocked: true,
-    ),
-    Achievement(
-      title: 'بطل الرياضيات',
-      description: 'حصلت على 5 نجوم في تحدي الجمع.',
-      icon: Icons.star_rounded,
-      color: Colors.blueAccent.shade400,
-      unlocked: true,
-    ),
-    Achievement(
-      title: 'راوي القصص',
-      description: 'استمعت إلى 3 قصص ممتعة.',
-      icon: Icons.menu_book_rounded,
-      color: Colors.orangeAccent.shade400,
-      unlocked: true,
-    ),
-    Achievement(
-      title: 'صديق كيدو',
-      description: 'أجريت أول محادثة مع صديقك الذكي.',
-      icon: Icons.chat_bubble_rounded,
-      color: Colors.purpleAccent.shade400,
-      unlocked: true,
-    ),
-    Achievement(
-      title: 'الفضولي الصغير',
-      description: 'طرحت 10 أسئلة ذكية!',
-      icon: Icons.lightbulb_rounded,
-      color: Colors.yellowAccent.shade700,
-      unlocked: false, // Example of a locked achievement
-    ),
-    Achievement(
-      title: 'فنان الألوان',
-      description: 'أكملت تحدي تلوين الأشكال.',
-      icon: Icons.color_lens_rounded,
-      color: Colors.pinkAccent.shade400,
-      unlocked: true,
-    ),
-    Achievement(
-      title: 'المتعلم اليومي',
-      description: 'استخدمت التطبيق 3 أيام متتالية.',
-      icon: Icons.calendar_today_rounded,
-      color: Colors.tealAccent.shade400,
-      unlocked: false, // Example of a locked achievement
-    ),
-     Achievement(
-      title: 'خبير الحروف',
-      description: 'تعرفت على جميع الحروف الهجائية!',
-      icon: Icons.abc_rounded,
-      color: Colors.redAccent.shade400,
-      unlocked: true,
-    ),
+  title: 'المستكشف الأول',
+  description: 'أكملت أول درس بنجاح!',
+  icon: Icons.explore_rounded,
+  color: Colors.greenAccent.shade400,
+  unlocked: true,
+),
+Achievement(
+  title: 'صديق كيدو',
+  description: 'أجريت أول محادثة مع مساعد كيدو الذكي.',
+  icon: Icons.chat_bubble_rounded,
+  color: Colors.purpleAccent.shade400,
+  unlocked: true,
+),
+Achievement(
+  title: 'بطل الحساب',
+  description: 'أنهيت تحدي الجمع بنجاح!',
+  icon: Icons.calculate_rounded,
+  color: Colors.blueAccent.shade400,
+  unlocked: true,
+),
+Achievement(
+  title: 'عين النسر',
+  description: 'نجحت في قراءة كلمة مكتوبة بخط اليد باستخدام الكاميرا!',
+  icon: Icons.visibility_rounded,
+  color: Colors.deepOrangeAccent.shade200,
+  unlocked: true,
+),
+Achievement(
+  title: 'ذكي من أول نظرة',
+  description: 'أنهيت اختبار الذكاء بنجاح.',
+  icon: Icons.psychology_rounded,
+  color: Colors.yellowAccent.shade700,
+  unlocked: true,
+),
+Achievement(
+  title: 'فنان الشخصية',
+  description: 'اخترت شخصيتك المفضلة وصممت ملفك.',
+  icon: Icons.brush_rounded,
+  color: Colors.pinkAccent.shade400,
+  unlocked: true,
+),
+Achievement(
+  title: 'المتعلم المثابر',
+  description: 'استخدمت كيدو 3 أيام متتالية.',
+  icon: Icons.calendar_today_rounded,
+  color: Colors.tealAccent.shade400,
+  unlocked: false, // can be dynamic
+),
+Achievement(
+  title: 'ملك الحروف',
+  description: 'تعلمت كل الحروف الأبجدية!',
+  icon: Icons.abc_rounded,
+  color: Colors.redAccent.shade400,
+  unlocked: false, // can be updated later
+),
+
   ];
 
   // --- Avatar settings ---
   // (Keep your existing avatar data)
   final List<Map<String, dynamic>> _avatars = [
-     {
+    {
       'name': 'SpongeBob',
-      'displayName': 'سبونج بوب',
       'imagePath': 'assets/avatars/spongebob.png',
-      'color': const Color(0xFFFFEB3B),
-      'gradient': [const Color.fromARGB(255, 206, 190, 46), const Color(0xFFFFF9C4)],
+      'voicePath': 'assets/voices/SpongeBob.wav',
+      'color': Color(0xFFFFEB3B),
+      'gradient': [Color.fromARGB(255, 206, 190, 46), Color(0xFFFFF9C4)],
     },
     {
       'name': 'Gumball',
-      'displayName': 'غمبول',
       'imagePath': 'assets/avatars/gumball.png',
-      'color': const Color(0xFF2196F3),
-      'gradient': [const Color.fromARGB(255, 48, 131, 198), const Color(0xFFE3F2FD)],
+      'voicePath': 'assets/voices/gumball.wav',
+      'color': Color(0xFF2196F3),
+      'gradient': [Color.fromARGB(255, 48, 131, 198), Color(0xFFE3F2FD)],
     },
-    // Add other avatars if needed...
+    {
+      'name': 'SpiderMan',
+      'imagePath': 'assets/avatars/spiderman.png',
+      'voicePath': 'assets/voices/spiderman.wav',
+      'color': Color.fromARGB(255, 227, 11, 18),
+      'gradient': [Color.fromARGB(255, 203, 21, 39), Color(0xFFFFEBEE)],
+    },
+    {
+      'name': 'HelloKitty',
+      'imagePath': 'assets/avatars/hellokitty.png',
+      'voicePath': 'assets/voices/hellokitty.wav',
+      'color': Color(0xFFFF80AB),
+      'gradient': [Color.fromARGB(255, 255, 131, 174), Color(0xFFFCE4EC)],
+    },
   ];
 
   @override
@@ -197,10 +211,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
        if (mounted) {
         // Set default fallback avatar if loading fails
         setState(() {
-          _currentAvatarName = 'SpongeBob';
+         /*_currentAvatarName = 'SpongeBob';
           _avatarImage = 'assets/avatars/spongebob.png';
           _currentAvatarColor = const Color(0xFFFFEB3B);
-          _currentAvatarGradient = [const Color.fromARGB(255, 206, 190, 46), const Color(0xFFFFF9C4)];
+          _currentAvatarGradient = [const Color.fromARGB(255, 206, 190, 46), const Color(0xFFFFF9C4)];*/
         });
       }
     }
@@ -311,7 +325,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Widget _buildAchievementProgressBar(BuildContext context) {
     final int unlockedCount = _achievements.where((a) => a.unlocked).length;
     final int totalAchievements = _achievements.isNotEmpty ? _achievements.length : 1; // Avoid division by zero
-    final double progress = unlockedCount / totalAchievements;
+    final double progress =0;
     const double barHeight = 28.0;
     final Color progressColor = Colors.amber.shade600; // Example color
     final Color trackColor = Colors.white.withOpacity(0.3);
@@ -388,7 +402,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 // Percentage Text Overlay
                 Center(
                   child: Text(
-                    '${(progress * 100).toStringAsFixed(0)}%',
+                    '${(progress* 100).toStringAsFixed(0)}%',
                     style: const TextStyle(
                       color: Colors.black87, // Ensure contrast
                       fontWeight: FontWeight.bold,

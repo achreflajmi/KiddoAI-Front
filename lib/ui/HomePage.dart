@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart'; // Import GoogleFonts
+import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
 import 'LessonPage.dart';
 import '../view_models/Lessons_ViewModel.dart';
@@ -8,6 +8,9 @@ import '../services/SubjectService.dart';
 import 'package:front_kiddoai/ui/profile_page.dart';
 import '../utils/constants.dart';
 import '../models/avatar_settings.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'StoryPage.dart';
 
 class SubjectsPage extends StatefulWidget {
   final String threadId;
@@ -23,7 +26,7 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
   late AnimationController _animationController;
   late AnimationController _headerAnimationController;
 
-   final TextStyle _titleTextStyle = GoogleFonts.tajawal(
+  final TextStyle _titleTextStyle = GoogleFonts.tajawal(
     fontSize: 22,
     fontWeight: FontWeight.bold,
     color: Colors.white,
@@ -32,30 +35,29 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
     fontSize: 16,
     color: Colors.white.withOpacity(0.9),
   );
-   final TextStyle _cardTitleTextStyle = GoogleFonts.tajawal(
+  final TextStyle _cardTitleTextStyle = GoogleFonts.tajawal(
     color: Colors.white,
-    fontSize: 20, // Increased size
+    fontSize: 20,
     fontWeight: FontWeight.bold,
   );
-   final TextStyle _cardDescTextStyle = GoogleFonts.tajawal(
+  final TextStyle _cardDescTextStyle = GoogleFonts.tajawal(
     color: Colors.white.withOpacity(0.9),
-    fontSize: 15, // Increased size
+    fontSize: 15,
   );
   final TextStyle _buttonTextStyle = GoogleFonts.tajawal(
     fontSize: 18,
     fontWeight: FontWeight.bold,
     color: Colors.white,
   );
-   final TextStyle _statusTextStyle = GoogleFonts.tajawal(
+  final TextStyle _statusTextStyle = GoogleFonts.tajawal(
     fontSize: 20,
     fontWeight: FontWeight.bold,
   );
-  final TextStyle _logoTextStyle = GoogleFonts.fredoka( // Playful font for logo
-      fontSize: 24, // Adjusted size
-      fontWeight: FontWeight.bold,
-    );
+  final TextStyle _logoTextStyle = GoogleFonts.fredoka(
+    fontSize: 24,
+    fontWeight: FontWeight.bold,
+  );
 
-  // Avatar settings variables
   String _avatarName = 'SpongeBob';
   String _avatarImage = 'assets/avatars/spongebob.png';
   Color _avatarColor = const Color(0xFFFFEB3B);
@@ -64,7 +66,6 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
     const Color(0xFFFFF9C4),
   ];
 
-  // List of available avatars
   final List<Map<String, dynamic>> _avatars = [
     {
       'name': 'SpongeBob',
@@ -100,7 +101,6 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
     },
   ];
 
-  // Subject assets
   final Map<String, Map<String, dynamic>> _subjectAssets = {
     'الرياضيات': {
       'icon': Icons.calculate,
@@ -143,25 +143,19 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
   @override
   void initState() {
     super.initState();
-      _headerAnimationController = AnimationController(
+    _headerAnimationController = AnimationController(
       vsync: this,
       duration: Duration(milliseconds: 1000),
     );
-        _headerAnimationController.forward();
+    _headerAnimationController.forward();
 
     _animationController = AnimationController(
       vsync: this,
       duration: Duration(milliseconds: 800),
     );
-    _headerAnimationController = AnimationController(
-      vsync: this,
-      duration: Duration(milliseconds: 1000),
-    );
-
     _subjects = SubjectService(CurrentIP + "/KiddoAI").fetchSubjects();
 
     _animationController.forward();
-    _headerAnimationController.forward();
     _loadAvatarSettings();
   }
 
@@ -169,7 +163,6 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
   void dispose() {
     _animationController.dispose();
     _headerAnimationController.dispose();
-
     super.dispose();
   }
 
@@ -219,33 +212,286 @@ class _SubjectsPageState extends State<SubjectsPage> with TickerProviderStateMix
     }
   }
 
- // Your color palette
-final List<Color> _subjectColors = [
-  Color(0xFF4CAF50), // Green
-  Color(0xFF2196F3), // Blue
-  Color(0xFFF44336), // Red
-  Color(0xFFFF9800), // Orange
-  Color(0xFF9C27B0), // Purple
-  Color(0xFF009688), // Teal
-];
+  final List<Color> _subjectColors = [
+    Color(0xFF4CAF50),
+    Color(0xFF2196F3),
+    Color(0xFFF44336),
+    Color(0xFFFF9800),
+    Color(0xFF9C27B0),
+    Color(0xFF009688),
+  ];
 
-// A counter to loop through the colors in order
-int _colorIndex = 0;
+  int _colorIndex = 0;
 
-Map<String, dynamic> _getSubjectAssets(String subject) {
-  // Get the color and update the index for next call
-  Color color = _subjectColors[_colorIndex];
-  _colorIndex = (_colorIndex + 1) % _subjectColors.length;
+  Map<String, dynamic> _getSubjectAssets(String subject) {
+    Color color = _subjectColors[_colorIndex];
+    _colorIndex = (_colorIndex + 1) % _subjectColors.length;
 
-  return _subjectAssets[subject] ?? {
-    'icon': Icons.school,
-    'color': color,
-    'animation': 'https://assets9.lottiefiles.com/packages/lf20_5tl1xxnz.json',
-    'description': ''
-  };
-}
+    return _subjectAssets[subject] ?? {
+      'icon': Icons.school,
+      'color': color,
+      'animation': 'https://assets9.lottiefiles.com/packages/lf20_5tl1xxnz.json',
+      'description': ''
+    };
+  }
 
+  void _showStoryPromptDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        String prompt = '';
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            elevation: 8,
+            backgroundColor: Colors.transparent,
+            child: Container(
+              padding: EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: _avatarGradient,
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 10,
+                    offset: Offset(0, 5),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Avatar Image
+                  CircleAvatar(
+                    backgroundImage: AssetImage(_avatarImage),
+                    radius: 30,
+                    backgroundColor: Colors.white,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 10),
+                  // Lottie Animation
+                  Container(
+                    width: 60,
+                    height: 60,
+                    child: Lottie.asset(
+                      'assets/book_animation.json',
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                  // Title
+                  Text(
+                    'فكرة قصتك الممتعة!',
+                    style: GoogleFonts.tajawal(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: 16),
+                  // TextField
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.9),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: _avatarColor.withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: TextField(
+                      onChanged: (value) {
+                        prompt = value;
+                      },
+                      textDirection: TextDirection.rtl,
+                      style: GoogleFonts.tajawal(
+                        fontSize: 16,
+                        color: Colors.black87,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'اكتب فكرة قصتك هنا...',
+                        hintStyle: GoogleFonts.tajawal(
+                          fontSize: 16,
+                          color: Colors.grey.shade600,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      ),
+                      maxLines: 3,
+                    ),
+                  ),
+                  SizedBox(height: 20),
+                  // Buttons
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      // Cancel Button
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).pop();
+                        },
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [Colors.red.shade300, Colors.red.shade500],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(30),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.red.shade300.withOpacity(0.5),
+                                blurRadius: 8,
+                                offset: Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: Text(
+                            'إلغاء',
+                            style: GoogleFonts.tajawal(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Create Story Button
+                      GestureDetector(
+                        onTap: () {
+                          if (prompt.isNotEmpty) {
+                            _generateStory(prompt);
+                            Navigator.of(context).pop();
+                          }
+                        },
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [Colors.green.shade400, Colors.green.shade600],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(30),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.green.shade300.withOpacity(0.5),
+                                blurRadius: 8,
+                                offset: Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.auto_stories,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                'إنشاء القصة',
+                                style: GoogleFonts.tajawal(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
 
+  Future<void> _generateStory(String prompt) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: Dialog(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(width: 20),
+                  Text('جاري إنشاء القصة...'),
+                ].reversed.toList(),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+
+    try {
+      final response = await http.post(
+        Uri.parse('https://76b2-165-50-113-5.ngrok-free.app/generate-story'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'prompt': prompt}),
+      );
+
+      Navigator.of(context).pop();
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final story = data['story'];
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => StoryPage(
+              story: story,
+              threadId: widget.threadId,
+              avatarImage: _avatarImage,
+              avatarColor: _avatarColor,
+              avatarGradient: _avatarGradient,
+            ),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('فشل في إنشاء القصة')),
+        );
+      }
+    } catch (e) {
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('حدث خطأ أثناء إنشاء القصة')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -255,106 +501,110 @@ Map<String, dynamic> _getSubjectAssets(String subject) {
         extendBodyBehindAppBar: true,
         backgroundColor: _avatarGradient.last,
         appBar: AppBar(
-   backgroundColor: _avatarColor,
-   elevation: 0,
-   shape: const RoundedRectangleBorder(
-    borderRadius: BorderRadius.vertical(
-      bottom: Radius.circular(30),
-    ),
-  ),
-  centerTitle: true,
-  title: Row(
-    mainAxisSize: MainAxisSize.min,
-    mainAxisAlignment: MainAxisAlignment.center,
-    children: [
-      Image.asset(
-        'assets/logo.png',
-        height: 50,
-      ),
-      AnimatedBuilder(
-        animation: _headerAnimationController,
-        builder: (context, child) {
-          return ClipRect(
-            child: Align(
-              alignment: Alignment.centerLeft,
-              widthFactor: _headerAnimationController.value,
-              child: Padding(
-                padding: const EdgeInsets.only(left: 10),
-                child: RichText(
-                  text: TextSpan(
-                    style: const TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Comic Sans MS',
+          backgroundColor: _avatarColor,
+          elevation: 0,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(
+              bottom: Radius.circular(30),
+            ),
+          ),
+          centerTitle: true,
+          title: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset(
+                'assets/logo.png',
+                height: 50,
+              ),
+              AnimatedBuilder(
+                animation: _headerAnimationController,
+                builder: (context, child) {
+                  return ClipRect(
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      widthFactor: _headerAnimationController.value,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 10),
+                        child: RichText(
+                          text: TextSpan(
+                            style: const TextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'Comic Sans MS',
+                            ),
+                            children: [
+                              const TextSpan(
+                                text: 'K',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                              TextSpan(
+                                text: 'iddo ',
+                                style: TextStyle(color: Colors.white.withOpacity(0.85)),
+                              ),
+                              const TextSpan(
+                                text: 'A',
+                                style: TextStyle(color: Colors.yellow),
+                              ),
+                              TextSpan(
+                                text: 'I',
+                                style: TextStyle(color: Colors.yellow.withOpacity(0.85)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
-                    children: [
-                      const TextSpan(
-                        text: 'K',
-                        style: TextStyle(color: Colors.white),
+                  );
+                },
+              ),
+            ],
+          ),
+          actions: [
+            IconButton(
+              icon: Icon(Icons.book),
+              onPressed: _showStoryPromptDialog,
+            ),
+            Padding(
+              padding: const EdgeInsets.only(left: 16),
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ProfilePage(threadId: widget.threadId)),
+                  ).then((_) => _loadAvatarSettings());
+                },
+                child: Hero(
+                  tag: 'profile_avatar',
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.white,
+                        width: 3,
                       ),
-                      TextSpan(
-                        text: 'iddo ',
-                        style: TextStyle(color: Colors.white.withOpacity(0.85)),
-                      ),
-                      const TextSpan(
-                        text: 'A',
-                        style: TextStyle(color: Colors.yellow),
-                      ),
-                      TextSpan(
-                        text: 'I',
-                        style: TextStyle(color: Colors.yellow.withOpacity(0.85)),
-                      ),
-                    ],
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 6,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: CircleAvatar(
+                      backgroundImage: AssetImage(_avatarImage),
+                      radius: 22,
+                    ),
                   ),
                 ),
               ),
             ),
-          );
-        },
-      ),
-    ],
-  ),
-  actions: [
-    Padding(
-      padding: const EdgeInsets.only(left: 16),
-      child: GestureDetector(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => ProfilePage(threadId: widget.threadId)),
-          ).then((_) => _loadAvatarSettings());
-        },
-        child: Hero(
-          tag: 'profile_avatar',
-          child: Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: Colors.white,
-                width: 3,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 6,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            child: CircleAvatar(
-              backgroundImage: AssetImage(_avatarImage),
-              radius: 22,
-            ),
-          ),
+          ],
         ),
-      ),
-    ),
-  ],
-),
         body: SafeArea(
-            top: false,
+          top: false,
           child: Container(
-                padding: const EdgeInsets.only(top: 90), // height of your AppBar
+            padding: const EdgeInsets.only(top: 90),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: _avatarGradient,
@@ -481,7 +731,7 @@ Map<String, dynamic> _getSubjectAssets(String subject) {
                                     child: Text(
                                       'عفوًا! مغامرة التعلم متوقفة.',
                                       textAlign: TextAlign.center,
-                                      style:_statusTextStyle.copyWith(color: Colors.red.shade700),
+                                      style: _statusTextStyle.copyWith(color: Colors.red.shade700),
                                       textDirection: TextDirection.rtl,
                                     ),
                                   ),
@@ -542,7 +792,7 @@ Map<String, dynamic> _getSubjectAssets(String subject) {
                                     icon: Icon(Icons.refresh, color: Colors.white),
                                     label: Text(
                                       "تحديث المواد",
-                                      style:_buttonTextStyle,
+                                      style: _buttonTextStyle,
                                     ),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.blue.shade600,
@@ -577,7 +827,7 @@ Map<String, dynamic> _getSubjectAssets(String subject) {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => LessonsPage(subjectName: subject,threadId: widget.threadId),
+                                      builder: (context) => LessonsPage(subjectName: subject, threadId: widget.threadId),
                                     ),
                                   );
                                 },
@@ -660,7 +910,6 @@ Map<String, dynamic> _getSubjectAssets(String subject) {
                                                 textDirection: TextDirection.rtl,
                                               ),
                                             ),
-                                            
                                           ],
                                         ),
                                       ),
